@@ -11,6 +11,7 @@ interface MetricsTableProps {
 
 export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
   const compareValues = (base: number, opt: number) => {
+    if (!base || !opt) return null;
     const improvement = ((opt - base) / base) * 100;
     return (
       <span className={improvement > 0 ? "text-green-600" : "text-red-600"}>
@@ -18,6 +19,10 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
       </span>
     );
   };
+
+  if (!baseline || !optimized) {
+    return null;
+  }
 
   return (
     <Card className="w-full table-fade-in">
@@ -42,56 +47,60 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
           <TableBody>
             <TableRow>
               <TableCell>רוחב מסדרון למעלה</TableCell>
-              <TableCell>{baseline.corridorBW_up.toFixed(2)}</TableCell>
-              <TableCell>{optimized.corridorBW_up.toFixed(2)}</TableCell>
+              <TableCell>{baseline.corridorBW_up?.toFixed(2) || "N/A"}</TableCell>
+              <TableCell>{optimized.corridorBW_up?.toFixed(2) || "N/A"}</TableCell>
               <TableCell>
-                {compareValues(baseline.corridorBW_up, optimized.corridorBW_up)}
+                {baseline.corridorBW_up && optimized.corridorBW_up 
+                  ? compareValues(baseline.corridorBW_up, optimized.corridorBW_up)
+                  : "N/A"}
               </TableCell>
             </TableRow>
             <TableRow>
               <TableCell>רוחב מסדרון למטה</TableCell>
-              <TableCell>{baseline.corridorBW_down.toFixed(2)}</TableCell>
-              <TableCell>{optimized.corridorBW_down.toFixed(2)}</TableCell>
+              <TableCell>{baseline.corridorBW_down?.toFixed(2) || "N/A"}</TableCell>
+              <TableCell>{optimized.corridorBW_down?.toFixed(2) || "N/A"}</TableCell>
               <TableCell>
-                {compareValues(baseline.corridorBW_down, optimized.corridorBW_down)}
+                {baseline.corridorBW_down && optimized.corridorBW_down
+                  ? compareValues(baseline.corridorBW_down, optimized.corridorBW_down)
+                  : "N/A"}
               </TableCell>
             </TableRow>
             <TableRow>
               <TableCell>עיכוב ממוצע למעלה</TableCell>
-              <TableCell>{baseline.avg_delay_up[0]?.toFixed(2) || "N/A"}</TableCell>
-              <TableCell>{optimized.avg_delay_up[0]?.toFixed(2) || "N/A"}</TableCell>
+              <TableCell>{baseline.avg_delay_up?.[0]?.toFixed(2) || "N/A"}</TableCell>
+              <TableCell>{optimized.avg_delay_up?.[0]?.toFixed(2) || "N/A"}</TableCell>
               <TableCell>
-                {baseline.avg_delay_up[0] && optimized.avg_delay_up[0]
+                {baseline.avg_delay_up?.[0] && optimized.avg_delay_up?.[0]
                   ? compareValues(baseline.avg_delay_up[0], optimized.avg_delay_up[0])
                   : "N/A"}
               </TableCell>
             </TableRow>
             <TableRow>
               <TableCell>עיכוב ממוצע למטה</TableCell>
-              <TableCell>{baseline.avg_delay_down[0]?.toFixed(2) || "N/A"}</TableCell>
-              <TableCell>{optimized.avg_delay_down[0]?.toFixed(2) || "N/A"}</TableCell>
+              <TableCell>{baseline.avg_delay_down?.[0]?.toFixed(2) || "N/A"}</TableCell>
+              <TableCell>{optimized.avg_delay_down?.[0]?.toFixed(2) || "N/A"}</TableCell>
               <TableCell>
-                {baseline.avg_delay_down[0] && optimized.avg_delay_down[0]
+                {baseline.avg_delay_down?.[0] && optimized.avg_delay_down?.[0]
                   ? compareValues(baseline.avg_delay_down[0], optimized.avg_delay_down[0])
                   : "N/A"}
               </TableCell>
             </TableRow>
             <TableRow>
               <TableCell>עיכוב מקסימלי למעלה</TableCell>
-              <TableCell>{baseline.max_delay_up[0]?.toFixed(2) || "N/A"}</TableCell>
-              <TableCell>{optimized.max_delay_up[0]?.toFixed(2) || "N/A"}</TableCell>
+              <TableCell>{baseline.max_delay_up?.[0]?.toFixed(2) || "N/A"}</TableCell>
+              <TableCell>{optimized.max_delay_up?.[0]?.toFixed(2) || "N/A"}</TableCell>
               <TableCell>
-                {baseline.max_delay_up[0] && optimized.max_delay_up[0]
+                {baseline.max_delay_up?.[0] && optimized.max_delay_up?.[0]
                   ? compareValues(baseline.max_delay_up[0], optimized.max_delay_up[0])
                   : "N/A"}
               </TableCell>
             </TableRow>
             <TableRow>
               <TableCell>עיכוב מקסימלי למטה</TableCell>
-              <TableCell>{baseline.max_delay_down[0]?.toFixed(2) || "N/A"}</TableCell>
-              <TableCell>{optimized.max_delay_down[0]?.toFixed(2) || "N/A"}</TableCell>
+              <TableCell>{baseline.max_delay_down?.[0]?.toFixed(2) || "N/A"}</TableCell>
+              <TableCell>{optimized.max_delay_down?.[0]?.toFixed(2) || "N/A"}</TableCell>
               <TableCell>
-                {baseline.max_delay_down[0] && optimized.max_delay_down[0]
+                {baseline.max_delay_down?.[0] && optimized.max_delay_down?.[0]
                   ? compareValues(baseline.max_delay_down[0], optimized.max_delay_down[0])
                   : "N/A"}
               </TableCell>

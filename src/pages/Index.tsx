@@ -11,6 +11,7 @@ import { WeightsPanel } from '@/components/WeightsPanel';
 import { FileActions } from '@/components/FileActions';
 import { ResultsPanel } from '@/components/ResultsPanel';
 import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights } from '@/types/optimization';
+
 const Index = () => {
   const [intersections, setIntersections] = useState<Intersection[]>([{
     id: 1,
@@ -44,6 +45,7 @@ const Index = () => {
   const [mode, setMode] = useState<'display' | 'calculate'>('calculate');
   const [weights, setWeights] = useState<OptimizationWeights>(DEFAULT_WEIGHTS);
   const [showWeights, setShowWeights] = useState(false);
+
   const handleAddIntersection = () => {
     const newId = Math.max(...intersections.map(i => i.id)) + 1;
     const lastIntersection = intersections[intersections.length - 1];
@@ -63,53 +65,32 @@ const Index = () => {
       }]
     }]);
   };
+
   const handleCalculate = () => {
     try {
       const baseIntersections = intersections.map(intersection => ({
         ...intersection,
         offset: 0
       }));
-      const beforeResults = calculateGreenWave(baseIntersections, speed);
-      const afterResults = calculateGreenWave(intersections, speed, weights);
-      setResults({
-        ...afterResults,
-        metrics: {
-          ...afterResults.metrics,
-          beforeOptimization: beforeResults.metrics
-        }
-      });
+      
+      const results = calculateGreenWave(intersections, speed, weights);
+      setResults(results);
       toast.success("חישוב הגל הירוק הושלם בהצלחה");
     } catch (error) {
       console.error("Error in calculation:", error);
       toast.error("שגיאה בחישוב הגל הירוק");
     }
   };
+
   const handleShowExisting = () => {
     try {
-      const existingIntersections = intersections.map(intersection => ({
+      const currentIntersections = intersections.map(intersection => ({
         ...intersection,
         offset: 0
       }));
-      const existingResults = {
-        cycleTime: existingIntersections[0].cycleTime,
-        speed: speed,
-        intersections: existingIntersections,
-        metrics: {
-          corridorBandwidth: {
-            upstream: 0,
-            downstream: 0
-          },
-          adjacentBandwidths: {
-            upstream: [],
-            downstream: []
-          },
-          delays: {
-            maximum: 0,
-            average: 0
-          }
-        }
-      };
-      setResults(existingResults);
+      
+      const results = calculateGreenWave(currentIntersections, speed);
+      setResults(results);
       setMode('display');
       toast.success("הצגת הגל הירוק הקיים הושלמה בהצלחה");
     } catch (error) {
@@ -117,6 +98,7 @@ const Index = () => {
       toast.error("שגיאה בהצגת הגל הירוק הקיים");
     }
   };
+
   const updateWeight = (category: keyof OptimizationWeights, direction: 'upstream' | 'downstream', value: number) => {
     const newWeights = {
       ...weights
@@ -134,6 +116,7 @@ const Index = () => {
     }
     setWeights(newWeights);
   };
+
   const handleLoadInput = (data: {
     speed: number;
     intersections: Intersection[];
@@ -141,6 +124,7 @@ const Index = () => {
     setSpeed(data.speed);
     setIntersections(data.intersections);
   };
+
   const handleResetWeights = () => {
     setWeights({
       corridorBandwidth: {
@@ -159,6 +143,7 @@ const Index = () => {
     setResults(null);
     toast.success("המשקולות אופסו לברירת המחדל");
   };
+
   return <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
       <div className="max-w-6xl mx-auto space-y-8 animate-fade-up">
         <div className="text-center space-y-2">
@@ -219,4 +204,5 @@ const Index = () => {
       </div>
     </div>;
 };
+
 export default Index;
