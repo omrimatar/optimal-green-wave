@@ -76,6 +76,26 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
                   : "N/A"}
               </TableCell>
             </TableRow>
+            <TableRow>
+              <TableCell>עיכוב מקסימלי למעלה</TableCell>
+              <TableCell>{baseline.max_delay_up[0]?.toFixed(2) || "N/A"}</TableCell>
+              <TableCell>{optimized.max_delay_up[0]?.toFixed(2) || "N/A"}</TableCell>
+              <TableCell>
+                {baseline.max_delay_up[0] && optimized.max_delay_up[0]
+                  ? compareValues(baseline.max_delay_up[0], optimized.max_delay_up[0])
+                  : "N/A"}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>עיכוב מקסימלי למטה</TableCell>
+              <TableCell>{baseline.max_delay_down[0]?.toFixed(2) || "N/A"}</TableCell>
+              <TableCell>{optimized.max_delay_down[0]?.toFixed(2) || "N/A"}</TableCell>
+              <TableCell>
+                {baseline.max_delay_down[0] && optimized.max_delay_down[0]
+                  ? compareValues(baseline.max_delay_down[0], optimized.max_delay_down[0])
+                  : "N/A"}
+              </TableCell>
+            </TableRow>
           </TableBody>
         </Table>
       </CardContent>

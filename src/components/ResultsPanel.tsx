@@ -1,8 +1,13 @@
 
 import { Card } from "@/components/ui/card";
+import { MetricsTable } from "./MetricsTable";
+import type { RunResult } from "@/types/traffic";
 
 interface ResultsPanelProps {
-  results: any;
+  results: {
+    baseline_results: RunResult;
+    optimized_results: RunResult;
+  } | null;
   mode: 'display' | 'calculate';
 }
 
@@ -12,10 +17,10 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
   return (
     <Card className="p-6 h-full">
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">תוצאות</h2>
-        <pre className="bg-gray-50 p-4 rounded overflow-auto">
-          {JSON.stringify(results, null, 2)}
-        </pre>
+        <MetricsTable 
+          baseline={results.baseline_results}
+          optimized={results.optimized_results}
+        />
       </div>
     </Card>
   );
