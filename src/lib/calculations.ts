@@ -50,4 +50,12 @@ export const calculateGreenWave = (
     corridor_up: 25,
     corridor_down: 25,
     overlap_up: 15,
-    overlap_
+    overlap_down: 15,
+    avg_delay_up: 10,
+    avg_delay_down: 10,
+    max_delay_up: 10,
+    max_delay_down: 10
+  });
+
+  return results;
+};
