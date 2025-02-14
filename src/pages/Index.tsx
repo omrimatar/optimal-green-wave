@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { IntersectionInput } from '@/components/IntersectionInput';
 import { calculateGreenWave } from '@/lib/calculations';
 import { toast } from 'sonner';
-import { ArrowRight, Play, Save, RotateCcw, Plus, FileDown, FileUp, Settings2 } from 'lucide-react';
+import { ArrowRight, Play, Plus, Settings2 } from 'lucide-react';
 import { WeightsPanel } from '@/components/WeightsPanel';
 import { FileActions } from '@/components/FileActions';
 import { ResultsPanel } from '@/components/ResultsPanel';
@@ -45,19 +45,38 @@ const Index = () => {
   const [mode, setMode] = useState<'display' | 'calculate'>('calculate');
   const [weights, setWeights] = useState<OptimizationWeights>(DEFAULT_WEIGHTS);
   const [showWeights, setShowWeights] = useState(false);
+
+  const handleAddIntersection = () => {
+    const newId = Math.max(...intersections.map(i => i.id)) + 1;
+    const lastIntersection = intersections[intersections.length - 1];
+    const newDistance = lastIntersection.distance + 200;
+    
+    setIntersections([...intersections, {
+      id: newId,
+      distance: newDistance,
+      cycleTime: 90,
+      greenPhases: [{
+        direction: 'upstream',
+        startTime: 0,
+        duration: 45
+      }, {
+        direction: 'downstream',
+        startTime: 45,
+        duration: 45
+      }]
+    }]);
+  };
+
   const handleCalculate = () => {
     try {
-      // חישוב מצב התחלתי - ללא אופטימיזציה (אופסט 0)
       const baseIntersections = intersections.map(intersection => ({
         ...intersection,
         offset: 0
       }));
       const beforeResults = calculateGreenWave(baseIntersections, speed);
 
-      // חישוב מצב לאחר אופטימיזציה
       const afterResults = calculateGreenWave(intersections, speed, weights);
 
-      // שילוב התוצאות
       setResults({
         ...afterResults,
         metrics: {
@@ -71,15 +90,14 @@ const Index = () => {
       toast.error("שגיאה בחישוב הגל הירוק");
     }
   };
+
   const handleShowExisting = () => {
     try {
-      // יצירת העתק של הצמתים עם אופסט 0
       const existingIntersections = intersections.map(intersection => ({
         ...intersection,
         offset: 0
       }));
 
-      // הכנת אובייקט התוצאות ללא חישובים נוספים
       const existingResults = {
         cycleTime: existingIntersections[0].cycleTime,
         speed: speed,
@@ -107,16 +125,15 @@ const Index = () => {
       toast.error("שגיאה בהצגת הגל הירוק הקיים");
     }
   };
+
   const updateWeight = (category: keyof OptimizationWeights, direction: 'upstream' | 'downstream', value: number) => {
     const newWeights = {
       ...weights
     };
     newWeights[category][direction] = value;
 
-    // Calculate total of all weights
     const total = Object.values(newWeights).reduce((sum, cat) => sum + cat.upstream + cat.downstream, 0);
 
-    // Adjust other weights proportionally to maintain sum of 100
     if (total !== 100) {
       const scale = (100 - value) / (total - newWeights[category][direction]);
       Object.entries(newWeights).forEach(([key, val]) => {
@@ -128,6 +145,7 @@ const Index = () => {
     }
     setWeights(newWeights);
   };
+
   const handleLoadInput = (data: {
     speed: number;
     intersections: Intersection[];
@@ -135,6 +153,7 @@ const Index = () => {
     setSpeed(data.speed);
     setIntersections(data.intersections);
   };
+
   const handleResetWeights = () => {
     setWeights({
       corridorBandwidth: {
@@ -154,7 +173,8 @@ const Index = () => {
     toast.success("המשקולות אופסו לברירת המחדל");
   };
 
-  return <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
+  return (
+    <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
       <div className="max-w-6xl mx-auto space-y-8 animate-fade-up">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold text-gray-900">מחשבון גל ירוק</h1>
@@ -164,40 +184,10 @@ const Index = () => {
         <div className="grid gap-8 md:grid-cols-2">
           <Card className="p-6 glassmorphism">
             <div className="space-y-6">
-              <div className="flex gap-4 flex-wrap">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {/* Functionality for import */}}
-                  className="flex items-center gap-2"
-                >
-                  <FileUp size={16} />
-                  ייבוא נתונים
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {/* Functionality for export */}}
-                  className="flex items-center gap-2"
-                >
-                  <FileDown size={16} />
-                  ייצוא נתונים
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleResetWeights}
-                  className="flex items-center gap-2"
-                >
-                  <RotateCcw size={16} />
-                  איפוס הגדרות
-                </Button>
-              </div>
-
               <FileActions speed={speed} intersections={intersections} onLoadInput={handleLoadInput} />
 
               <div>
-                <Label htmlFor="speed" className="block mb-2">מהירות תכן (קמ"ש)</Label>
+                <Label htmlFor="speed">מהירות תכן (קמ"ש)</Label>
                 <Input 
                   id="speed" 
                   type="number" 
@@ -221,25 +211,7 @@ const Index = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      const newId = Math.max(...intersections.map(i => i.id)) + 1;
-                      const lastIntersection = intersections[intersections.length - 1];
-                      const newDistance = lastIntersection.distance + 200;
-                      setIntersections([...intersections, {
-                        id: newId,
-                        distance: newDistance,
-                        cycleTime: 90,
-                        greenPhases: [{
-                          direction: 'upstream',
-                          startTime: 0,
-                          duration: 45
-                        }, {
-                          direction: 'downstream',
-                          startTime: 45,
-                          duration: 45
-                        }]
-                      }]);
-                    }}
+                    onClick={handleAddIntersection}
                     className="flex items-center gap-2"
                   >
                     <Plus size={16} />
@@ -298,7 +270,8 @@ const Index = () => {
           <ResultsPanel results={results} mode={mode} />
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
 
 export default Index;
