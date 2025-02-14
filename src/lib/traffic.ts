@@ -208,3 +208,4 @@ export function greenWaveOptimization(data: NetworkData, weights: Weights) {
         optimized_results: optimizedRes
     };
 }
+
