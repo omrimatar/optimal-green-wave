@@ -1,1 +1,5 @@
-project_id = "xfdqxyxvjzbvxewbzrpe"
+
+project_id = "green-wave"
+
+[functions.optimize]
+verify_jwt = false
