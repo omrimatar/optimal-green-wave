@@ -7,7 +7,7 @@ export const calculateGreenWave = (
   speed: number,
   weights?: any
 ) => {
-  // המרת הנתונים לפורמט הנדרש על ידי האלגוריתם
+  // המרת נתוני הקלט לפורמט הנדרש על ידי האלגוריתם
   const networkData = {
     intersections: intersections.map(intersection => ({
       id: intersection.id,
@@ -43,10 +43,7 @@ export const calculateGreenWave = (
     avg_delay_down: weights.delayMinimization.downstream,
     max_delay_up: weights.delayMinimization.upstream,
     max_delay_down: weights.delayMinimization.downstream
-  } : undefined;
-
-  // הרצת האלגוריתם
-  const results = greenWaveOptimization(networkData, calculationWeights || {
+  } : {
     corridor_up: 25,
     corridor_down: 25,
     overlap_up: 15,
@@ -55,7 +52,9 @@ export const calculateGreenWave = (
     avg_delay_down: 10,
     max_delay_up: 10,
     max_delay_down: 10
-  });
+  };
 
-  return results;
+  // הרצת האלגוריתם
+  return greenWaveOptimization(networkData, calculationWeights);
 };
+
