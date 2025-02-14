@@ -2,7 +2,65 @@
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
-console.log("Loading optimize function");
+// טעינת GLPK WASM
+const glpkWasm = await WebAssembly.instantiateStreaming(
+  fetch("https://cdn.jsdelivr.net/npm/glpk.js@4.0.0/dist/glpk.wasm")
+);
+
+console.log("Loading optimize function with GLPK WASM");
+
+function solveLP(data: any, weights: any) {
+  // יצירת בעיית LP חדשה
+  const problem = {
+    name: 'GreenWave',
+    objective: {
+      direction: glpkWasm.instance.exports.GLP_MAX,
+      name: 'z',
+      vars: []
+    },
+    subjectTo: [],
+    bounds: []
+  };
+
+  const n = data.intersections.length;
+  
+  // הוספת משתני היסט (offsets)
+  for (let i = 0; i < n; i++) {
+    problem.vars.push({
+      name: `offset_${i}`,
+      coef: 0
+    });
+    
+    // הגבלות על משתני ההיסט
+    problem.bounds.push({
+      type: glpkWasm.instance.exports.GLP_DB,
+      ub: i === 0 ? 0 : 90,
+      lb: 0,
+      name: `offset_${i}_bounds`
+    });
+  }
+
+  // הוספת משתנים ואילוצים נוספים...
+  // TODO: להשלים את הגדרת הבעיה
+
+  // פתרון הבעיה
+  const result = glpkWasm.instance.exports.glp_simplex(problem, {
+    presolve: glpkWasm.instance.exports.GLP_ON
+  });
+
+  // חילוץ התוצאות
+  const offsets = [];
+  for (let i = 0; i < n; i++) {
+    offsets.push(glpkWasm.instance.exports.glp_get_col_prim(problem, i + 1));
+  }
+
+  return {
+    status: result === 0 ? "Optimal" : "Error",
+    offsets,
+    objective_value: glpkWasm.instance.exports.glp_get_obj_val(problem),
+    // ... יתר השדות
+  };
+}
 
 serve(async (req) => {
   // Handle CORS
@@ -13,10 +71,10 @@ serve(async (req) => {
   try {
     const { data, weights } = await req.json();
     
-    // כאן נבצע את האופטימיזציה עם GLPK
-    // TODO: נוסיף את הקוד הספציפי לאחר התקנת GLPK
+    // פתרון בעיית האופטימיזציה
+    const optimizationResults = solveLP(data, weights);
     
-    // כרגע נחזיר תוצאות דמה
+    // כרגע נחזיר תוצאות דמה בנוסף לתוצאות האמיתיות לצורך השוואה
     const n = data.intersections.length;
     const baselineRes = {
       status: "Optimal",
@@ -32,24 +90,10 @@ serve(async (req) => {
       corridorBW_down: 30
     };
 
-    const optimizedRes = {
-      status: "Optimal",
-      offsets: Array.from({length: n}, () => Math.floor(Math.random() * 90)),
-      objective_value: 150,
-      overlap_up: new Array(n-1).fill(25),
-      avg_delay_up: new Array(n-1).fill(10),
-      max_delay_up: new Array(n-1).fill(20),
-      overlap_down: new Array(n-1).fill(25),
-      avg_delay_down: new Array(n-1).fill(10),
-      max_delay_down: new Array(n-1).fill(20),
-      corridorBW_up: 40,
-      corridorBW_down: 40
-    };
-
     return new Response(
       JSON.stringify({
         baseline_results: baselineRes,
-        optimized_results: optimizedRes
+        optimized_results: optimizationResults
       }),
       { 
         headers: { 
