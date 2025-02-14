@@ -23,25 +23,25 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
     <Card className="w-full table-fade-in">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          Optimization Results
-          <Badge variant="outline" className="ml-2">
-            {optimized.status}
+          תוצאות האופטימיזציה
+          <Badge variant="outline" className="mr-2">
+            {optimized.status === "Optimal" ? "אופטימלי" : optimized.status}
           </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
+        <Table dir="rtl">
           <TableHeader>
             <TableRow>
-              <TableHead>Metric</TableHead>
-              <TableHead>Baseline</TableHead>
-              <TableHead>Optimized</TableHead>
-              <TableHead>Improvement</TableHead>
+              <TableHead>מדד</TableHead>
+              <TableHead>בסיס</TableHead>
+              <TableHead>לאחר אופטימיזציה</TableHead>
+              <TableHead>שיפור</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             <TableRow>
-              <TableCell>Corridor BW Up</TableCell>
+              <TableCell>רוחב מסדרון למעלה</TableCell>
               <TableCell>{baseline.corridorBW_up.toFixed(2)}</TableCell>
               <TableCell>{optimized.corridorBW_up.toFixed(2)}</TableCell>
               <TableCell>
@@ -49,7 +49,7 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
               </TableCell>
             </TableRow>
             <TableRow>
-              <TableCell>Corridor BW Down</TableCell>
+              <TableCell>רוחב מסדרון למטה</TableCell>
               <TableCell>{baseline.corridorBW_down.toFixed(2)}</TableCell>
               <TableCell>{optimized.corridorBW_down.toFixed(2)}</TableCell>
               <TableCell>
@@ -57,7 +57,7 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
               </TableCell>
             </TableRow>
             <TableRow>
-              <TableCell>Average Delay Up</TableCell>
+              <TableCell>עיכוב ממוצע למעלה</TableCell>
               <TableCell>{baseline.avg_delay_up[0]?.toFixed(2) || "N/A"}</TableCell>
               <TableCell>{optimized.avg_delay_up[0]?.toFixed(2) || "N/A"}</TableCell>
               <TableCell>
@@ -67,7 +67,7 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
               </TableCell>
             </TableRow>
             <TableRow>
-              <TableCell>Average Delay Down</TableCell>
+              <TableCell>עיכוב ממוצע למטה</TableCell>
               <TableCell>{baseline.avg_delay_down[0]?.toFixed(2) || "N/A"}</TableCell>
               <TableCell>{optimized.avg_delay_down[0]?.toFixed(2) || "N/A"}</TableCell>
               <TableCell>
