@@ -11,7 +11,6 @@ import { WeightsPanel } from '@/components/WeightsPanel';
 import { FileActions } from '@/components/FileActions';
 import { ResultsPanel } from '@/components/ResultsPanel';
 import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights } from '@/types/optimization';
-
 const Index = () => {
   const [intersections, setIntersections] = useState<Intersection[]>([{
     id: 1,
@@ -45,12 +44,10 @@ const Index = () => {
   const [mode, setMode] = useState<'display' | 'calculate'>('calculate');
   const [weights, setWeights] = useState<OptimizationWeights>(DEFAULT_WEIGHTS);
   const [showWeights, setShowWeights] = useState(false);
-
   const handleAddIntersection = () => {
     const newId = Math.max(...intersections.map(i => i.id)) + 1;
     const lastIntersection = intersections[intersections.length - 1];
     const newDistance = lastIntersection.distance + 200;
-    
     setIntersections([...intersections, {
       id: newId,
       distance: newDistance,
@@ -66,7 +63,6 @@ const Index = () => {
       }]
     }]);
   };
-
   const handleCalculate = () => {
     try {
       const baseIntersections = intersections.map(intersection => ({
@@ -74,9 +70,7 @@ const Index = () => {
         offset: 0
       }));
       const beforeResults = calculateGreenWave(baseIntersections, speed);
-
       const afterResults = calculateGreenWave(intersections, speed, weights);
-
       setResults({
         ...afterResults,
         metrics: {
@@ -90,14 +84,12 @@ const Index = () => {
       toast.error("שגיאה בחישוב הגל הירוק");
     }
   };
-
   const handleShowExisting = () => {
     try {
       const existingIntersections = intersections.map(intersection => ({
         ...intersection,
         offset: 0
       }));
-
       const existingResults = {
         cycleTime: existingIntersections[0].cycleTime,
         speed: speed,
@@ -125,15 +117,12 @@ const Index = () => {
       toast.error("שגיאה בהצגת הגל הירוק הקיים");
     }
   };
-
   const updateWeight = (category: keyof OptimizationWeights, direction: 'upstream' | 'downstream', value: number) => {
     const newWeights = {
       ...weights
     };
     newWeights[category][direction] = value;
-
     const total = Object.values(newWeights).reduce((sum, cat) => sum + cat.upstream + cat.downstream, 0);
-
     if (total !== 100) {
       const scale = (100 - value) / (total - newWeights[category][direction]);
       Object.entries(newWeights).forEach(([key, val]) => {
@@ -145,7 +134,6 @@ const Index = () => {
     }
     setWeights(newWeights);
   };
-
   const handleLoadInput = (data: {
     speed: number;
     intersections: Intersection[];
@@ -153,7 +141,6 @@ const Index = () => {
     setSpeed(data.speed);
     setIntersections(data.intersections);
   };
-
   const handleResetWeights = () => {
     setWeights({
       corridorBandwidth: {
@@ -172,9 +159,7 @@ const Index = () => {
     setResults(null);
     toast.success("המשקולות אופסו לברירת המחדל");
   };
-
-  return (
-    <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
+  return <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
       <div className="max-w-6xl mx-auto space-y-8 animate-fade-up">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold text-gray-900">מחשבון גל ירוק</h1>
@@ -188,78 +173,40 @@ const Index = () => {
 
               <div>
                 <Label htmlFor="speed">מהירות תכן (קמ"ש)</Label>
-                <Input 
-                  id="speed" 
-                  type="number" 
-                  value={speed} 
-                  onChange={e => setSpeed(Number(e.target.value))} 
-                  className="w-full"
-                />
+                <Input id="speed" type="number" value={speed} onChange={e => setSpeed(Number(e.target.value))} className="w-full" />
               </div>
 
-              <WeightsPanel 
-                weights={weights} 
-                showWeights={showWeights} 
-                onWeightChange={updateWeight} 
-                onToggleWeights={() => setShowWeights(!showWeights)} 
-                onResetWeights={handleResetWeights} 
-              />
+              <WeightsPanel weights={weights} showWeights={showWeights} onWeightChange={updateWeight} onToggleWeights={() => setShowWeights(!showWeights)} onResetWeights={handleResetWeights} />
 
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <Label>צמתים</Label>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddIntersection}
-                    className="flex items-center gap-2"
-                  >
+                  <Button variant="outline" size="sm" onClick={handleAddIntersection} className="flex items-center gap-2">
                     <Plus size={16} />
                     הוסף צומת
                   </Button>
                 </div>
                 
-                {intersections.map((intersection, index) => (
-                  <IntersectionInput 
-                    key={intersection.id} 
-                    intersection={intersection} 
-                    onChange={updated => {
-                      const newIntersections = [...intersections];
-                      newIntersections[index] = updated;
-                      setIntersections(newIntersections);
-                    }}
-                    onDelete={() => {
-                      if (intersections.length > 2) {
-                        setIntersections(intersections.filter(i => i.id !== intersection.id));
-                      }
-                    }}
-                  />
-                ))}
+                {intersections.map((intersection, index) => <IntersectionInput key={intersection.id} intersection={intersection} onChange={updated => {
+                const newIntersections = [...intersections];
+                newIntersections[index] = updated;
+                setIntersections(newIntersections);
+              }} onDelete={() => {
+                if (intersections.length > 2) {
+                  setIntersections(intersections.filter(i => i.id !== intersection.id));
+                }
+              }} />)}
               </div>
 
               <div className="flex flex-wrap gap-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowWeights(!showWeights)}
-                  className="flex items-center gap-2"
-                >
-                  <Settings2 size={16} />
-                  {showWeights ? 'הסתר משקולות' : 'הצג משקולות'}
-                </Button>
                 
-                <Button 
-                  variant="outline" 
-                  onClick={handleShowExisting}
-                  className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white"
-                >
+                
+                <Button variant="outline" onClick={handleShowExisting} className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white">
                   <Play size={16} />
                   צייר גל ירוק קיים
                 </Button>
 
-                <Button 
-                  onClick={handleCalculate}
-                  className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white"
-                >
+                <Button onClick={handleCalculate} className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white">
                   חשב גל ירוק
                   <ArrowRight className="mr-2" size={16} />
                 </Button>
@@ -270,8 +217,6 @@ const Index = () => {
           <ResultsPanel results={results} mode={mode} />
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
