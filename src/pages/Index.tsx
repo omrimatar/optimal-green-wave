@@ -1,195 +1,304 @@
+import { useState } from 'react';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { IntersectionInput } from '@/components/IntersectionInput';
+import { calculateGreenWave } from '@/lib/calculations';
+import { toast } from 'sonner';
+import { ArrowRight, Play, Save, RotateCcw, Plus, FileDown, FileUp, Settings2 } from 'lucide-react';
+import { WeightsPanel } from '@/components/WeightsPanel';
+import { FileActions } from '@/components/FileActions';
+import { ResultsPanel } from '@/components/ResultsPanel';
+import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights } from '@/types/optimization';
 
-import { useState } from "react";
-import { NetworkData, Weights, RunResult } from "@/types/traffic";
-import { MetricsTable } from "@/components/MetricsTable";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { createClient } from '@supabase/supabase-js';
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-
-// הגדרת מופע Supabase רק אם המשתנים קיימים
-const supabase = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
-  ? createClient(
-      import.meta.env.VITE_SUPABASE_URL,
-      import.meta.env.VITE_SUPABASE_ANON_KEY
-    )
-  : null;
-
-export default function Index() {
-  const [results, setResults] = useState<{
-    baseline_results: RunResult;
-    optimized_results: RunResult;
-  } | null>(null);
-
-  const [networkData, setNetworkData] = useState<NetworkData>({
-    intersections: [
-      {
-        id: 1,
-        distance: 0,
-        green_up: [{ start: 0, duration: 45 }],
-        green_down: [{ start: 45, duration: 45 }],
-        cycle_up: 90,
-        cycle_down: 90,
-      },
-      {
-        id: 2,
-        distance: 300,
-        green_up: [{ start: 0, duration: 45 }],
-        green_down: [{ start: 45, duration: 45 }],
-        cycle_up: 90,
-        cycle_down: 90,
-      },
-      {
-        id: 3,
-        distance: 500,
-        green_up: [{ start: 0, duration: 45 }],
-        green_down: [{ start: 45, duration: 45 }],
-        cycle_up: 90,
-        cycle_down: 90,
-      },
-    ],
-    travel: {
-      up: { speed: 50 },
-      down: { speed: 50 },
-    },
-  });
-
-  const [weights, setWeights] = useState<Weights>({
-    corridor_up: 10,
-    corridor_down: 10,
-    overlap_up: 5,
-    avg_delay_up: 5,
-    max_delay_up: 5,
-    overlap_down: 5,
-    avg_delay_down: 5,
-    max_delay_down: 5,
-  });
-
-  const handleOptimize = async () => {
-    if (!supabase) {
-      toast.error("נדרש חיבור ל-Supabase כדי להריץ אופטימיזציה");
-      return;
-    }
-
+const Index = () => {
+  const [intersections, setIntersections] = useState<Intersection[]>([{
+    id: 1,
+    distance: 0,
+    cycleTime: 90,
+    greenPhases: [{
+      direction: 'upstream',
+      startTime: 0,
+      duration: 45
+    }, {
+      direction: 'downstream',
+      startTime: 45,
+      duration: 45
+    }]
+  }, {
+    id: 2,
+    distance: 300,
+    cycleTime: 90,
+    greenPhases: [{
+      direction: 'upstream',
+      startTime: 0,
+      duration: 45
+    }, {
+      direction: 'downstream',
+      startTime: 45,
+      duration: 45
+    }]
+  }]);
+  const [speed, setSpeed] = useState(50);
+  const [results, setResults] = useState<any>(null);
+  const [mode, setMode] = useState<'display' | 'calculate'>('calculate');
+  const [weights, setWeights] = useState<OptimizationWeights>(DEFAULT_WEIGHTS);
+  const [showWeights, setShowWeights] = useState(false);
+  const handleCalculate = () => {
     try {
-      const { data, error } = await supabase.functions.invoke('optimize-traffic', {
-        body: { networkData, weights }
+      // חישוב מצב התחלתי - ללא אופטימיזציה (אופסט 0)
+      const baseIntersections = intersections.map(intersection => ({
+        ...intersection,
+        offset: 0
+      }));
+      const beforeResults = calculateGreenWave(baseIntersections, speed);
+
+      // חישוב מצב לאחר אופטימיזציה
+      const afterResults = calculateGreenWave(intersections, speed, weights);
+
+      // שילוב התוצאות
+      setResults({
+        ...afterResults,
+        metrics: {
+          ...afterResults.metrics,
+          beforeOptimization: beforeResults.metrics
+        }
       });
-
-      if (error) throw error;
-
-      setResults(data);
-      toast.success("האופטימיזציה הושלמה בהצלחה");
+      toast.success("חישוב הגל הירוק הושלם בהצלחה");
     } catch (error) {
-      toast.error("שגיאה בביצוע האופטימיזציה");
-      console.error(error);
+      console.error("Error in calculation:", error);
+      toast.error("שגיאה בחישוב הגל הירוק");
     }
   };
+  const handleShowExisting = () => {
+    try {
+      // יצירת העתק של הצמתים עם אופסט 0
+      const existingIntersections = intersections.map(intersection => ({
+        ...intersection,
+        offset: 0
+      }));
 
-  return (
-    <div className="container mx-auto p-8 max-w-6xl" dir="rtl">
-      <div className="space-y-8">
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-purple-600 to-blue-500 text-transparent bg-clip-text">
-            אופטימיזציה של רמזורים
-          </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            חישוב גלים ירוקים אופטימליים והשוואת מדדים לתזמון רמזורים
-          </p>
+      // הכנת אובייקט התוצאות ללא חישובים נוספים
+      const existingResults = {
+        cycleTime: existingIntersections[0].cycleTime,
+        speed: speed,
+        intersections: existingIntersections,
+        metrics: {
+          corridorBandwidth: {
+            upstream: 0,
+            downstream: 0
+          },
+          adjacentBandwidths: {
+            upstream: [],
+            downstream: []
+          },
+          delays: {
+            maximum: 0,
+            average: 0
+          }
+        }
+      };
+      setResults(existingResults);
+      setMode('display');
+      toast.success("הצגת הגל הירוק הקיים הושלמה בהצלחה");
+    } catch (error) {
+      console.error("Error displaying existing green wave:", error);
+      toast.error("שגיאה בהצגת הגל הירוק הקיים");
+    }
+  };
+  const updateWeight = (category: keyof OptimizationWeights, direction: 'upstream' | 'downstream', value: number) => {
+    const newWeights = {
+      ...weights
+    };
+    newWeights[category][direction] = value;
+
+    // Calculate total of all weights
+    const total = Object.values(newWeights).reduce((sum, cat) => sum + cat.upstream + cat.downstream, 0);
+
+    // Adjust other weights proportionally to maintain sum of 100
+    if (total !== 100) {
+      const scale = (100 - value) / (total - newWeights[category][direction]);
+      Object.entries(newWeights).forEach(([key, val]) => {
+        if (key !== category || key === category && direction === 'downstream') {
+          newWeights[key as keyof OptimizationWeights].upstream *= scale;
+          newWeights[key as keyof OptimizationWeights].downstream *= scale;
+        }
+      });
+    }
+    setWeights(newWeights);
+  };
+  const handleLoadInput = (data: {
+    speed: number;
+    intersections: Intersection[];
+  }) => {
+    setSpeed(data.speed);
+    setIntersections(data.intersections);
+  };
+  const handleResetWeights = () => {
+    setWeights({
+      corridorBandwidth: {
+        upstream: 25,
+        downstream: 25
+      },
+      adjacentPairs: {
+        upstream: 15,
+        downstream: 15
+      },
+      delayMinimization: {
+        upstream: 10,
+        downstream: 10
+      }
+    });
+    setResults(null);
+    toast.success("המשקולות אופסו לברירת המחדל");
+  };
+
+  return <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
+      <div className="max-w-6xl mx-auto space-y-8 animate-fade-up">
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl font-bold text-gray-900">מחשבון גל ירוק</h1>
+          <p className="text-lg text-gray-600">כלי לתכנון אופטימלי של תזמוני רמזורים</p>
         </div>
 
-        <Card className="bg-white/50 backdrop-blur-sm border-2">
-          <CardContent className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <h2 className="text-lg font-semibold">מהירויות נסיעה</h2>
-                <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <Label>מהירות בכיוון למעלה (קמ"ש)</Label>
-                    <Input
-                      type="number"
-                      value={networkData.travel.up.speed}
-                      onChange={(e) => setNetworkData(prev => ({
-                        ...prev,
-                        travel: {
-                          ...prev.travel,
-                          up: { speed: Number(e.target.value) }
-                        }
-                      }))}
-                      className="text-left"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>מהירות בכיוון למטה (קמ"ש)</Label>
-                    <Input
-                      type="number"
-                      value={networkData.travel.down.speed}
-                      onChange={(e) => setNetworkData(prev => ({
-                        ...prev,
-                        travel: {
-                          ...prev.travel,
-                          down: { speed: Number(e.target.value) }
-                        }
-                      }))}
-                      className="text-left"
-                    />
-                  </div>
-                </div>
+        <div className="grid gap-8 md:grid-cols-2">
+          <Card className="p-6 glassmorphism">
+            <div className="space-y-6">
+              <div className="flex gap-4 flex-wrap">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {/* Functionality for import */}}
+                  className="flex items-center gap-2"
+                >
+                  <FileUp size={16} />
+                  ייבוא נתונים
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {/* Functionality for export */}}
+                  className="flex items-center gap-2"
+                >
+                  <FileDown size={16} />
+                  ייצוא נתונים
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleResetWeights}
+                  className="flex items-center gap-2"
+                >
+                  <RotateCcw size={16} />
+                  איפוס הגדרות
+                </Button>
               </div>
 
+              <FileActions speed={speed} intersections={intersections} onLoadInput={handleLoadInput} />
+
+              <div>
+                <Label htmlFor="speed" className="block mb-2">מהירות תכן (קמ"ש)</Label>
+                <Input 
+                  id="speed" 
+                  type="number" 
+                  value={speed} 
+                  onChange={e => setSpeed(Number(e.target.value))} 
+                  className="w-full"
+                />
+              </div>
+
+              <WeightsPanel 
+                weights={weights} 
+                showWeights={showWeights} 
+                onWeightChange={updateWeight} 
+                onToggleWeights={() => setShowWeights(!showWeights)} 
+                onResetWeights={handleResetWeights} 
+              />
+
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold">משקולות אופטימיזציה</h2>
-                <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <Label>משקל מסדרון למעלה</Label>
-                    <Input
-                      type="number"
-                      value={weights.corridor_up}
-                      onChange={(e) => setWeights(prev => ({
-                        ...prev,
-                        corridor_up: Number(e.target.value)
-                      }))}
-                      className="text-left"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>משקל מסדרון למטה</Label>
-                    <Input
-                      type="number"
-                      value={weights.corridor_down}
-                      onChange={(e) => setWeights(prev => ({
-                        ...prev,
-                        corridor_down: Number(e.target.value)
-                      }))}
-                      className="text-left"
-                    />
-                  </div>
+                <div className="flex justify-between items-center">
+                  <Label>צמתים</Label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newId = Math.max(...intersections.map(i => i.id)) + 1;
+                      const lastIntersection = intersections[intersections.length - 1];
+                      const newDistance = lastIntersection.distance + 200;
+                      setIntersections([...intersections, {
+                        id: newId,
+                        distance: newDistance,
+                        cycleTime: 90,
+                        greenPhases: [{
+                          direction: 'upstream',
+                          startTime: 0,
+                          duration: 45
+                        }, {
+                          direction: 'downstream',
+                          startTime: 45,
+                          duration: 45
+                        }]
+                      }]);
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus size={16} />
+                    הוסף צומת
+                  </Button>
                 </div>
+                
+                {intersections.map((intersection, index) => (
+                  <IntersectionInput 
+                    key={intersection.id} 
+                    intersection={intersection} 
+                    onChange={updated => {
+                      const newIntersections = [...intersections];
+                      newIntersections[index] = updated;
+                      setIntersections(newIntersections);
+                    }}
+                    onDelete={() => {
+                      if (intersections.length > 2) {
+                        setIntersections(intersections.filter(i => i.id !== intersection.id));
+                      }
+                    }}
+                  />
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowWeights(!showWeights)}
+                  className="flex items-center gap-2"
+                >
+                  <Settings2 size={16} />
+                  {showWeights ? 'הסתר משקולות' : 'הצג משקולות'}
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  onClick={handleShowExisting}
+                  className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white"
+                >
+                  <Play size={16} />
+                  צייר גל ירוק קיים
+                </Button>
+
+                <Button 
+                  onClick={handleCalculate}
+                  className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white"
+                >
+                  חשב גל ירוק
+                  <ArrowRight className="mr-2" size={16} />
+                </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </Card>
 
-        <div className="flex justify-center">
-          <Button 
-            onClick={handleOptimize} 
-            className="px-8 bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white"
-          >
-            הרץ אופטימיזציה
-          </Button>
+          <ResultsPanel results={results} mode={mode} />
         </div>
-
-        {results && (
-          <div className="space-y-6 metric-fade-in">
-            <MetricsTable
-              baseline={results.baseline_results}
-              optimized={results.optimized_results}
-            />
-          </div>
-        )}
       </div>
-    </div>
-  );
-}
+    </div>;
+};
+
+export default Index;
