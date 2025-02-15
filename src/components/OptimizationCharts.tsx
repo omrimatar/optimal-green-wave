@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -64,7 +63,7 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
     })) || [])
   ];
 
-  // הכנת נתונים לגרף רדאר - חישוב ממוצעים
+  // הכנת נתונים לגרף רדאר - 4 מדדים
   const calculateAverage = (arr: number[] = []): number => {
     if (arr.length === 0) return 0;
     return arr.reduce((sum, val) => sum + val, 0) / arr.length;
@@ -72,15 +71,16 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
 
   const radarData = [
     {
-      metric: "מדדי ביצוע",
-      'רוחב מסדרון למעלה - לפני': Number(baseline.corridorBW_up.toFixed(1)),
-      'רוחב מסדרון למעלה - אחרי': Number(optimized.corridorBW_up.toFixed(1)),
-      'רוחב מסדרון למטה - לפני': Number(baseline.corridorBW_down.toFixed(1)),
-      'רוחב מסדרון למטה - אחרי': Number(optimized.corridorBW_down.toFixed(1)),
-      'עיכוב ממוצע למעלה - לפני': -Number(calculateAverage(baseline.avg_delay_up).toFixed(1)),
-      'עיכוב ממוצע למעלה - אחרי': -Number(calculateAverage(optimized.avg_delay_up).toFixed(1)),
-      'עיכוב ממוצע למטה - לפני': -Number(calculateAverage(baseline.avg_delay_down).toFixed(1)),
-      'עיכוב ממוצע למטה - אחרי': -Number(calculateAverage(optimized.avg_delay_down).toFixed(1))
+      'רוחב מסדרון למעלה': Number(baseline.corridorBW_up.toFixed(1)),
+      'רוחב מסדרון למטה': Number(baseline.corridorBW_down.toFixed(1)),
+      'עיכוב ממוצע למעלה': -Number(calculateAverage(baseline.avg_delay_up).toFixed(1)),
+      'עיכוב ממוצע למטה': -Number(calculateAverage(baseline.avg_delay_down).toFixed(1))
+    },
+    {
+      'רוחב מסדרון למעלה': Number(optimized.corridorBW_up.toFixed(1)),
+      'רוחב מסדרון למטה': Number(optimized.corridorBW_down.toFixed(1)),
+      'עיכוב ממוצע למעלה': -Number(calculateAverage(optimized.avg_delay_up).toFixed(1)),
+      'עיכוב ממוצע למטה': -Number(calculateAverage(optimized.avg_delay_down).toFixed(1))
     }
   ];
 
@@ -120,18 +120,62 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
           <ResponsiveContainer width="100%" height={400}>
             <RadarChart data={radarData}>
               <PolarGrid />
-              <PolarAngleAxis dataKey="metric" />
-              <PolarRadiusAxis />
+              <PolarAngleAxis dataKey="name" />
+              <PolarRadiusAxis angle={90} domain={[-50, 50]} />
               <Radar 
                 name="לפני אופטימיזציה" 
-                dataKey="רוחב מסדרון למעלה - לפני" 
+                dataKey="רוחב מסדרון למעלה"
+                data={[radarData[0]]}
                 stroke="#1EAEDB" 
                 fill="#1EAEDB" 
                 fillOpacity={0.6} 
               />
               <Radar 
                 name="אחרי אופטימיזציה" 
-                dataKey="רוחב מסדרון למעלה - אחרי" 
+                dataKey="רוחב מסדרון למעלה"
+                data={[radarData[1]]}
+                stroke="#22c55e" 
+                fill="#22c55e" 
+                fillOpacity={0.6} 
+              />
+              <Radar 
+                dataKey="רוחב מסדרון למטה"
+                data={[radarData[0]]}
+                stroke="#1EAEDB" 
+                fill="#1EAEDB" 
+                fillOpacity={0.6} 
+              />
+              <Radar 
+                dataKey="רוחב מסדרון למטה"
+                data={[radarData[1]]}
+                stroke="#22c55e" 
+                fill="#22c55e" 
+                fillOpacity={0.6} 
+              />
+              <Radar 
+                dataKey="עיכוב ממוצע למעלה"
+                data={[radarData[0]]}
+                stroke="#1EAEDB" 
+                fill="#1EAEDB" 
+                fillOpacity={0.6} 
+              />
+              <Radar 
+                dataKey="עיכוב ממוצע למעלה"
+                data={[radarData[1]]}
+                stroke="#22c55e" 
+                fill="#22c55e" 
+                fillOpacity={0.6} 
+              />
+              <Radar 
+                dataKey="עיכוב ממוצע למטה"
+                data={[radarData[0]]}
+                stroke="#1EAEDB" 
+                fill="#1EAEDB" 
+                fillOpacity={0.6} 
+              />
+              <Radar 
+                dataKey="עיכוב ממוצע למטה"
+                data={[radarData[1]]}
                 stroke="#22c55e" 
                 fill="#22c55e" 
                 fillOpacity={0.6} 
