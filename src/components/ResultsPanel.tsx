@@ -23,11 +23,11 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
   return (
     <Card className="p-6 h-full">
       <div className="space-y-4">
-        <MetricsTable 
+        <OptimizationCharts
           baseline={results.baseline_results}
           optimized={results.optimized_results}
         />
-        <OptimizationCharts
+        <MetricsTable 
           baseline={results.baseline_results}
           optimized={results.optimized_results}
         />
