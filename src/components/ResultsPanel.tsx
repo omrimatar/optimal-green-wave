@@ -12,7 +12,9 @@ interface ResultsPanelProps {
 }
 
 export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
-  if (!results) return null;
+  if (!results || !results.baseline_results || !results.optimized_results) {
+    return null;
+  }
 
   return (
     <Card className="p-6 h-full">
