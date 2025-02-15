@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -41,13 +42,35 @@ serve(async (req) => {
 
     console.log('Received request with data:', { data, weights });
     
-    // TODO: Here will come the actual optimization logic
-    // For now, return minimal response with optimization status
+    // אתחול תוצאות בסיס (מצב נוכחי) - כל ההיסטים הם 0
+    const baselineResults = {
+      status: "Success",
+      offsets: new Array(data.intersections.length).fill(0),
+      objective_value: null,
+      corridorBW_up: 0,
+      corridorBW_down: 0,
+      avg_delay_up: [0],
+      avg_delay_down: [0],
+      max_delay_up: [0],
+      max_delay_down: [0]
+    };
+
+    // TODO: כאן תבוא הלוגיקה של האופטימיזציה האמיתית
+    const optimizedResults = {
+      status: "Success",
+      offsets: new Array(data.intersections.length).fill(0), // יוחלף בחישוב אמיתי
+      objective_value: null,
+      corridorBW_up: 0,
+      corridorBW_down: 0,
+      avg_delay_up: [0],
+      avg_delay_down: [0],
+      max_delay_up: [0],
+      max_delay_down: [0]
+    };
+
     const response = {
-      db_result: {
-        status: "Success",
-        message: "Function invoked successfully"
-      }
+      baseline_results: baselineResults,
+      optimized_results: optimizedResults
     };
 
     console.log('Sending response:', response);
