@@ -153,13 +153,11 @@ function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): { up:
 
   let upVal: number|null = null;
   if (foundUpPair) {
-    // במקרה זה באמת היה זוג אחד לפחות
     upVal = minBandwidthUp === Infinity ? 0 : minBandwidthUp;
   }
 
   let downVal: number|null = null;
   if (foundDownPair) {
-    // במקרה זה באמת היה זוג אחד לפחות
     downVal = minBandwidthDown === Infinity ? 0 : minBandwidthDown;
   }
 
@@ -167,6 +165,9 @@ function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): { up:
   return { up: upVal, down: downVal };
 }
 
+/*******************************************************************
+* חישוב עיכובים
+******************************************************************/
 function calculateDelays(data: NetworkData, offsets: number[]): {
   avg_up: Array<number|null>;
   avg_down: Array<number|null>;
@@ -185,7 +186,7 @@ function calculateDelays(data: NetworkData, offsets: number[]): {
     const curr = intersections[i];
     const next = intersections[i + 1];
 
-    // up
+    // בדיקת זוג צמתים עבור כיוון UP
     if (curr.green_up?.length && next.green_up?.length && curr.cycle_up && next.cycle_up) {
       const distance = next.distance - curr.distance;
       const travelTimeUp = (distance / travel.up.speed) * 3.6;
@@ -209,7 +210,7 @@ function calculateDelays(data: NetworkData, offsets: number[]): {
       delays.max_up.push(null);
     }
 
-    // down
+    // בדיקת זוג צמתים עבור כיוון DOWN
     if (curr.green_down?.length && next.green_down?.length && curr.cycle_down && next.cycle_down) {
       const distance = next.distance - curr.distance;
       const travelTimeDown = (distance / travel.down.speed) * 3.6;
