@@ -12,40 +12,54 @@ import type { RunResult } from "@/types/traffic";
 interface OptimizationChartsProps {
   baseline: RunResult;
   optimized: RunResult;
+  mode: 'display' | 'calculate' | 'manual';
 }
 
 type ChartType = 'bar' | 'radar';
 type ComparisonType = 'optimization' | 'direction';
 
-export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsProps) => {
+export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationChartsProps) => {
   const [chartType, setChartType] = useState<ChartType>('bar');
   const [comparisonType, setComparisonType] = useState<ComparisonType>('optimization');
 
-  // הכנת נתונים להשוואת אופטימיזציה
+  const getLabels = () => {
+    if (mode === 'manual') {
+      return {
+        baseline: 'מצב התחלתי',
+        optimized: 'מצב ידני'
+      };
+    }
+    return {
+      baseline: 'בסיס',
+      optimized: 'אופטימיזציה'
+    };
+  };
+
+  const labels = getLabels();
+
   const optimizationData = [
     {
       metric: 'רוחב מסדרון למעלה',
-      בסיס: Number(baseline.corridorBW_up.toFixed(1)),
-      אופטימיזציה: Number(optimized.corridorBW_up.toFixed(1))
+      [labels.baseline]: Number(baseline.corridorBW_up.toFixed(1)),
+      [labels.optimized]: Number(optimized.corridorBW_up.toFixed(1))
     },
     {
       metric: 'רוחב מסדרון למטה',
-      בסיס: Number(baseline.corridorBW_down.toFixed(1)),
-      אופטימיזציה: Number(optimized.corridorBW_down.toFixed(1))
+      [labels.baseline]: Number(baseline.corridorBW_down.toFixed(1)),
+      [labels.optimized]: Number(optimized.corridorBW_down.toFixed(1))
     },
     ...(baseline.avg_delay_up?.map((_, index) => ({
       metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
-      בסיס: -Number(baseline.avg_delay_up[index].toFixed(1)),
-      אופטימיזציה: -Number(optimized.avg_delay_up?.[index].toFixed(1))
+      [labels.baseline]: -Number(baseline.avg_delay_up[index].toFixed(1)),
+      [labels.optimized]: -Number(optimized.avg_delay_up?.[index].toFixed(1))
     })) || []),
     ...(baseline.max_delay_up?.map((_, index) => ({
       metric: `עיכוב מקסימלי ${index + 1}-${index + 2}`,
-      בסיס: -Number(baseline.max_delay_up[index].toFixed(1)),
-      אופטימיזציה: -Number(optimized.max_delay_up?.[index].toFixed(1))
+      [labels.baseline]: -Number(baseline.max_delay_up[index].toFixed(1)),
+      [labels.optimized]: -Number(optimized.max_delay_up?.[index].toFixed(1))
     })) || [])
   ];
 
-  // הכנת נתונים להשוואת כיוונים
   const directionData = [
     {
       metric: 'רוחב מסדרון',
@@ -63,7 +77,6 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
     })) || [])
   ];
 
-  // הכנת נתונים לגרף רדאר - 4 מדדים
   const calculateAverage = (arr: number[] = []): number => {
     if (arr.length === 0) return 0;
     return arr.reduce((sum, val) => sum + val, 0) / arr.length;
@@ -155,7 +168,7 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
     <Card className="mb-8">
       <CardHeader>
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
-          <CardTitle>השוואה גרפית</CardTitle>
+          <CardTitle>השוואה גרפית - {mode === 'manual' ? 'מצב ידני' : 'אופטימיזציה'}</CardTitle>
           <div className="flex flex-col gap-2 sm:flex-row">
             <ToggleGroup type="single" value={chartType} onValueChange={(value) => value && setChartType(value as ChartType)}>
               <ToggleGroupItem value="bar" aria-label="תרשים עמודות">

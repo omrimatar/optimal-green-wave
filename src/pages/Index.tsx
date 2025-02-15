@@ -112,7 +112,7 @@ const Index = () => {
       );
       console.log("Manual calculation results received:", calculationResults);
       setResults(calculationResults);
-      setMode('calculate');
+      setMode('manual'); // שינוי המצב ל'manual'
       setShowManualDialog(false);
       toast.success("חישוב הגל הירוק במצב ידני הושלם בהצלחה");
     } catch (error) {

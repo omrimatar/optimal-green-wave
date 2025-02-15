@@ -8,12 +8,14 @@ interface ResultsPanelProps {
   results: {
     baseline_results: RunResult;
     optimized_results: RunResult;
+    manual_results?: RunResult;
   } | null;
-  mode: 'display' | 'calculate';
+  mode: 'display' | 'calculate' | 'manual';
 }
 
 export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
-  if (!results || !results.baseline_results || !results.optimized_results) {
+  if (!results || !results.baseline_results || 
+     (!results.optimized_results && !results.manual_results)) {
     console.log("No results to display in ResultsPanel:", results);
     return null;
   }
@@ -25,11 +27,17 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
       <div className="space-y-4">
         <OptimizationCharts
           baseline={results.baseline_results}
-          optimized={results.optimized_results}
+          optimized={mode === 'manual' && results.manual_results ? 
+                    results.manual_results : 
+                    results.optimized_results}
+          mode={mode}
         />
         <MetricsTable 
           baseline={results.baseline_results}
-          optimized={results.optimized_results}
+          optimized={mode === 'manual' && results.manual_results ? 
+                    results.manual_results : 
+                    results.optimized_results}
+          mode={mode}
         />
       </div>
     </Card>

@@ -14,31 +14,23 @@ export interface Intersection {
 }
 
 export interface OptimizationWeights {
-  corridorBandwidth: {
-    upstream: number;
-    downstream: number;
-  };
-  adjacentPairs: {
-    upstream: number;
-    downstream: number;
-  };
-  delayMinimization: {
-    upstream: number;
-    downstream: number;
-  };
+  corridor_up: number;
+  corridor_down: number;
+  overlap_up: number;
+  overlap_down: number;
+  avg_delay_up: number;
+  avg_delay_down: number;
+  max_delay_up: number;
+  max_delay_down: number;
 }
 
 export const DEFAULT_WEIGHTS: OptimizationWeights = {
-  corridorBandwidth: {
-    upstream: 25,
-    downstream: 25
-  },
-  adjacentPairs: {
-    upstream: 15,
-    downstream: 15
-  },
-  delayMinimization: {
-    upstream: 10,
-    downstream: 10
-  }
+  corridor_up: 0.125,
+  corridor_down: 0.125,
+  overlap_up: 0.125,
+  overlap_down: 0.125,
+  avg_delay_up: 0.125,
+  avg_delay_down: 0.125,
+  max_delay_up: 0.125,
+  max_delay_down: 0.125
 };
