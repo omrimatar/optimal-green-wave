@@ -15,7 +15,27 @@ serve(async (req) => {
   }
 
   try {
-    const { data, weights } = await req.json();
+    const bodyText = await req.text();
+    console.log('Raw request body:', bodyText);
+
+    if (!bodyText) {
+      throw new Error('Request body is empty');
+    }
+
+    let parsedBody;
+    try {
+      parsedBody = JSON.parse(bodyText);
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      throw new Error('Invalid JSON in request body');
+    }
+
+    const { data, weights } = parsedBody;
+    
+    if (!data || !weights) {
+      throw new Error('Missing required fields: data or weights');
+    }
+
     console.log('Received request with data:', { data, weights });
     
     const supabaseClient = createClient(
@@ -63,12 +83,16 @@ serve(async (req) => {
       corridorBW_down: 40
     };
 
+    const response = {
+      baseline_results: baselineRes,
+      optimized_results: optimizedRes,
+      db_result: dbResult
+    };
+
+    console.log('Sending response:', response);
+
     return new Response(
-      JSON.stringify({
-        baseline_results: baselineRes,
-        optimized_results: optimizedRes,
-        db_result: dbResult
-      }),
+      JSON.stringify(response),
       { 
         headers: { 
           ...corsHeaders,
@@ -80,7 +104,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Function error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        type: error.constructor.name
+      }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400
@@ -88,4 +115,3 @@ serve(async (req) => {
     );
   }
 });
-
