@@ -34,7 +34,6 @@ export function chainPostProc(run: RunResult, data: NetworkData) {
     const corrUp = chainBWUp(run.offsets, data, travelUp);
     const corrDown = chainBWDown(run.offsets, data, travelDown);
 
-    // תיקון הטיפוסים - התאמה למערכים
     run.chain_up_start = corrUp.chain_up_start;
     run.chain_up_end = corrUp.chain_up_end;
     run.chain_down_start = corrDown.chain_down_start;
@@ -51,6 +50,10 @@ function chainBWUp(offsets: number[], data: NetworkData, travelUp: number[]): {
     const n = data.intersections.length;
     if(n < 2) return {chain_up_start: [], chain_up_end: []};
     
+    if(!data.intersections[0].green_up?.length || !data.intersections[1].green_up?.length) {
+        return {chain_up_start: [], chain_up_end: []};
+    }
+
     let Lc: number, Uc: number;
     {
         const off_dep = offsets[0];
@@ -67,6 +70,10 @@ function chainBWUp(offsets: number[], data: NetworkData, travelUp: number[]): {
     }
 
     for(let i = 1; i < n-1; i++) {
+        if(!data.intersections[i].green_up?.length || !data.intersections[i+1].green_up?.length) {
+            return {chain_up_start: [], chain_up_end: []};
+        }
+
         const t = travelUp[i];
         Lc += t;
         Uc += t;
@@ -97,6 +104,10 @@ function chainBWDown(offsets: number[], data: NetworkData, travelDown: number[])
     const n = data.intersections.length;
     if(n < 2) return {chain_down_start: [], chain_down_end: []};
     
+    if(!data.intersections[n-1].green_down?.length || !data.intersections[n-2].green_down?.length) {
+        return {chain_down_start: [], chain_down_end: []};
+    }
+
     let Lc: number, Uc: number;
     {
         const off_dep = offsets[n-1];
@@ -114,6 +125,10 @@ function chainBWDown(offsets: number[], data: NetworkData, travelDown: number[])
     }
 
     for(let i = n-2; i > 0; i--) {
+        if(!data.intersections[i].green_down?.length || !data.intersections[i-1].green_down?.length) {
+            return {chain_down_start: [], chain_down_end: []};
+        }
+
         const t = travelDown[i-1];
         Lc += t;
         Uc += t;
