@@ -131,18 +131,30 @@ function chainBWDown(offsets: number[], data: NetworkData, travelDown: number[])
 ******************************************************************/
 export async function greenWaveOptimization(data: NetworkData, weights: Weights) {
     try {
-        console.log('Starting optimization with data:', data);
+        console.log('Starting optimization with data:', { 
+            intersections: data.intersections,
+            travel: data.travel
+        });
         console.log('Using weights:', weights);
 
+        // בדיקת תקינות הנתונים לפני השליחה
+        if (!data.intersections || !data.travel || !weights) {
+            throw new Error('Missing required data for optimization');
+        }
+
         // שליחת הבקשה לפונקציית Edge
-        console.log('Calling Edge function...');
+        console.log('Preparing request body...');
+        const requestBody = {
+            data: {
+                intersections: data.intersections,
+                travel: data.travel
+            },
+            weights
+        };
+        console.log('Request body:', requestBody);
         
-        // שינוי משמעותי: הוספת מידע נוסף לקריאה
         const { data: results, error } = await supabase.functions.invoke('optimize', {
-            body: JSON.stringify({ data, weights }),
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            body: requestBody
         });
 
         if (error) {
