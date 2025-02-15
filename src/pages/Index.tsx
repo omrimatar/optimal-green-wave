@@ -131,7 +131,8 @@ const Index = () => {
 
   const handleResetWeights = () => {
     setWeights(DEFAULT_WEIGHTS);
-    setResults(null);
+    setResults(null); // מנקה את תוצאות החישוב
+    setMode('calculate'); // מחזיר למצב חישוב
     toast.success("המשקולות אופסו לברירת המחדל");
   };
 
@@ -155,7 +156,13 @@ const Index = () => {
                 <Input id="speed" type="number" value={speed} onChange={e => setSpeed(Number(e.target.value))} className="w-full" />
               </div>
 
-              <WeightsPanel weights={weights} showWeights={showWeights} onWeightChange={updateWeight} onToggleWeights={() => setShowWeights(!showWeights)} onResetWeights={handleResetWeights} />
+              <WeightsPanel 
+                weights={weights} 
+                showWeights={showWeights} 
+                onWeightChange={updateWeight} 
+                onToggleWeights={() => setShowWeights(!showWeights)} 
+                onResetWeights={handleResetWeights} 
+              />
 
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
