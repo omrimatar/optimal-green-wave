@@ -71,12 +71,14 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
 
   const radarData = [
     {
+      name: "ביצועים לפני אופטימיזציה",
       'רוחב מסדרון למעלה': Number(baseline.corridorBW_up.toFixed(1)),
       'רוחב מסדרון למטה': Number(baseline.corridorBW_down.toFixed(1)),
       'עיכוב ממוצע למעלה': -Number(calculateAverage(baseline.avg_delay_up).toFixed(1)),
       'עיכוב ממוצע למטה': -Number(calculateAverage(baseline.avg_delay_down).toFixed(1))
     },
     {
+      name: "ביצועים אחרי אופטימיזציה",
       'רוחב מסדרון למעלה': Number(optimized.corridorBW_up.toFixed(1)),
       'רוחב מסדרון למטה': Number(optimized.corridorBW_down.toFixed(1)),
       'עיכוב ממוצע למעלה': -Number(calculateAverage(optimized.avg_delay_up).toFixed(1)),
@@ -124,58 +126,28 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
               <PolarRadiusAxis angle={90} domain={[-50, 50]} />
               <Radar 
                 name="לפני אופטימיזציה" 
-                dataKey="רוחב מסדרון למעלה"
-                data={[radarData[0]]}
+                dataKey="רוחב מסדרון למעלה" 
                 stroke="#1EAEDB" 
                 fill="#1EAEDB" 
                 fillOpacity={0.6} 
               />
               <Radar 
                 name="אחרי אופטימיזציה" 
-                dataKey="רוחב מסדרון למעלה"
-                data={[radarData[1]]}
+                dataKey="רוחב מסדרון למטה" 
                 stroke="#22c55e" 
                 fill="#22c55e" 
                 fillOpacity={0.6} 
               />
               <Radar 
-                dataKey="רוחב מסדרון למטה"
-                data={[radarData[0]]}
+                name="לפני אופטימיזציה" 
+                dataKey="עיכוב ממוצע למעלה" 
                 stroke="#1EAEDB" 
                 fill="#1EAEDB" 
                 fillOpacity={0.6} 
               />
               <Radar 
-                dataKey="רוחב מסדרון למטה"
-                data={[radarData[1]]}
-                stroke="#22c55e" 
-                fill="#22c55e" 
-                fillOpacity={0.6} 
-              />
-              <Radar 
-                dataKey="עיכוב ממוצע למעלה"
-                data={[radarData[0]]}
-                stroke="#1EAEDB" 
-                fill="#1EAEDB" 
-                fillOpacity={0.6} 
-              />
-              <Radar 
-                dataKey="עיכוב ממוצע למעלה"
-                data={[radarData[1]]}
-                stroke="#22c55e" 
-                fill="#22c55e" 
-                fillOpacity={0.6} 
-              />
-              <Radar 
-                dataKey="עיכוב ממוצע למטה"
-                data={[radarData[0]]}
-                stroke="#1EAEDB" 
-                fill="#1EAEDB" 
-                fillOpacity={0.6} 
-              />
-              <Radar 
-                dataKey="עיכוב ממוצע למטה"
-                data={[radarData[1]]}
+                name="אחרי אופטימיזציה" 
+                dataKey="עיכוב ממוצע למטה" 
                 stroke="#22c55e" 
                 fill="#22c55e" 
                 fillOpacity={0.6} 
