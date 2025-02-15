@@ -1,4 +1,4 @@
-
+import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis,
@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ChartBar, ChartRadar, LineChart as LineChartIcon } from "lucide-react";
+import { ChartBar, LineChart as LineChartIcon, Radar as RadarIcon } from "lucide-react";
 import type { RunResult } from "@/types/traffic";
 
 interface OptimizationChartsProps {
@@ -18,8 +18,8 @@ type ChartType = 'bar' | 'radar' | 'line';
 type ComparisonType = 'optimization' | 'direction';
 
 export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsProps) => {
-  const [chartType, setChartType] = React.useState<ChartType>('bar');
-  const [comparisonType, setComparisonType] = React.useState<ComparisonType>('optimization');
+  const [chartType, setChartType] = useState<ChartType>('bar');
+  const [comparisonType, setComparisonType] = useState<ComparisonType>('optimization');
 
   // הכנת נתונים להשוואת אופטימיזציה
   const optimizationData = [
@@ -163,7 +163,7 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
                 <ChartBar className="h-4 w-4" />
               </ToggleGroupItem>
               <ToggleGroupItem value="radar" aria-label="תרשים רדאר">
-                <ChartRadar className="h-4 w-4" />
+                <RadarIcon className="h-4 w-4" />
               </ToggleGroupItem>
               <ToggleGroupItem value="line" aria-label="תרשים קווים">
                 <LineChartIcon className="h-4 w-4" />
