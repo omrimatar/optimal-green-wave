@@ -154,7 +154,10 @@ export async function greenWaveOptimization(data: NetworkData, weights: Weights)
         console.log('Request body:', requestBody);
         
         const { data: results, error } = await supabase.functions.invoke('optimize', {
-            body: requestBody
+            body: requestBody,
+            headers: {
+                Authorization: `Bearer ${supabase.auth.getSession()?.access_token}`
+            }
         });
 
         if (error) {
