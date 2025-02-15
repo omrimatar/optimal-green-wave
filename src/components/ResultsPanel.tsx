@@ -1,6 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { MetricsTable } from "./MetricsTable";
+import { OptimizationCharts } from "./OptimizationCharts";
 import type { RunResult } from "@/types/traffic";
 
 interface ResultsPanelProps {
@@ -23,6 +24,10 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
     <Card className="p-6 h-full">
       <div className="space-y-4">
         <MetricsTable 
+          baseline={results.baseline_results}
+          optimized={results.optimized_results}
+        />
+        <OptimizationCharts
           baseline={results.baseline_results}
           optimized={results.optimized_results}
         />
