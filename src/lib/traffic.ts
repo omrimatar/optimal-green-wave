@@ -136,8 +136,13 @@ export async function greenWaveOptimization(data: NetworkData, weights: Weights)
 
         // שליחת הבקשה לפונקציית Edge
         console.log('Calling Edge function...');
+        
+        // שינוי משמעותי: הוספת מידע נוסף לקריאה
         const { data: results, error } = await supabase.functions.invoke('optimize', {
-            body: { data, weights },
+            body: JSON.stringify({ data, weights }),
+            headers: {
+                'Content-Type': 'application/json'
+            }
         });
 
         if (error) {
