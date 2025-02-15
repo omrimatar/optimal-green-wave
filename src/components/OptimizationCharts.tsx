@@ -75,6 +75,10 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
     return value !== null ? Number(value.toFixed(1)) : null;
   };
 
+  const negateValue = (value: number | null): number | null => {
+    return value !== null ? -value : null;
+  };
+
   const radarData = [
     {
       metric: 'רוחב פס למעלה',
@@ -88,13 +92,13 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
     },
     {
       metric: 'עיכוב ממוצע למעלה',
-      לפני: formatValue(calculateAverage(baseline.avg_delay_up)?.map(x => -x)),
-      אחרי: formatValue(calculateAverage(optimized.avg_delay_up)?.map(x => -x)),
+      לפני: formatValue(negateValue(calculateAverage(baseline.avg_delay_up))),
+      אחרי: formatValue(negateValue(calculateAverage(optimized.avg_delay_up))),
     },
     {
       metric: 'עיכוב ממוצע למטה',
-      לפני: formatValue(calculateAverage(baseline.avg_delay_down)?.map(x => -x)),
-      אחרי: formatValue(calculateAverage(optimized.avg_delay_down)?.map(x => -x)),
+      לפני: formatValue(negateValue(calculateAverage(baseline.avg_delay_down))),
+      אחרי: formatValue(negateValue(calculateAverage(optimized.avg_delay_down))),
     }
   ];
 
