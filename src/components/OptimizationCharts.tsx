@@ -46,6 +46,15 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
   ];
 
   // הכנת נתונים להשוואת כיוונים
+  const delayData = baseline.avg_delay_up && baseline.avg_delay_down ? 
+    baseline.avg_delay_up.map((_, index) => ({
+      metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
+      'מעלה הזרם - בסיס': baseline.avg_delay_up?.[index] !== null ? -Number(baseline.avg_delay_up[index].toFixed(1)) : null,
+      'מעלה הזרם - אופטימיזציה': optimized.avg_delay_up?.[index] !== null ? -Number(optimized.avg_delay_up[index].toFixed(1)) : null,
+      'מורד הזרם - בסיס': baseline.avg_delay_down?.[index] !== null ? -Number(baseline.avg_delay_down[index].toFixed(1)) : null,
+      'מורד הזרם - אופטימיזציה': optimized.avg_delay_down?.[index] !== null ? -Number(optimized.avg_delay_down[index].toFixed(1)) : null
+    })) : [];
+
   const directionData = [
     {
       metric: 'רוחב פס',
@@ -54,13 +63,7 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
       'מורד הזרם - בסיס': baseline.corridorBW_down !== null ? Number(baseline.corridorBW_down.toFixed(1)) : null,
       'מורד הזרם - אופטימיזציה': optimized.corridorBW_down !== null ? Number(optimized.corridorBW_down.toFixed(1)) : null
     },
-    ...((baseline.avg_delay_up && baseline.avg_delay_down) ? baseline.avg_delay_up.map((_, index) => ({
-      metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
-      'מעלה הזרם - בסיס': baseline.avg_delay_up?.[index] !== null ? -Number(baseline.avg_delay_up[index].toFixed(1)) : null,
-      'מעלה הזרם - אופטימיזציה': optimized.avg_delay_up?.[index] !== null ? -Number(optimized.avg_delay_up[index].toFixed(1)) : null,
-      'מורד הזרם - בסיס': baseline.avg_delay_down?.[index] !== null ? -Number(baseline.avg_delay_down[index].toFixed(1)) : null,
-      'מורד הזרם - אופטימיזציה': optimized.avg_delay_down?.[index] !== null ? -Number(optimized.avg_delay_down[index].toFixed(1)) : null
-    })) || [])
+    ...delayData
   ];
 
   // הכנת נתונים לגרף רדאר - 4 מדדים
