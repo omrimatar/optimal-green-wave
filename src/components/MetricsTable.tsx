@@ -11,6 +11,7 @@ interface MetricsTableProps {
 
 export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
   const compareValues = (base: number, opt: number) => {
+    if (!base && !opt) return "0%";
     if (!base || !opt) return null;
     const improvement = ((opt - base) / base) * 100;
     return (
@@ -52,7 +53,7 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
               <TableRow key={`offset-${index}`}>
                 <TableCell>היסט צומת {index + 1}</TableCell>
                 <TableCell>{offset.toFixed(2)}</TableCell>
-                <TableCell>{optimized.offsets?.[index]?.toFixed(2) ?? "N/A"}</TableCell>
+                <TableCell>{optimized.offsets?.[index]?.toFixed(2) ?? "0"}</TableCell>
                 <TableCell>-</TableCell>
               </TableRow>
             ))}
@@ -60,58 +61,58 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
             {baseline.avg_delay_up?.map((delay, index) => (
               <TableRow key={`delay-up-${index}`}>
                 <TableCell>עיכוב ממוצע למעלה צמתים {index + 1}-{index + 2}</TableCell>
-                <TableCell>{delay?.toFixed(2) ?? "N/A"}</TableCell>
-                <TableCell>{optimized.avg_delay_up?.[index]?.toFixed(2) ?? "N/A"}</TableCell>
-                <TableCell>{delay && optimized.avg_delay_up?.[index] ? compareValues(delay, optimized.avg_delay_up[index]) : "N/A"}</TableCell>
+                <TableCell>{delay === null ? "N/A" : delay.toFixed(2)}</TableCell>
+                <TableCell>{optimized.avg_delay_up?.[index] === null ? "N/A" : optimized.avg_delay_up?.[index]?.toFixed(2)}</TableCell>
+                <TableCell>{delay === null || optimized.avg_delay_up?.[index] === null ? "N/A" : compareValues(delay, optimized.avg_delay_up[index])}</TableCell>
               </TableRow>
             ))}
 
             {baseline.avg_delay_down?.map((delay, index) => (
               <TableRow key={`delay-down-${index}`}>
                 <TableCell>עיכוב ממוצע למטה צמתים {index + 2}-{index + 1}</TableCell>
-                <TableCell>{delay?.toFixed(2) ?? "N/A"}</TableCell>
-                <TableCell>{optimized.avg_delay_down?.[index]?.toFixed(2) ?? "N/A"}</TableCell>
-                <TableCell>{delay && optimized.avg_delay_down?.[index] ? compareValues(delay, optimized.avg_delay_down[index]) : "N/A"}</TableCell>
+                <TableCell>{delay === null ? "N/A" : delay.toFixed(2)}</TableCell>
+                <TableCell>{optimized.avg_delay_down?.[index] === null ? "N/A" : optimized.avg_delay_down?.[index]?.toFixed(2)}</TableCell>
+                <TableCell>{delay === null || optimized.avg_delay_down?.[index] === null ? "N/A" : compareValues(delay, optimized.avg_delay_down[index])}</TableCell>
               </TableRow>
             ))}
 
             {baseline.max_delay_up?.map((delay, index) => (
               <TableRow key={`max-delay-up-${index}`}>
                 <TableCell>עיכוב מקסימלי למעלה צמתים {index + 1}-{index + 2}</TableCell>
-                <TableCell>{delay?.toFixed(2) ?? "N/A"}</TableCell>
-                <TableCell>{optimized.max_delay_up?.[index]?.toFixed(2) ?? "N/A"}</TableCell>
-                <TableCell>{delay && optimized.max_delay_up?.[index] ? compareValues(delay, optimized.max_delay_up[index]) : "N/A"}</TableCell>
+                <TableCell>{delay === null ? "N/A" : delay.toFixed(2)}</TableCell>
+                <TableCell>{optimized.max_delay_up?.[index] === null ? "N/A" : optimized.max_delay_up?.[index]?.toFixed(2)}</TableCell>
+                <TableCell>{delay === null || optimized.max_delay_up?.[index] === null ? "N/A" : compareValues(delay, optimized.max_delay_up[index])}</TableCell>
               </TableRow>
             ))}
 
             {baseline.max_delay_down?.map((delay, index) => (
               <TableRow key={`max-delay-down-${index}`}>
                 <TableCell>עיכוב מקסימלי למטה צמתים {index + 2}-{index + 1}</TableCell>
-                <TableCell>{delay?.toFixed(2) ?? "N/A"}</TableCell>
-                <TableCell>{optimized.max_delay_down?.[index]?.toFixed(2) ?? "N/A"}</TableCell>
-                <TableCell>{delay && optimized.max_delay_down?.[index] ? compareValues(delay, optimized.max_delay_down[index]) : "N/A"}</TableCell>
+                <TableCell>{delay === null ? "N/A" : delay.toFixed(2)}</TableCell>
+                <TableCell>{optimized.max_delay_down?.[index] === null ? "N/A" : optimized.max_delay_down?.[index]?.toFixed(2)}</TableCell>
+                <TableCell>{delay === null || optimized.max_delay_down?.[index] === null ? "N/A" : compareValues(delay, optimized.max_delay_down[index])}</TableCell>
               </TableRow>
             ))}
 
             <TableRow>
               <TableCell>רוחב מסדרון למעלה</TableCell>
-              <TableCell>{baseline.corridorBW_up?.toFixed(2) ?? "N/A"}</TableCell>
-              <TableCell>{optimized.corridorBW_up?.toFixed(2) ?? "N/A"}</TableCell>
+              <TableCell>{baseline.corridorBW_up === null ? "N/A" : baseline.corridorBW_up.toFixed(2)}</TableCell>
+              <TableCell>{optimized.corridorBW_up === null ? "N/A" : optimized.corridorBW_up.toFixed(2)}</TableCell>
               <TableCell>
-                {baseline.corridorBW_up != null && optimized.corridorBW_up != null 
-                  ? compareValues(baseline.corridorBW_up, optimized.corridorBW_up)
-                  : "N/A"}
+                {baseline.corridorBW_up === null || optimized.corridorBW_up === null 
+                  ? "N/A" 
+                  : compareValues(baseline.corridorBW_up, optimized.corridorBW_up)}
               </TableCell>
             </TableRow>
 
             <TableRow>
               <TableCell>רוחב מסדרון למטה</TableCell>
-              <TableCell>{baseline.corridorBW_down?.toFixed(2) ?? "N/A"}</TableCell>
-              <TableCell>{optimized.corridorBW_down?.toFixed(2) ?? "N/A"}</TableCell>
+              <TableCell>{baseline.corridorBW_down === null ? "N/A" : baseline.corridorBW_down.toFixed(2)}</TableCell>
+              <TableCell>{optimized.corridorBW_down === null ? "N/A" : optimized.corridorBW_down.toFixed(2)}</TableCell>
               <TableCell>
-                {baseline.corridorBW_down != null && optimized.corridorBW_down != null
-                  ? compareValues(baseline.corridorBW_down, optimized.corridorBW_down)
-                  : "N/A"}
+                {baseline.corridorBW_down === null || optimized.corridorBW_down === null
+                  ? "N/A"
+                  : compareValues(baseline.corridorBW_down, optimized.corridorBW_down)}
               </TableCell>
             </TableRow>
           </TableBody>
