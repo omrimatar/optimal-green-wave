@@ -35,22 +35,24 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
       בסיס: Number(baseline.corridorBW_down.toFixed(1)),
       אופטימיזציה: Number(optimized.corridorBW_down.toFixed(1))
     } : null,
-    ...(baseline.avg_delay_up?.map((val, index) => {
-      const optVal = optimized.avg_delay_up?.[index];
-      return val !== null && optVal !== null ? {
-        metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
-        בסיס: -Number(val.toFixed(1)),
-        אופטימיזציה: -Number(optVal.toFixed(1))
-      } : null;
-    }).filter(Boolean) || []),
-    ...(baseline.max_delay_up?.map((val, index) => {
-      const optVal = optimized.max_delay_up?.[index];
-      return val !== null && optVal !== null ? {
-        metric: `עיכוב מקסימלי ${index + 1}-${index + 2}`,
-        בסיס: -Number(val.toFixed(1)),
-        אופטימיזציה: -Number(optVal.toFixed(1))
-      } : null;
-    }).filter(Boolean) || [])
+    ...(baseline.avg_delay_up && optimized.avg_delay_up ? 
+      baseline.avg_delay_up.map((val, index) => {
+        const optVal = optimized.avg_delay_up?.[index];
+        return val !== null && optVal !== null ? {
+          metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
+          בסיס: -Number(val.toFixed(1)),
+          אופטימיזציה: -Number(optVal.toFixed(1))
+        } : null;
+      }).filter(Boolean) : []),
+    ...(baseline.max_delay_up && optimized.max_delay_up ?
+      baseline.max_delay_up.map((val, index) => {
+        const optVal = optimized.max_delay_up?.[index];
+        return val !== null && optVal !== null ? {
+          metric: `עיכוב מקסימלי ${index + 1}-${index + 2}`,
+          בסיס: -Number(val.toFixed(1)),
+          אופטימיזציה: -Number(optVal.toFixed(1))
+        } : null;
+      }).filter(Boolean) : [])
   ].filter(Boolean);
 
   // הכנת נתונים להשוואת כיוונים
@@ -63,18 +65,20 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
       'מורד הזרם - בסיס': Number(baseline.corridorBW_down.toFixed(1)),
       'מורד הזרם - אופטימיזציה': Number(optimized.corridorBW_down.toFixed(1))
     } : null,
-    ...(baseline.avg_delay_up?.map((val, index) => {
-      const optValUp = optimized.avg_delay_up?.[index];
-      const baseValDown = baseline.avg_delay_down?.[index];
-      const optValDown = optimized.avg_delay_down?.[index];
-      return val !== null && optValUp !== null && baseValDown !== null && optValDown !== null ? {
-        metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
-        'מעלה הזרם - בסיס': -Number(val.toFixed(1)),
-        'מעלה הזרם - אופטימיזציה': -Number(optValUp.toFixed(1)),
-        'מורד הזרם - בסיס': -Number(baseValDown.toFixed(1)),
-        'מורד הזרם - אופטימיזציה': -Number(optValDown.toFixed(1))
-      } : null;
-    }).filter(Boolean) || [])
+    ...(baseline.avg_delay_up && optimized.avg_delay_up && 
+        baseline.avg_delay_down && optimized.avg_delay_down ?
+      baseline.avg_delay_up.map((val, index) => {
+        const optValUp = optimized.avg_delay_up?.[index];
+        const baseValDown = baseline.avg_delay_down?.[index];
+        const optValDown = optimized.avg_delay_down?.[index];
+        return val !== null && optValUp !== null && baseValDown !== null && optValDown !== null ? {
+          metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
+          'מעלה הזרם - בסיס': -Number(val.toFixed(1)),
+          'מעלה הזרם - אופטימיזציה': -Number(optValUp.toFixed(1)),
+          'מורד הזרם - בסיס': -Number(baseValDown.toFixed(1)),
+          'מורד הזרם - אופטימיזציה': -Number(optValDown.toFixed(1))
+        } : null;
+      }).filter(Boolean) : [])
   ].filter(Boolean);
 
   // הכנת נתונים לגרף רדאר - רק אם יש ערכים בשני המקרים
@@ -99,8 +103,8 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
   ].filter(Boolean);
 
   // הוספת עיכובים ממוצעים רק אם הם קיימים
-  const avgDelayUp = calculateAverage(baseline.avg_delay_up);
-  const avgDelayUpOpt = calculateAverage(optimized.avg_delay_up);
+  const avgDelayUp = calculateAverage(baseline.avg_delay_up ?? []);
+  const avgDelayUpOpt = calculateAverage(optimized.avg_delay_up ?? []);
   if (avgDelayUp !== null && avgDelayUpOpt !== null) {
     radarData.push({
       metric: 'עיכוב ממוצע למעלה',
@@ -109,8 +113,8 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
     });
   }
 
-  const avgDelayDown = calculateAverage(baseline.avg_delay_down);
-  const avgDelayDownOpt = calculateAverage(optimized.avg_delay_down);
+  const avgDelayDown = calculateAverage(baseline.avg_delay_down ?? []);
+  const avgDelayDownOpt = calculateAverage(optimized.avg_delay_down ?? []);
   if (avgDelayDown !== null && avgDelayDownOpt !== null) {
     radarData.push({
       metric: 'עיכוב ממוצע למטה',
