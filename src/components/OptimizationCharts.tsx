@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -55,9 +54,9 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
       'מורד הזרם - בסיס': baseline.corridorBW_down !== null ? Number(baseline.corridorBW_down.toFixed(1)) : null,
       'מורד הזרם - אופטימיזציה': optimized.corridorBW_down !== null ? Number(optimized.corridorBW_down.toFixed(1)) : null
     },
-    ...(baseline.avg_delay_up?.map((_, index) => ({
+    ...((baseline.avg_delay_up && baseline.avg_delay_down) ? baseline.avg_delay_up.map((_, index) => ({
       metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
-      'מעלה הזרם - בסיס': baseline.avg_delay_up[index] !== null ? -Number(baseline.avg_delay_up[index].toFixed(1)) : null,
+      'מעלה הזרם - בסיס': baseline.avg_delay_up?.[index] !== null ? -Number(baseline.avg_delay_up[index].toFixed(1)) : null,
       'מעלה הזרם - אופטימיזציה': optimized.avg_delay_up?.[index] !== null ? -Number(optimized.avg_delay_up[index].toFixed(1)) : null,
       'מורד הזרם - בסיס': baseline.avg_delay_down?.[index] !== null ? -Number(baseline.avg_delay_down[index].toFixed(1)) : null,
       'מורד הזרם - אופטימיזציה': optimized.avg_delay_down?.[index] !== null ? -Number(optimized.avg_delay_down[index].toFixed(1)) : null
@@ -92,13 +91,13 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
     },
     {
       metric: 'עיכוב ממוצע למעלה',
-      לפני: formatValue(negateValue(calculateAverage(baseline.avg_delay_up))),
-      אחרי: formatValue(negateValue(calculateAverage(optimized.avg_delay_up))),
+      לפני: formatValue(negateValue(calculateAverage(baseline.avg_delay_up ?? []))),
+      אחרי: formatValue(negateValue(calculateAverage(optimized.avg_delay_up ?? []))),
     },
     {
       metric: 'עיכוב ממוצע למטה',
-      לפני: formatValue(negateValue(calculateAverage(baseline.avg_delay_down))),
-      אחרי: formatValue(negateValue(calculateAverage(optimized.avg_delay_down))),
+      לפני: formatValue(negateValue(calculateAverage(baseline.avg_delay_down ?? []))),
+      אחרי: formatValue(negateValue(calculateAverage(optimized.avg_delay_down ?? []))),
     }
   ];
 
