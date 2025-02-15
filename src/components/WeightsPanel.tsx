@@ -55,14 +55,16 @@ export const WeightsPanel = ({
                 value={[weights.corridorBandwidth.upstream]}
                 onValueChange={(value) => onWeightChange('corridorBandwidth', 'upstream', value[0])}
                 max={100}
-                step={1}
+                step={0.1}
+                defaultValue={[25]}
               />
               <Label>במורד הזרם ({formatNumber(weights.corridorBandwidth.downstream)}%)</Label>
               <Slider 
                 value={[weights.corridorBandwidth.downstream]}
                 onValueChange={(value) => onWeightChange('corridorBandwidth', 'downstream', value[0])}
                 max={100}
-                step={1}
+                step={0.1}
+                defaultValue={[25]}
               />
             </div>
           </div>
@@ -75,14 +77,16 @@ export const WeightsPanel = ({
                 value={[weights.adjacentPairs.upstream]}
                 onValueChange={(value) => onWeightChange('adjacentPairs', 'upstream', value[0])}
                 max={100}
-                step={1}
+                step={0.1}
+                defaultValue={[15]}
               />
               <Label>במורד הזרם ({formatNumber(weights.adjacentPairs.downstream)}%)</Label>
               <Slider 
                 value={[weights.adjacentPairs.downstream]}
                 onValueChange={(value) => onWeightChange('adjacentPairs', 'downstream', value[0])}
                 max={100}
-                step={1}
+                step={0.1}
+                defaultValue={[15]}
               />
             </div>
           </div>
@@ -95,14 +99,16 @@ export const WeightsPanel = ({
                 value={[weights.delayMinimization.upstream]}
                 onValueChange={(value) => onWeightChange('delayMinimization', 'upstream', value[0])}
                 max={100}
-                step={1}
+                step={0.1}
+                defaultValue={[10]}
               />
               <Label>במורד הזרם ({formatNumber(weights.delayMinimization.downstream)}%)</Label>
               <Slider 
                 value={[weights.delayMinimization.downstream]}
                 onValueChange={(value) => onWeightChange('delayMinimization', 'downstream', value[0])}
                 max={100}
-                step={1}
+                step={0.1}
+                defaultValue={[10]}
               />
             </div>
           </div>
