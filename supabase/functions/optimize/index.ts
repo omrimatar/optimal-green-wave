@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -47,7 +46,6 @@ function calculateOffsets(data: NetworkData): number[] {
   for (let i = 0; i < intersections.length; i++) {
     const curr = intersections[i];
     if (i === 0) {
-      // צומת ראשון - היסט 0
       offsets.push(0);
       continue;
     }
@@ -55,16 +53,16 @@ function calculateOffsets(data: NetworkData): number[] {
     const prev = intersections[i-1];
     const distance = curr.distance - prev.distance;
     
-    // חישוב זמן נסיעה בשניות
-    const travelTimeUp = (distance / travel.up.speed) * 3.6; // המרה ממטר/שניה לקמ"ש
+    const travelTimeUp = (distance / travel.up.speed) * 3.6;
     
-    // חישוב היסט אופטימלי
     const greenPhaseUp = curr.green_up[0];
     const prevGreenPhaseUp = prev.green_up[0];
     
-    const idealOffset = (prevGreenPhaseUp.start + prevGreenPhaseUp.duration/2 + travelTimeUp - greenPhaseUp.duration/2) % curr.cycle_up;
+    const idealOffset = Math.round(
+      (prevGreenPhaseUp.start + prevGreenPhaseUp.duration/2 + travelTimeUp - greenPhaseUp.duration/2) % curr.cycle_up
+    );
     
-    offsets.push(Math.round(idealOffset));
+    offsets.push(idealOffset);
   }
   
   return offsets;
@@ -87,8 +85,14 @@ function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): { up:
     const currStart = (offsets[i] + currGreen.start) % curr.cycle_up;
     const nextStart = (offsets[i + 1] + nextGreen.start) % next.cycle_up;
     
-    const bandwidth = Math.min(currGreen.duration, nextGreen.duration);
-    minBandwidthUp = Math.min(minBandwidthUp, bandwidth);
+    const arrivalTime = (currStart + currGreen.duration/2 + travelTime) % next.cycle_up;
+    
+    const overlap = Math.min(
+      nextGreen.duration,
+      Math.max(0, nextGreen.duration - Math.abs(arrivalTime - (nextStart + nextGreen.duration/2)))
+    );
+    
+    minBandwidthUp = Math.min(minBandwidthUp, overlap);
   }
 
   // חישוב רוחב מסדרון בכיוון למטה
@@ -103,8 +107,14 @@ function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): { up:
     const currStart = (offsets[i] + currGreen.start) % curr.cycle_down;
     const prevStart = (offsets[i - 1] + prevGreen.start) % prev.cycle_down;
     
-    const bandwidth = Math.min(currGreen.duration, prevGreen.duration);
-    minBandwidthDown = Math.min(minBandwidthDown, bandwidth);
+    const arrivalTime = (currStart + currGreen.duration/2 + travelTime) % prev.cycle_down;
+    
+    const overlap = Math.min(
+      prevGreen.duration,
+      Math.max(0, prevGreen.duration - Math.abs(arrivalTime - (prevStart + prevGreen.duration/2)))
+    );
+    
+    minBandwidthDown = Math.min(minBandwidthDown, overlap);
   }
 
   return {
@@ -119,7 +129,7 @@ function calculateDelays(data: NetworkData, offsets: number[]): {
   max_up: number[];
   max_down: number[];
 } {
-  const { intersections } = data;
+  const { intersections, travel } = data;
   const delays = {
     avg_up: [],
     avg_down: [],
@@ -131,30 +141,39 @@ function calculateDelays(data: NetworkData, offsets: number[]): {
   for (let i = 0; i < intersections.length - 1; i++) {
     const curr = intersections[i];
     const next = intersections[i + 1];
+    const distance = next.distance - curr.distance;
     
-    // עיכובים בכיוון למעלה
+    const travelTimeUp = (distance / travel.up.speed) * 3.6;
     const currGreenUp = curr.green_up[0];
     const nextGreenUp = next.green_up[0];
     const currStartUp = (offsets[i] + currGreenUp.start) % curr.cycle_up;
     const nextStartUp = (offsets[i + 1] + nextGreenUp.start) % next.cycle_up;
     
-    const avgDelayUp = Math.abs(nextStartUp - currStartUp) % curr.cycle_up;
-    const maxDelayUp = Math.max(curr.cycle_up - currGreenUp.duration, next.cycle_up - nextGreenUp.duration);
+    const expectedArrivalUp = (currStartUp + currGreenUp.duration/2 + travelTimeUp) % next.cycle_up;
+    const actualGreenStartUp = (nextStartUp + nextGreenUp.duration/2);
+    const avgDelayUp = Math.min(
+      Math.abs(expectedArrivalUp - actualGreenStartUp),
+      next.cycle_up - Math.abs(expectedArrivalUp - actualGreenStartUp)
+    );
     
     delays.avg_up.push(avgDelayUp);
-    delays.max_up.push(maxDelayUp);
+    delays.max_up.push(next.cycle_up - nextGreenUp.duration);
 
-    // עיכובים בכיוון למטה
+    const travelTimeDown = (distance / travel.down.speed) * 3.6;
     const currGreenDown = curr.green_down[0];
     const nextGreenDown = next.green_down[0];
     const currStartDown = (offsets[i] + currGreenDown.start) % curr.cycle_down;
     const nextStartDown = (offsets[i + 1] + nextGreenDown.start) % next.cycle_down;
     
-    const avgDelayDown = Math.abs(nextStartDown - currStartDown) % curr.cycle_down;
-    const maxDelayDown = Math.max(curr.cycle_down - currGreenDown.duration, next.cycle_down - nextGreenDown.duration);
+    const expectedArrivalDown = (nextStartDown + nextGreenDown.duration/2 + travelTimeDown) % curr.cycle_down;
+    const actualGreenStartDown = (currStartDown + currGreenDown.duration/2);
+    const avgDelayDown = Math.min(
+      Math.abs(expectedArrivalDown - actualGreenStartDown),
+      curr.cycle_down - Math.abs(expectedArrivalDown - actualGreenStartDown)
+    );
     
     delays.avg_down.push(avgDelayDown);
-    delays.max_down.push(maxDelayDown);
+    delays.max_down.push(curr.cycle_down - currGreenDown.duration);
   }
 
   return delays;
