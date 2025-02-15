@@ -33,28 +33,31 @@ export const calculateGreenWave = (
     }
   };
 
+  console.log("Network data being sent to optimization:", networkData);
+
   // המרת המשקולות לפורמט הנדרש
   const calculationWeights = weights ? {
     corridor_up: weights.corridorBandwidth.upstream,
     corridor_down: weights.corridorBandwidth.downstream,
     overlap_up: weights.adjacentPairs.upstream,
     overlap_down: weights.adjacentPairs.downstream,
-    avg_delay_up: weights.delayMinimization.upstream,
-    avg_delay_down: weights.delayMinimization.downstream,
-    max_delay_up: weights.delayMinimization.upstream,
-    max_delay_down: weights.delayMinimization.downstream
+    avg_delay_up: weights.delayMinimization.upstream / 2,  // מחלקים את המשקל של העיכוב בין ממוצע ומקסימום
+    avg_delay_down: weights.delayMinimization.downstream / 2,
+    max_delay_up: weights.delayMinimization.upstream / 2,
+    max_delay_down: weights.delayMinimization.downstream / 2
   } : {
     corridor_up: 25,
     corridor_down: 25,
     overlap_up: 15,
     overlap_down: 15,
-    avg_delay_up: 10,
-    avg_delay_down: 10,
-    max_delay_up: 10,
-    max_delay_down: 10
+    avg_delay_up: 5,
+    avg_delay_down: 5,
+    max_delay_up: 5,
+    max_delay_down: 5
   };
+
+  console.log("Calculation weights:", calculationWeights);
 
   // הרצת האלגוריתם
   return greenWaveOptimization(networkData, calculationWeights);
 };
-
