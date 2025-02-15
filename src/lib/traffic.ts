@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import type { NetworkData, Weights, RunResult } from "@/types/traffic";
 
@@ -153,7 +154,10 @@ export async function greenWaveOptimization(data: NetworkData, weights: Weights)
         console.log('Request body:', requestBody);
         
         const { data: results, error } = await supabase.functions.invoke('optimize', {
-            body: requestBody
+            body: requestBody,
+            headers: {
+                apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZHF4eXh2anpidnhld2J6cnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NzE5MTIsImV4cCI6MjA1NTE0NzkxMn0.uhp87GwzK6g04w3ZTBE1vVe8dtDkXALlzrBsSjAuUtg'
+            }
         });
 
         if (error) {
