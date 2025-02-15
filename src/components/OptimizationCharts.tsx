@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -49,9 +50,9 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
   const delayData = baseline.avg_delay_up && baseline.avg_delay_down ? 
     baseline.avg_delay_up.map((_, index) => ({
       metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
-      'מעלה הזרם - בסיס': baseline.avg_delay_up?.[index] !== null ? -Number(baseline.avg_delay_up[index].toFixed(1)) : null,
+      'מעלה הזרם - בסיס': baseline.avg_delay_up[index] !== null ? -Number(baseline.avg_delay_up[index].toFixed(1)) : null,
       'מעלה הזרם - אופטימיזציה': optimized.avg_delay_up?.[index] !== null ? -Number(optimized.avg_delay_up[index].toFixed(1)) : null,
-      'מורד הזרם - בסיס': baseline.avg_delay_down?.[index] !== null ? -Number(baseline.avg_delay_down[index].toFixed(1)) : null,
+      'מורד הזרם - בסיס': baseline.avg_delay_down[index] !== null ? -Number(baseline.avg_delay_down[index].toFixed(1)) : null,
       'מורד הזרם - אופטימיזציה': optimized.avg_delay_down?.[index] !== null ? -Number(optimized.avg_delay_down[index].toFixed(1)) : null
     })) : [];
 
