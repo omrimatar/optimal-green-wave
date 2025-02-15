@@ -58,6 +58,6 @@ export const calculateGreenWave = (
 
   console.log("Calculation weights:", calculationWeights);
 
-  // הרצת האלגוריתם
+  // הרצת האלגוריתם עם המשקולות המעודכנות
   return greenWaveOptimization(networkData, calculationWeights);
 };
