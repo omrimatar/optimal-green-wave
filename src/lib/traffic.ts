@@ -1,4 +1,7 @@
 
+import { supabase } from "@/integrations/supabase/client";
+import type { NetworkData, Weights, RunResult } from "@/types/traffic";
+
 // הגדרת מופע ירוק בצומת
 export interface GreenPhase {
     start: number; // זמן תחילת המופע במחזור
@@ -13,47 +16,6 @@ export interface Intersection {
     green_down: GreenPhase[]; // רשימת מופעים בכיוון down
     cycle_up: number; // אורך מחזור בכיוון up
     cycle_down: number; // אורך מחזור בכיוון down
-}
-
-// הגדרת נתוני הרשת
-export interface NetworkData {
-    intersections: Intersection[];
-    travel: {
-        up: { speed: number };
-        down: { speed: number };
-    }
-}
-
-// הגדרת משקולות
-export interface Weights {
-    corridor_up: number;
-    corridor_down: number;
-    overlap_up: number;
-    avg_delay_up: number;
-    max_delay_up: number;
-    overlap_down: number;
-    avg_delay_down: number;
-    max_delay_down: number;
-}
-
-export interface RunResult {
-    status: string; 
-    offsets: number[];
-    objective_value: number | null;
-    overlap_up: number[];
-    avg_delay_up: number[];
-    max_delay_up: number[];
-    overlap_down: number[];
-    avg_delay_down: number[];
-    max_delay_down: number[];
-    corridorBW_up: number;
-    corridorBW_down: number;
-    chain_corridorBW_up?: number;
-    chain_corridorBW_down?: number;
-    local_up_L?: (number | null)[];
-    local_up_U?: (number | null)[];
-    local_down_L?: (number | null)[];
-    local_down_U?: (number | null)[];
 }
 
 /*******************************************************************
@@ -167,45 +129,30 @@ function chainBWDown(offsets: number[], data: NetworkData, travelDown: number[])
 /*******************************************************************
 * פונקציית האופטימיזציה הראשית
 ******************************************************************/
-export function greenWaveOptimization(data: NetworkData, weights: Weights) {
-    // כרגע נייצר תוצאות דמה לבדיקת הממשק
-    const n = data.intersections.length;
-    
-    const baselineRes: RunResult = {
-        status: "Optimal",
-        offsets: new Array(n).fill(0),
-        objective_value: 100,
-        overlap_up: new Array(n-1).fill(20),
-        avg_delay_up: new Array(n-1).fill(15),
-        max_delay_up: new Array(n-1).fill(25),
-        overlap_down: new Array(n-1).fill(20),
-        avg_delay_down: new Array(n-1).fill(15),
-        max_delay_down: new Array(n-1).fill(25),
-        corridorBW_up: 30,
-        corridorBW_down: 30
-    };
+export async function greenWaveOptimization(data: NetworkData, weights: Weights) {
+    try {
+        // שליחת הבקשה לפונקציית Edge
+        const { data: results, error } = await supabase.functions.invoke('optimize', {
+            body: { data, weights }
+        });
 
-    const optimizedRes: RunResult = {
-        status: "Optimal",
-        offsets: Array.from({length: n}, () => Math.floor(Math.random() * 90)),
-        objective_value: 150,
-        overlap_up: new Array(n-1).fill(25),
-        avg_delay_up: new Array(n-1).fill(10),
-        max_delay_up: new Array(n-1).fill(20),
-        overlap_down: new Array(n-1).fill(25),
-        avg_delay_down: new Array(n-1).fill(10),
-        max_delay_down: new Array(n-1).fill(20),
-        corridorBW_up: 40,
-        corridorBW_down: 40
-    };
+        if (error) {
+            console.error('Error in optimization:', error);
+            throw error;
+        }
 
-    // חישוב post-processing
-    chainPostProc(baselineRes, data);
-    chainPostProc(optimizedRes, data);
+        // חישוב post-processing על התוצאות
+        if (results.baseline_results) {
+            chainPostProc(results.baseline_results, data);
+        }
+        if (results.optimized_results) {
+            chainPostProc(results.optimized_results, data);
+        }
 
-    return {
-        baseline_results: baselineRes,
-        optimized_results: optimizedRes
-    };
+        return results;
+    } catch (error) {
+        console.error('Error in greenWaveOptimization:', error);
+        throw error;
+    }
 }
 
