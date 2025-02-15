@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import type { NetworkData, Weights, RunResult } from "@/types/traffic";
 
@@ -154,7 +153,6 @@ export async function greenWaveOptimization(data: NetworkData, weights: Weights)
         console.log('Request body:', requestBody);
         
         const { data: results, error } = await supabase.functions.invoke('optimize', {
-            headers: { 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY },
             body: requestBody
         });
 
