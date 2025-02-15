@@ -74,29 +74,18 @@ function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): { up:
 
   let minBandwidthUp = Infinity;
   let minBandwidthDown = Infinity;
-  let foundUpPair = false;   // מסמן האם נמצא לפחות זוג אחד עם מופעי up
-  let foundDownPair = false; // מסמן האם נמצא לפחות זוג אחד עם מופעי down
+  let hasUp = false;     // נסמן אם בכלל יש מופע up בצמתים
+  let hasDown = false;   // idem ל-down
 
   // כיוון UP
   for (let i = 0; i < intersections.length - 1; i++) {
     const curr = intersections[i];
     const next = intersections[i + 1];
     if (!curr.green_up?.length || !next.green_up?.length || !curr.cycle_up || !next.cycle_up) {
-      console.log(`Skipping corridorBW up at i=${i} because:`, {
-        curr_green_up: curr.green_up?.length ? 'exists' : 'missing',
-        next_green_up: next.green_up?.length ? 'exists' : 'missing',
-        curr_cycle_up: curr.cycle_up ? 'exists' : 'missing',
-        next_cycle_up: next.cycle_up ? 'exists' : 'missing'
-      });
+      // דילוג
       continue;
     }
-    foundUpPair = true;
-    console.log(`Processing corridorBW up at i=${i}:`, {
-      curr_green: curr.green_up[0],
-      next_green: next.green_up[0],
-      curr_cycle: curr.cycle_up,
-      next_cycle: next.cycle_up
-    });
+    hasUp = true;
 
     const distance = next.distance - curr.distance;
     const travelTime = (distance / travel.up.speed) * 3.6;
@@ -119,21 +108,9 @@ function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): { up:
     const curr = intersections[i];
     const prev = intersections[i - 1];
     if (!curr.green_down?.length || !prev.green_down?.length || !curr.cycle_down || !prev.cycle_down) {
-      console.log(`Skipping corridorBW down at i=${i} because:`, {
-        curr_green_down: curr.green_down?.length ? 'exists' : 'missing',
-        prev_green_down: prev.green_down?.length ? 'exists' : 'missing',
-        curr_cycle_down: curr.cycle_down ? 'exists' : 'missing',
-        prev_cycle_down: prev.cycle_down ? 'exists' : 'missing'
-      });
       continue;
     }
-    foundDownPair = true;
-    console.log(`Processing corridorBW down at i=${i}:`, {
-      curr_green: curr.green_down[0],
-      prev_green: prev.green_down[0],
-      curr_cycle: curr.cycle_down,
-      prev_cycle: prev.cycle_down
-    });
+    hasDown = true;
 
     const distance = curr.distance - prev.distance;
     const travelTime = (distance / travel.down.speed) * 3.6;
@@ -151,19 +128,9 @@ function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): { up:
     minBandwidthDown = Math.min(minBandwidthDown, overlap);
   }
 
-  let upVal: number|null = null;
-  if (foundUpPair) {
-    // במקרה זה באמת היה זוג אחד לפחות
-    upVal = minBandwidthUp === Infinity ? 0 : minBandwidthUp;
-  }
+  const upVal = hasUp ? (minBandwidthUp === Infinity ? 0 : minBandwidthUp) : null;
+  const downVal= hasDown? (minBandwidthDown===Infinity? 0 : minBandwidthDown): null;
 
-  let downVal: number|null = null;
-  if (foundDownPair) {
-    // במקרה זה באמת היה זוג אחד לפחות
-    downVal = minBandwidthDown === Infinity ? 0 : minBandwidthDown;
-  }
-
-  console.log('Final corridor bandwidth values:', { upVal, downVal });
   return { up: upVal, down: downVal };
 }
 
