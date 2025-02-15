@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -42,38 +41,9 @@ serve(async (req) => {
 
     console.log('Received request with data:', { data, weights });
     
-    const n = data.intersections.length;
-    const baselineRes = {
-      status: "Optimal",
-      offsets: new Array(n).fill(0),
-      objective_value: 100,
-      overlap_up: new Array(n-1).fill(20),
-      avg_delay_up: new Array(n-1).fill(15),
-      max_delay_up: new Array(n-1).fill(25),
-      overlap_down: new Array(n-1).fill(20),
-      avg_delay_down: new Array(n-1).fill(15),
-      max_delay_down: new Array(n-1).fill(25),
-      corridorBW_up: 30,
-      corridorBW_down: 30
-    };
-
-    const optimizedRes = {
-      status: "Optimal",
-      offsets: Array.from({length: n}, () => Math.floor(Math.random() * 90)),
-      objective_value: 150,
-      overlap_up: new Array(n-1).fill(25),
-      avg_delay_up: new Array(n-1).fill(10),
-      max_delay_up: new Array(n-1).fill(20),
-      overlap_down: new Array(n-1).fill(25),
-      avg_delay_down: new Array(n-1).fill(10),
-      max_delay_down: new Array(n-1).fill(20),
-      corridorBW_up: 40,
-      corridorBW_down: 40
-    };
-
+    // TODO: Here will come the actual optimization logic
+    // For now, return minimal response with optimization status
     const response = {
-      baseline_results: baselineRes,
-      optimized_results: optimizedRes,
       db_result: {
         status: "Success",
         message: "Function invoked successfully"
