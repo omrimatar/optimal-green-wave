@@ -24,79 +24,109 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
 
   // הכנת נתונים להשוואת אופטימיזציה
   const optimizationData = [
-    {
+    // רק אם שני הערכים קיימים
+    baseline.corridorBW_up !== null && optimized.corridorBW_up !== null ? {
       metric: 'רוחב מסדרון למעלה',
-      בסיס: Number((baseline.corridorBW_up ?? 0).toFixed(1)),
-      אופטימיזציה: Number((optimized.corridorBW_up ?? 0).toFixed(1))
-    },
-    {
+      בסיס: Number(baseline.corridorBW_up.toFixed(1)),
+      אופטימיזציה: Number(optimized.corridorBW_up.toFixed(1))
+    } : null,
+    baseline.corridorBW_down !== null && optimized.corridorBW_down !== null ? {
       metric: 'רוחב מסדרון למטה',
-      בסיס: Number((baseline.corridorBW_down ?? 0).toFixed(1)),
-      אופטימיזציה: Number((optimized.corridorBW_down ?? 0).toFixed(1))
-    },
-    ...(baseline.avg_delay_up?.map((val, index) => ({
-      metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
-      בסיס: -(Number((val ?? 0).toFixed(1))),
-      אופטימיזציה: -(Number((optimized.avg_delay_up?.[index] ?? 0).toFixed(1)))
-    })) || []),
-    ...(baseline.max_delay_up?.map((val, index) => ({
-      metric: `עיכוב מקסימלי ${index + 1}-${index + 2}`,
-      בסיס: -(Number((val ?? 0).toFixed(1))),
-      אופטימיזציה: -(Number((optimized.max_delay_up?.[index] ?? 0).toFixed(1)))
-    })) || [])
-  ];
+      בסיס: Number(baseline.corridorBW_down.toFixed(1)),
+      אופטימיזציה: Number(optimized.corridorBW_down.toFixed(1))
+    } : null,
+    ...(baseline.avg_delay_up?.map((val, index) => {
+      const optVal = optimized.avg_delay_up?.[index];
+      return val !== null && optVal !== null ? {
+        metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
+        בסיס: -Number(val.toFixed(1)),
+        אופטימיזציה: -Number(optVal.toFixed(1))
+      } : null;
+    }).filter(Boolean) || []),
+    ...(baseline.max_delay_up?.map((val, index) => {
+      const optVal = optimized.max_delay_up?.[index];
+      return val !== null && optVal !== null ? {
+        metric: `עיכוב מקסימלי ${index + 1}-${index + 2}`,
+        בסיס: -Number(val.toFixed(1)),
+        אופטימיזציה: -Number(optVal.toFixed(1))
+      } : null;
+    }).filter(Boolean) || [])
+  ].filter(Boolean);
 
   // הכנת נתונים להשוואת כיוונים
   const directionData = [
-    {
+    (baseline.corridorBW_up !== null && optimized.corridorBW_up !== null &&
+     baseline.corridorBW_down !== null && optimized.corridorBW_down !== null) ? {
       metric: 'רוחב מסדרון',
-      'מעלה הזרם - בסיס': Number((baseline.corridorBW_up ?? 0).toFixed(1)),
-      'מעלה הזרם - אופטימיזציה': Number((optimized.corridorBW_up ?? 0).toFixed(1)),
-      'מורד הזרם - בסיס': Number((baseline.corridorBW_down ?? 0).toFixed(1)),
-      'מורד הזרם - אופטימיזציה': Number((optimized.corridorBW_down ?? 0).toFixed(1))
-    },
-    ...(baseline.avg_delay_up?.map((val, index) => ({
-      metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
-      'מעלה הזרם - בסיס': -(Number((val ?? 0).toFixed(1))),
-      'מעלה הזרם - אופטימיזציה': -(Number((optimized.avg_delay_up?.[index] ?? 0).toFixed(1))),
-      'מורד הזרם - בסיס': -(Number((baseline.avg_delay_down?.[index] ?? 0).toFixed(1))),
-      'מורד הזרם - אופטימיזציה': -(Number((optimized.avg_delay_down?.[index] ?? 0).toFixed(1)))
-    })) || [])
-  ];
+      'מעלה הזרם - בסיס': Number(baseline.corridorBW_up.toFixed(1)),
+      'מעלה הזרם - אופטימיזציה': Number(optimized.corridorBW_up.toFixed(1)),
+      'מורד הזרם - בסיס': Number(baseline.corridorBW_down.toFixed(1)),
+      'מורד הזרם - אופטימיזציה': Number(optimized.corridorBW_down.toFixed(1))
+    } : null,
+    ...(baseline.avg_delay_up?.map((val, index) => {
+      const optValUp = optimized.avg_delay_up?.[index];
+      const baseValDown = baseline.avg_delay_down?.[index];
+      const optValDown = optimized.avg_delay_down?.[index];
+      return val !== null && optValUp !== null && baseValDown !== null && optValDown !== null ? {
+        metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
+        'מעלה הזרם - בסיס': -Number(val.toFixed(1)),
+        'מעלה הזרם - אופטימיזציה': -Number(optValUp.toFixed(1)),
+        'מורד הזרם - בסיס': -Number(baseValDown.toFixed(1)),
+        'מורד הזרם - אופטימיזציה': -Number(optValDown.toFixed(1))
+      } : null;
+    }).filter(Boolean) || [])
+  ].filter(Boolean);
 
-  // הכנת נתונים לגרף רדאר - 4 מדדים
-  const calculateAverage = (arr: number[] = []): number => {
-    if (arr?.length === 0) return 0;
-    return arr.reduce((sum, val) => sum + (val ?? 0), 0) / arr.length;
+  // הכנת נתונים לגרף רדאר - רק אם יש ערכים בשני המקרים
+  const calculateAverage = (arr: number[] = []): number | null => {
+    if (!arr?.length) return null;
+    const validValues = arr.filter(val => val !== null);
+    if (validValues.length === 0) return null;
+    return validValues.reduce((sum, val) => sum + val, 0) / validValues.length;
   };
 
   const radarData = [
-    {
+    baseline.corridorBW_up !== null && optimized.corridorBW_up !== null ? {
       metric: 'רוחב מסדרון למעלה',
-      לפני: Number((baseline.corridorBW_up ?? 0).toFixed(1)),
-      אחרי: Number((optimized.corridorBW_up ?? 0).toFixed(1)),
-    },
-    {
+      לפני: Number(baseline.corridorBW_up.toFixed(1)),
+      אחרי: Number(optimized.corridorBW_up.toFixed(1)),
+    } : null,
+    baseline.corridorBW_down !== null && optimized.corridorBW_down !== null ? {
       metric: 'רוחב מסדרון למטה',
-      לפני: Number((baseline.corridorBW_down ?? 0).toFixed(1)),
-      אחרי: Number((optimized.corridorBW_down ?? 0).toFixed(1)),
-    },
-    {
+      לפני: Number(baseline.corridorBW_down.toFixed(1)),
+      אחרי: Number(optimized.corridorBW_down.toFixed(1)),
+    } : null
+  ].filter(Boolean);
+
+  // הוספת עיכובים ממוצעים רק אם הם קיימים
+  const avgDelayUp = calculateAverage(baseline.avg_delay_up);
+  const avgDelayUpOpt = calculateAverage(optimized.avg_delay_up);
+  if (avgDelayUp !== null && avgDelayUpOpt !== null) {
+    radarData.push({
       metric: 'עיכוב ממוצע למעלה',
-      לפני: -Number((calculateAverage(baseline.avg_delay_up)).toFixed(1)),
-      אחרי: -Number((calculateAverage(optimized.avg_delay_up)).toFixed(1)),
-    },
-    {
+      לפני: -Number(avgDelayUp.toFixed(1)),
+      אחרי: -Number(avgDelayUpOpt.toFixed(1)),
+    });
+  }
+
+  const avgDelayDown = calculateAverage(baseline.avg_delay_down);
+  const avgDelayDownOpt = calculateAverage(optimized.avg_delay_down);
+  if (avgDelayDown !== null && avgDelayDownOpt !== null) {
+    radarData.push({
       metric: 'עיכוב ממוצע למטה',
-      לפני: -Number((calculateAverage(baseline.avg_delay_down)).toFixed(1)),
-      אחרי: -Number((calculateAverage(optimized.avg_delay_down)).toFixed(1)),
-    }
-  ];
+      לפני: -Number(avgDelayDown.toFixed(1)),
+      אחרי: -Number(avgDelayDownOpt.toFixed(1)),
+    });
+  }
 
   const currentData = chartType === 'radar' ? radarData : 
                      comparisonType === 'optimization' ? optimizationData : directionData;
 
   const renderChart = () => {
+    if (currentData.length === 0) {
+      return <div className="text-center py-8 text-gray-500">אין נתונים זמינים להצגה</div>;
+    }
+
     switch (chartType) {
       case 'bar':
         return (
