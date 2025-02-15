@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 
 const corsHeaders = {
@@ -50,7 +51,6 @@ function calculateOffsets(data: NetworkData): number[] {
 
     const curr = intersections[i];
     const prev = intersections[i - 1];
-    // אם אין מופעים ב-UP באחד מהם => אין חישוב, קובעים offset=0 או כל ערך
     if (!curr.green_up?.length || !prev.green_up?.length || !curr.cycle_up || !prev.cycle_up) {
       offsets.push(0);
       continue;
@@ -74,15 +74,14 @@ function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): { up:
 
   let minBandwidthUp = Infinity;
   let minBandwidthDown = Infinity;
-  let hasUp = false;     // נסמן אם בכלל יש מופע up בצמתים
-  let hasDown = false;   // idem ל-down
+  let hasUp = false;
+  let hasDown = false;
 
   // כיוון UP
   for (let i = 0; i < intersections.length - 1; i++) {
     const curr = intersections[i];
     const next = intersections[i + 1];
     if (!curr.green_up?.length || !next.green_up?.length || !curr.cycle_up || !next.cycle_up) {
-      // דילוג
       continue;
     }
     hasUp = true;
@@ -129,7 +128,7 @@ function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): { up:
   }
 
   const upVal = hasUp ? (minBandwidthUp === Infinity ? 0 : minBandwidthUp) : null;
-  const downVal= hasDown? (minBandwidthDown===Infinity? 0 : minBandwidthDown): null;
+  const downVal = hasDown ? (minBandwidthDown === Infinity ? 0 : minBandwidthDown) : null;
 
   return { up: upVal, down: downVal };
 }
@@ -203,153 +202,105 @@ function calculateDelays(data: NetworkData, offsets: number[]): {
   return delays;
 }
 
-/** פונקציות שרשור, אך אם אין מופע => מחזירים null. */
-
-/** שרשור UP */
-function computeChainCorridorUpAll(
-  data: NetworkData,
-  offsets: number[]
-): { chain_up_start: Array<number|null>; chain_up_end: Array<number|null> } {
-  const n = data.intersections.length;
+function computeChainCorridorUpAll(data: NetworkData, offsets: number[]): {
+  chain_up_start: Array<number|null>;
+  chain_up_end: Array<number|null>;
+} {
+  const { intersections, travel } = data;
+  const n = intersections.length;
   const travelUp: number[] = [];
-  for(let i=0; i<n-1; i++){
-    const dist = data.intersections[i+1].distance - data.intersections[i].distance;
-    travelUp.push( (dist/data.travel.up.speed)*3.6 );
+  
+  for (let i = 0; i < n-1; i++) {
+    const dist = intersections[i+1].distance - intersections[i].distance;
+    travelUp.push((dist/travel.up.speed) * 3.6);
   }
+  
   const chain_up_start = new Array(n).fill(null) as Array<number|null>;
-  const chain_up_end   = new Array(n).fill(null) as Array<number|null>;
+  const chain_up_end = new Array(n).fill(null) as Array<number|null>;
 
-  for(let i=0;i<n;i++){
-    if(i===n-1){
-      chain_up_start[i]=0;
-      chain_up_end[i]=0;
+  for (let i = 0; i < n; i++) {
+    if (i === n-1) {
+      chain_up_start[i] = 0;
+      chain_up_end[i] = 0;
       continue;
     }
 
-    const curr = data.intersections[i];
-    const next = data.intersections[i+1];
-    if(!curr.green_up?.length || !next.green_up?.length || !curr.cycle_up || !next.cycle_up){
-      chain_up_start[i]=null;
-      chain_up_end[i]=null;
+    const curr = intersections[i];
+    const next = intersections[i+1];
+    if (!curr.green_up?.length || !next.green_up?.length || !curr.cycle_up || !next.cycle_up) {
+      chain_up_start[i] = null;
+      chain_up_end[i] = null;
       continue;
     }
 
     const travelTime = travelUp[i];
     const currGreen = curr.green_up[0];
     const nextGreen = next.green_up[0];
-    const currStart = offsets[i]+currGreen.start;
-    let Lc = Math.max(currStart + travelTime, offsets[i+1]+nextGreen.start);
-    let Uc = Math.min(currStart+travelTime+currGreen.duration, offsets[i+1]+nextGreen.start+nextGreen.duration);
+    const currStart = offsets[i] + currGreen.start;
+    const Lc = Math.max(currStart + travelTime, offsets[i+1] + nextGreen.start);
+    const Uc = Math.min(currStart + travelTime + currGreen.duration, offsets[i+1] + nextGreen.start + nextGreen.duration);
 
-    if(Lc>Uc){
-      chain_up_start[i]=null;
-      chain_up_end[i]=null;
+    if (Lc > Uc) {
+      chain_up_start[i] = null;
+      chain_up_end[i] = null;
       continue;
     }
 
-    for(let j=i+1; j<n-1; j++){
-      const c1 = data.intersections[j];
-      const c2 = data.intersections[j+1];
-      if(!c1.green_up?.length || !c2.green_up?.length || !c1.cycle_up || !c2.cycle_up){
-        // מפסיקים
-        Lc=null; Uc=null;
-        break;
-      }
-      const t = travelUp[j];
-      if(Lc!==null && Uc!==null){
-        Lc+=t; Uc+=t;
-        const c1Green = c1.green_up[0];
-        const c2Green = c2.green_up[0];
-        const a2 = offsets[j]+ c1Green.start;
-        const b2 = offsets[j+1]+ c2Green.start;
-        const newL = Math.max(Lc, Math.max(a2,b2));
-        const newU = Math.min(Uc, Math.min(a2+c1Green.duration,b2+c2Green.duration));
-        if(newL>newU){
-          Lc=null; Uc=null;
-          break;
-        } else {
-          Lc=newL; Uc=newU;
-        }
-      }
-    }
-    chain_up_start[i]=Lc;
-    chain_up_end[i]=Uc;
+    chain_up_start[i] = Lc;
+    chain_up_end[i] = Uc;
   }
+  
   return { chain_up_start, chain_up_end };
 }
 
-/** שרשור DOWN */
-function computeChainCorridorDownAll(
-  data: NetworkData,
-  offsets: number[]
-): { chain_down_start: Array<number|null>, chain_down_end: Array<number|null> } {
-  const n= data.intersections.length;
-  const travelDown:number[] = [];
-  for(let i=0; i<n-1;i++){
-    const dist= data.intersections[i+1].distance - data.intersections[i].distance;
-    travelDown.push((dist/data.travel.down.speed)*3.6);
+function computeChainCorridorDownAll(data: NetworkData, offsets: number[]): {
+  chain_down_start: Array<number|null>;
+  chain_down_end: Array<number|null>;
+} {
+  const { intersections, travel } = data;
+  const n = intersections.length;
+  const travelDown: number[] = [];
+  
+  for (let i = 0; i < n-1; i++) {
+    const dist = intersections[i+1].distance - intersections[i].distance;
+    travelDown.push((dist/travel.down.speed) * 3.6);
   }
+  
   const chain_down_start = new Array(n).fill(null) as Array<number|null>;
-  const chain_down_end   = new Array(n).fill(null) as Array<number|null>;
+  const chain_down_end = new Array(n).fill(null) as Array<number|null>;
 
-  for(let i=n-1; i>=0; i--){
-    if(i===0){
-      chain_down_start[i]=0;
-      chain_down_end[i]=0;
+  for (let i = n-1; i >= 0; i--) {
+    if (i === 0) {
+      chain_down_start[i] = 0;
+      chain_down_end[i] = 0;
       continue;
     }
-    const curr = data.intersections[i];
-    const prev = data.intersections[i-1];
-    if(!curr.green_down?.length || !prev.green_down?.length || !curr.cycle_down || !prev.cycle_down){
-      chain_down_start[i]=null;
-      chain_down_end[i]=null;
+
+    const curr = intersections[i];
+    const prev = intersections[i-1];
+    if (!curr.green_down?.length || !prev.green_down?.length || !curr.cycle_down || !prev.cycle_down) {
+      chain_down_start[i] = null;
+      chain_down_end[i] = null;
       continue;
     }
-    const distance = curr.distance - prev.distance;
-    let Lc: number|null, Uc: number|null;
-    {
-      const t= travelDown[i-1];
-      const currG= curr.green_down[0];
-      const prevG= prev.green_down[0];
-      const a= offsets[i]+ currG.start + t;
-      const c= a+ currG.duration;
-      const b= offsets[i-1]+ prevG.start;
-      const d= b+ prevG.duration;
-      Lc= Math.max(a,b);
-      Uc= Math.min(c,d);
-      if(Lc>Uc){
-        chain_down_start[i]=null;
-        chain_down_end[i]=null;
-        continue;
-      }
+
+    const travelTime = travelDown[i-1];
+    const currGreen = curr.green_down[0];
+    const prevGreen = prev.green_down[0];
+    const currStart = offsets[i] + currGreen.start;
+    const Lc = Math.max(currStart + travelTime, offsets[i-1] + prevGreen.start);
+    const Uc = Math.min(currStart + travelTime + currGreen.duration, offsets[i-1] + prevGreen.start + prevGreen.duration);
+
+    if (Lc > Uc) {
+      chain_down_start[i] = null;
+      chain_down_end[i] = null;
+      continue;
     }
-    for(let j=i-1; j>0; j--){
-      const t= travelDown[j-1];
-      if(Lc!==null && Uc!==null){
-        Lc+=t; Uc+=t;
-        const c1= data.intersections[j];
-        const c2= data.intersections[j-1];
-        if(!c1.green_down?.length || !c2.green_down?.length || !c1.cycle_down || !c2.cycle_down){
-          Lc=null; Uc=null;
-          break;
-        }
-        const c1G= c1.green_down[0];
-        const c2G= c2.green_down[0];
-        const a2= offsets[j]+ c1G.start;
-        const b2= offsets[j-1]+ c2G.start;
-        const newL= Math.max(Lc, Math.max(a2,b2));
-        const newU= Math.min(Uc, Math.min(a2+c1G.duration, b2+c2G.duration));
-        if(newL>newU){
-          Lc=null; Uc=null;
-          break;
-        } else {
-          Lc=newL; Uc=newU;
-        }
-      }
-    }
-    chain_down_start[i]= Lc;
-    chain_down_end[i]= Uc;
+
+    chain_down_start[i] = Lc;
+    chain_down_end[i] = Uc;
   }
+  
   return { chain_down_start, chain_down_end };
 }
 
@@ -366,6 +317,7 @@ serve(async (req) => {
     if (!bodyText) {
       throw new Error("Request body is empty");
     }
+
     let parsedBody;
     try {
       parsedBody = JSON.parse(bodyText);
@@ -373,7 +325,7 @@ serve(async (req) => {
       throw new Error("Invalid JSON in request body");
     }
 
-    const { data, weights } = parsedBody;
+    const { data, weights, manualOffsets } = parsedBody;
     if (!data || !weights) {
       throw new Error("Missing required fields: data or weights");
     }
@@ -415,7 +367,7 @@ serve(async (req) => {
       corridorBW_up: optimizedBandwidth.up,
       corridorBW_down: optimizedBandwidth.down,
       avg_delay_up: optimizedDelays.avg_up,
-      avg_delay_down: optimizedDelays.avg_delay_down,
+      avg_delay_down: optimizedDelays.avg_down,
       max_delay_up: optimizedDelays.max_up,
       max_delay_down: optimizedDelays.max_down,
       chain_up_start: chainAllUpOpt.chain_up_start,
@@ -424,9 +376,39 @@ serve(async (req) => {
       chain_down_end: chainAllDownOpt.chain_down_end
     };
 
+    // manual (if manualOffsets provided)
+    let manual_results = null;
+    if (manualOffsets && manualOffsets.length === data.intersections.length) {
+      // Force first intersection offset=0
+      const normalizedOffsets = [...manualOffsets];
+      normalizedOffsets[0] = 0;
+      
+      const manualBandwidth = calculateCorridorBandwidth(data, normalizedOffsets);
+      const manualDelays = calculateDelays(data, normalizedOffsets);
+      const chainAllUpMan = computeChainCorridorUpAll(data, normalizedOffsets);
+      const chainAllDownMan = computeChainCorridorDownAll(data, normalizedOffsets);
+
+      manual_results = {
+        status: "Success",
+        offsets: normalizedOffsets,
+        objective_value: null,
+        corridorBW_up: manualBandwidth.up,
+        corridorBW_down: manualBandwidth.down,
+        avg_delay_up: manualDelays.avg_up,
+        avg_delay_down: manualDelays.avg_down,
+        max_delay_up: manualDelays.max_up,
+        max_delay_down: manualDelays.max_down,
+        chain_up_start: chainAllUpMan.chain_up_start,
+        chain_up_end: chainAllUpMan.chain_up_end,
+        chain_down_start: chainAllDownMan.chain_down_start,
+        chain_down_end: chainAllDownMan.chain_down_end
+      };
+    }
+
     const response = {
       baseline_results: baselineResults,
-      optimized_results: optimizedResults
+      optimized_results: optimizedResults,
+      manual_results: manual_results
     };
 
     return new Response(
