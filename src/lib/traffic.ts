@@ -131,9 +131,13 @@ function chainBWDown(offsets: number[], data: NetworkData, travelDown: number[])
 ******************************************************************/
 export async function greenWaveOptimization(data: NetworkData, weights: Weights) {
     try {
+        console.log('Starting optimization with data:', data);
+        console.log('Using weights:', weights);
+
         // שליחת הבקשה לפונקציית Edge
+        console.log('Calling Edge function...');
         const { data: results, error } = await supabase.functions.invoke('optimize', {
-            body: { data, weights }
+            body: { data, weights },
         });
 
         if (error) {
@@ -141,18 +145,22 @@ export async function greenWaveOptimization(data: NetworkData, weights: Weights)
             throw error;
         }
 
+        console.log('Received results:', results);
+
         // חישוב post-processing על התוצאות
         if (results.baseline_results) {
+            console.log('Processing baseline results...');
             chainPostProc(results.baseline_results, data);
         }
         if (results.optimized_results) {
+            console.log('Processing optimized results...');
             chainPostProc(results.optimized_results, data);
         }
 
+        console.log('Final results:', results);
         return results;
     } catch (error) {
         console.error('Error in greenWaveOptimization:', error);
         throw error;
     }
 }
-
