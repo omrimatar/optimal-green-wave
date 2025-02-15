@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -25,23 +26,23 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
   const optimizationData = [
     {
       metric: 'רוחב מסדרון למעלה',
-      בסיס: Number(baseline.corridorBW_up.toFixed(1)),
-      אופטימיזציה: Number(optimized.corridorBW_up.toFixed(1))
+      בסיס: Number((baseline.corridorBW_up ?? 0).toFixed(1)),
+      אופטימיזציה: Number((optimized.corridorBW_up ?? 0).toFixed(1))
     },
     {
       metric: 'רוחב מסדרון למטה',
-      בסיס: Number(baseline.corridorBW_down.toFixed(1)),
-      אופטימיזציה: Number(optimized.corridorBW_down.toFixed(1))
+      בסיס: Number((baseline.corridorBW_down ?? 0).toFixed(1)),
+      אופטימיזציה: Number((optimized.corridorBW_down ?? 0).toFixed(1))
     },
-    ...(baseline.avg_delay_up?.map((_, index) => ({
+    ...(baseline.avg_delay_up?.map((val, index) => ({
       metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
-      בסיס: -Number(baseline.avg_delay_up[index].toFixed(1)),
-      אופטימיזציה: -Number(optimized.avg_delay_up?.[index].toFixed(1))
+      בסיס: -(Number((val ?? 0).toFixed(1))),
+      אופטימיזציה: -(Number((optimized.avg_delay_up?.[index] ?? 0).toFixed(1)))
     })) || []),
-    ...(baseline.max_delay_up?.map((_, index) => ({
+    ...(baseline.max_delay_up?.map((val, index) => ({
       metric: `עיכוב מקסימלי ${index + 1}-${index + 2}`,
-      בסיס: -Number(baseline.max_delay_up[index].toFixed(1)),
-      אופטימיזציה: -Number(optimized.max_delay_up?.[index].toFixed(1))
+      בסיס: -(Number((val ?? 0).toFixed(1))),
+      אופטימיזציה: -(Number((optimized.max_delay_up?.[index] ?? 0).toFixed(1)))
     })) || [])
   ];
 
@@ -49,46 +50,46 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
   const directionData = [
     {
       metric: 'רוחב מסדרון',
-      'מעלה הזרם - בסיס': Number(baseline.corridorBW_up.toFixed(1)),
-      'מעלה הזרם - אופטימיזציה': Number(optimized.corridorBW_up.toFixed(1)),
-      'מורד הזרם - בסיס': Number(baseline.corridorBW_down.toFixed(1)),
-      'מורד הזרם - אופטימיזציה': Number(optimized.corridorBW_down.toFixed(1))
+      'מעלה הזרם - בסיס': Number((baseline.corridorBW_up ?? 0).toFixed(1)),
+      'מעלה הזרם - אופטימיזציה': Number((optimized.corridorBW_up ?? 0).toFixed(1)),
+      'מורד הזרם - בסיס': Number((baseline.corridorBW_down ?? 0).toFixed(1)),
+      'מורד הזרם - אופטימיזציה': Number((optimized.corridorBW_down ?? 0).toFixed(1))
     },
-    ...(baseline.avg_delay_up?.map((_, index) => ({
+    ...(baseline.avg_delay_up?.map((val, index) => ({
       metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
-      'מעלה הזרם - בסיס': -Number(baseline.avg_delay_up[index].toFixed(1)),
-      'מעלה הזרם - אופטימיזציה': -Number(optimized.avg_delay_up?.[index].toFixed(1)),
-      'מורד הזרם - בסיס': -Number(baseline.avg_delay_down?.[index].toFixed(1)),
-      'מורד הזרם - אופטימיזציה': -Number(optimized.avg_delay_down?.[index].toFixed(1))
+      'מעלה הזרם - בסיס': -(Number((val ?? 0).toFixed(1))),
+      'מעלה הזרם - אופטימיזציה': -(Number((optimized.avg_delay_up?.[index] ?? 0).toFixed(1))),
+      'מורד הזרם - בסיס': -(Number((baseline.avg_delay_down?.[index] ?? 0).toFixed(1))),
+      'מורד הזרם - אופטימיזציה': -(Number((optimized.avg_delay_down?.[index] ?? 0).toFixed(1)))
     })) || [])
   ];
 
   // הכנת נתונים לגרף רדאר - 4 מדדים
   const calculateAverage = (arr: number[] = []): number => {
-    if (arr.length === 0) return 0;
-    return arr.reduce((sum, val) => sum + val, 0) / arr.length;
+    if (arr?.length === 0) return 0;
+    return arr.reduce((sum, val) => sum + (val ?? 0), 0) / arr.length;
   };
 
   const radarData = [
     {
       metric: 'רוחב מסדרון למעלה',
-      לפני: Number(baseline.corridorBW_up.toFixed(1)),
-      אחרי: Number(optimized.corridorBW_up.toFixed(1)),
+      לפני: Number((baseline.corridorBW_up ?? 0).toFixed(1)),
+      אחרי: Number((optimized.corridorBW_up ?? 0).toFixed(1)),
     },
     {
       metric: 'רוחב מסדרון למטה',
-      לפני: Number(baseline.corridorBW_down.toFixed(1)),
-      אחרי: Number(optimized.corridorBW_down.toFixed(1)),
+      לפני: Number((baseline.corridorBW_down ?? 0).toFixed(1)),
+      אחרי: Number((optimized.corridorBW_down ?? 0).toFixed(1)),
     },
     {
       metric: 'עיכוב ממוצע למעלה',
-      לפני: -Number(calculateAverage(baseline.avg_delay_up).toFixed(1)),
-      אחרי: -Number(calculateAverage(optimized.avg_delay_up).toFixed(1)),
+      לפני: -Number((calculateAverage(baseline.avg_delay_up)).toFixed(1)),
+      אחרי: -Number((calculateAverage(optimized.avg_delay_up)).toFixed(1)),
     },
     {
       metric: 'עיכוב ממוצע למטה',
-      לפני: -Number(calculateAverage(baseline.avg_delay_down).toFixed(1)),
-      אחרי: -Number(calculateAverage(optimized.avg_delay_down).toFixed(1)),
+      לפני: -Number((calculateAverage(baseline.avg_delay_down)).toFixed(1)),
+      אחרי: -Number((calculateAverage(optimized.avg_delay_down)).toFixed(1)),
     }
   ];
 
