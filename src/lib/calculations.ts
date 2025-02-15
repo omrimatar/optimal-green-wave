@@ -1,14 +1,20 @@
 
-import type { Intersection } from "@/types/optimization";
 import { greenWaveOptimization } from "./traffic";
+import type { Intersection, OptimizationWeights } from "@/types/optimization";
+import type { NetworkData, RunResult } from "@/types/traffic";
 
-export const calculateGreenWave = (
+export async function calculateGreenWave(
   intersections: Intersection[],
   speed: number,
-  weights?: any
-) => {
-  // המרת נתוני הקלט לפורמט הנדרש על ידי האלגוריתם
-  const networkData = {
+  weights?: OptimizationWeights,
+  manualOffsets?: number[]
+): Promise<{
+  baseline_results: RunResult;
+  optimized_results: RunResult;
+  manual_results?: RunResult;
+}> {
+  // המרת הנתונים לפורמט הנדרש
+  const networkData: NetworkData = {
     intersections: intersections.map(intersection => ({
       id: intersection.id,
       distance: intersection.distance,
@@ -33,31 +39,27 @@ export const calculateGreenWave = (
     }
   };
 
-  console.log("Network data being sent to optimization:", networkData);
+  // המרת המשקולות לפורמט הנדרש (אם סופקו)
+  const optimizationWeights = weights ? {
+    corridor_up: weights.corridorUp,
+    corridor_down: weights.corridorDown,
+    overlap_up: weights.overlapUp,
+    overlap_down: weights.overlapDown,
+    avg_delay_up: weights.avgDelayUp,
+    avg_delay_down: weights.avgDelayDown,
+    max_delay_up: weights.maxDelayUp,
+    max_delay_down: weights.maxDelayDown
+  } : undefined;
 
-  // המרת המשקולות לפורמט הנדרש
-  const calculationWeights = weights ? {
-    corridor_up: weights.corridorBandwidth.upstream,
-    corridor_down: weights.corridorBandwidth.downstream,
-    overlap_up: weights.adjacentPairs.upstream,
-    overlap_down: weights.adjacentPairs.downstream,
-    avg_delay_up: weights.delayMinimization.upstream / 2,  // מחלקים את המשקל של העיכוב בין ממוצע ומקסימום
-    avg_delay_down: weights.delayMinimization.downstream / 2,
-    max_delay_up: weights.delayMinimization.upstream / 2,
-    max_delay_down: weights.delayMinimization.downstream / 2
-  } : {
-    corridor_up: 25,
-    corridor_down: 25,
-    overlap_up: 15,
-    overlap_down: 15,
-    avg_delay_up: 5,
-    avg_delay_down: 5,
-    max_delay_up: 5,
-    max_delay_down: 5
-  };
-
-  console.log("Calculation weights:", calculationWeights);
-
-  // הרצת האלגוריתם עם המשקולות המעודכנות
-  return greenWaveOptimization(networkData, calculationWeights);
-};
+  // קריאה לפונקציית האופטימיזציה
+  return await greenWaveOptimization(networkData, optimizationWeights || {
+    corridor_up: 0.125,
+    corridor_down: 0.125,
+    overlap_up: 0.125,
+    overlap_down: 0.125,
+    avg_delay_up: 0.125,
+    avg_delay_down: 0.125,
+    max_delay_up: 0.125,
+    max_delay_down: 0.125
+  }, manualOffsets);
+}

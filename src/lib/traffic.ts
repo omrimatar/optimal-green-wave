@@ -137,11 +137,16 @@ function chainBWDown(offsets: number[], data: NetworkData, travelDown: number[])
 /*******************************************************************
 * פונקציית האופטימיזציה הראשית
 ******************************************************************/
-export async function greenWaveOptimization(data: NetworkData, weights: Weights) {
+export async function greenWaveOptimization(
+  data: NetworkData, 
+  weights: Weights,
+  manualOffsets?: number[]
+) {
     try {
         console.log('Starting optimization with data:', { 
             intersections: data.intersections,
-            travel: data.travel
+            travel: data.travel,
+            manualOffsets
         });
         console.log('Using weights:', weights);
 
@@ -157,7 +162,8 @@ export async function greenWaveOptimization(data: NetworkData, weights: Weights)
                 intersections: data.intersections,
                 travel: data.travel
             },
-            weights
+            weights,
+            manualOffsets
         };
         console.log('Request body:', requestBody);
         
@@ -192,6 +198,10 @@ export async function greenWaveOptimization(data: NetworkData, weights: Weights)
         if (results.optimized_results) {
             console.log('Processing optimized results...');
             chainPostProc(results.optimized_results, data);
+        }
+        if (results.manual_results) {
+            console.log('Processing manual results...');
+            chainPostProc(results.manual_results, data);
         }
 
         console.log('Final results:', results);

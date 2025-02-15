@@ -7,11 +7,20 @@ import { Label } from '@/components/ui/label';
 import { IntersectionInput } from '@/components/IntersectionInput';
 import { calculateGreenWave } from '@/lib/calculations';
 import { toast } from 'sonner';
-import { ArrowRight, Play, Plus, Settings2 } from 'lucide-react';
+import { ArrowRight, Hand, Play, Plus, Settings2 } from 'lucide-react';
 import { WeightsPanel } from '@/components/WeightsPanel';
 import { FileActions } from '@/components/FileActions';
 import { ResultsPanel } from '@/components/ResultsPanel';
 import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights } from '@/types/optimization';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const Index = () => {
   const [intersections, setIntersections] = useState<Intersection[]>([{
@@ -46,6 +55,8 @@ const Index = () => {
   const [mode, setMode] = useState<'display' | 'calculate'>('calculate');
   const [weights, setWeights] = useState<OptimizationWeights>(DEFAULT_WEIGHTS);
   const [showWeights, setShowWeights] = useState(false);
+  const [manualOffsets, setManualOffsets] = useState<number[]>([]);
+  const [showManualDialog, setShowManualDialog] = useState(false);
 
   const handleAddIntersection = () => {
     const newId = Math.max(...intersections.map(i => i.id)) + 1;
@@ -65,6 +76,8 @@ const Index = () => {
         duration: 45
       }]
     }]);
+    // עדכון מערך האופסטים הידניים
+    setManualOffsets(prev => [...prev, 0]);
   };
 
   const handleCalculate = async () => {
@@ -82,6 +95,29 @@ const Index = () => {
     } catch (error) {
       console.error("Error in calculation:", error);
       toast.error("שגיאה בחישוב הגל הירוק");
+    }
+  };
+
+  const handleManualCalculate = async () => {
+    try {
+      // וידוא שהאופסט הראשון הוא 0
+      const normalizedOffsets = [...manualOffsets];
+      normalizedOffsets[0] = 0;
+
+      const calculationResults = await calculateGreenWave(
+        intersections, 
+        speed, 
+        weights,
+        normalizedOffsets
+      );
+      console.log("Manual calculation results received:", calculationResults);
+      setResults(calculationResults);
+      setMode('calculate');
+      setShowManualDialog(false);
+      toast.success("חישוב הגל הירוק במצב ידני הושלם בהצלחה");
+    } catch (error) {
+      console.error("Error in manual calculation:", error);
+      toast.error("שגיאה בחישוב הגל הירוק במצב ידני");
     }
   };
 
@@ -185,6 +221,12 @@ const Index = () => {
                     onDelete={() => {
                       if (intersections.length > 2) {
                         setIntersections(intersections.filter(i => i.id !== intersection.id));
+                        // עדכון מערך האופסטים הידניים
+                        setManualOffsets(prev => {
+                          const newOffsets = [...prev];
+                          newOffsets.splice(index, 1);
+                          return newOffsets;
+                        });
                       }
                     }} 
                   />
@@ -196,6 +238,48 @@ const Index = () => {
                   <Play size={16} />
                   צייר גל ירוק קיים
                 </Button>
+
+                <Dialog open={showManualDialog} onOpenChange={setShowManualDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white">
+                      <Hand size={16} />
+                      חישוב ידני
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>הזנת היסטים ידנית</DialogTitle>
+                      <DialogDescription>
+                        הזן את ערכי ההיסט עבור כל צומת (בשניות).
+                        שים לב שההיסט של הצומת הראשון תמיד יהיה 0.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      {intersections.map((intersection, index) => (
+                        <div key={intersection.id} className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor={`offset-${index}`} className="text-right">
+                            צומת {index + 1}
+                          </Label>
+                          <Input
+                            id={`offset-${index}`}
+                            type="number"
+                            value={manualOffsets[index] || 0}
+                            onChange={(e) => {
+                              const newOffsets = [...manualOffsets];
+                              newOffsets[index] = Number(e.target.value);
+                              setManualOffsets(newOffsets);
+                            }}
+                            disabled={index === 0}
+                            className="col-span-3"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <DialogFooter>
+                      <Button onClick={handleManualCalculate}>חשב</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
 
                 <Button onClick={handleCalculate} className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white">
                   חשב גל ירוק
