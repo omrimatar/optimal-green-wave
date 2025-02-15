@@ -15,7 +15,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      invoke_optimize_function: {
+        Args: {
+          data: Json
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

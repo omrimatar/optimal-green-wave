@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from "../_shared/cors.ts";
 
 console.log("Loading optimize function");
@@ -11,7 +12,26 @@ serve(async (req) => {
   }
 
   try {
+    // קבלת הפרמטרים מה-request
     const { data, weights } = await req.json();
+    
+    // התחברות ל-Supabase עם service role key
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { persistSession: false } }
+    );
+
+    // קריאה לפונקציה שהגדרנו במסד הנתונים
+    const { data: dbResult, error: dbError } = await supabaseClient
+      .rpc('invoke_optimize_function', { data: { data, weights } });
+
+    if (dbError) {
+      console.error('Database error:', dbError);
+      throw dbError;
+    }
+
+    console.log('Database result:', dbResult);
     
     // כרגע נחזיר תוצאות דמה לצורך בדיקת התקשורת
     const n = data.intersections.length;
@@ -46,7 +66,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         baseline_results: baselineRes,
-        optimized_results: optimizedRes
+        optimized_results: optimizedRes,
+        db_result: dbResult
       }),
       { 
         headers: { 
@@ -56,11 +77,13 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error(error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 400
-    });
+    console.error('Function error:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400
+      }
+    );
   }
 });
-
