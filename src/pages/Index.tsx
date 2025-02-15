@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -66,15 +67,17 @@ const Index = () => {
     }]);
   };
 
-  const handleCalculate = () => {
+  const handleCalculate = async () => {
     try {
       const baseIntersections = intersections.map(intersection => ({
         ...intersection,
         offset: 0
       }));
       
-      const results = calculateGreenWave(intersections, speed, weights);
-      setResults(results);
+      const calculationResults = await calculateGreenWave(intersections, speed, weights);
+      console.log("Calculation results received:", calculationResults);
+      setResults(calculationResults);
+      setMode('calculate');
       toast.success("חישוב הגל הירוק הושלם בהצלחה");
     } catch (error) {
       console.error("Error in calculation:", error);
@@ -82,15 +85,16 @@ const Index = () => {
     }
   };
 
-  const handleShowExisting = () => {
+  const handleShowExisting = async () => {
     try {
       const currentIntersections = intersections.map(intersection => ({
         ...intersection,
         offset: 0
       }));
       
-      const results = calculateGreenWave(currentIntersections, speed);
-      setResults(results);
+      const currentResults = await calculateGreenWave(currentIntersections, speed);
+      console.log("Show existing results received:", currentResults);
+      setResults(currentResults);
       setMode('display');
       toast.success("הצגת הגל הירוק הקיים הושלמה בהצלחה");
     } catch (error) {
@@ -126,25 +130,15 @@ const Index = () => {
   };
 
   const handleResetWeights = () => {
-    setWeights({
-      corridorBandwidth: {
-        upstream: 25,
-        downstream: 25
-      },
-      adjacentPairs: {
-        upstream: 15,
-        downstream: 15
-      },
-      delayMinimization: {
-        upstream: 10,
-        downstream: 10
-      }
-    });
+    setWeights(DEFAULT_WEIGHTS);
     setResults(null);
     toast.success("המשקולות אופסו לברירת המחדל");
   };
 
-  return <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
+  console.log("Current results state:", results);
+
+  return (
+    <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
       <div className="max-w-6xl mx-auto space-y-8 animate-fade-up">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold text-gray-900">מחשבון גל ירוק</h1>
@@ -172,20 +166,25 @@ const Index = () => {
                   </Button>
                 </div>
                 
-                {intersections.map((intersection, index) => <IntersectionInput key={intersection.id} intersection={intersection} onChange={updated => {
-                const newIntersections = [...intersections];
-                newIntersections[index] = updated;
-                setIntersections(newIntersections);
-              }} onDelete={() => {
-                if (intersections.length > 2) {
-                  setIntersections(intersections.filter(i => i.id !== intersection.id));
-                }
-              }} />)}
+                {intersections.map((intersection, index) => (
+                  <IntersectionInput 
+                    key={intersection.id} 
+                    intersection={intersection} 
+                    onChange={updated => {
+                      const newIntersections = [...intersections];
+                      newIntersections[index] = updated;
+                      setIntersections(newIntersections);
+                    }} 
+                    onDelete={() => {
+                      if (intersections.length > 2) {
+                        setIntersections(intersections.filter(i => i.id !== intersection.id));
+                      }
+                    }} 
+                  />
+                ))}
               </div>
 
               <div className="flex flex-wrap gap-4">
-                
-                
                 <Button variant="outline" onClick={handleShowExisting} className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white">
                   <Play size={16} />
                   צייר גל ירוק קיים
@@ -199,10 +198,11 @@ const Index = () => {
             </div>
           </Card>
 
-          <ResultsPanel results={results} mode={mode} />
+          {results && <ResultsPanel results={results} mode={mode} />}
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
 
 export default Index;
