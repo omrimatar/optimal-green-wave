@@ -33,12 +33,20 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
   const avgDelayDown = Array.isArray(baseline.avg_delay_down) ? baseline.avg_delay_down : [];
   const maxDelayUp = Array.isArray(baseline.max_delay_up) ? baseline.max_delay_up : [];
   const maxDelayDown = Array.isArray(baseline.max_delay_down) ? baseline.max_delay_down : [];
+  const chainUpStart = Array.isArray(baseline.chain_up_start) ? baseline.chain_up_start : [];
+  const chainUpEnd = Array.isArray(baseline.chain_up_end) ? baseline.chain_up_end : [];
+  const chainDownStart = Array.isArray(baseline.chain_down_start) ? baseline.chain_down_start : [];
+  const chainDownEnd = Array.isArray(baseline.chain_down_end) ? baseline.chain_down_end : [];
 
   const optimizedOffsets = Array.isArray(optimized.offsets) ? optimized.offsets : [];
   const optimizedAvgDelayUp = Array.isArray(optimized.avg_delay_up) ? optimized.avg_delay_up : [];
   const optimizedAvgDelayDown = Array.isArray(optimized.avg_delay_down) ? optimized.avg_delay_down : [];
   const optimizedMaxDelayUp = Array.isArray(optimized.max_delay_up) ? optimized.max_delay_up : [];
   const optimizedMaxDelayDown = Array.isArray(optimized.max_delay_down) ? optimized.max_delay_down : [];
+  const optimizedChainUpStart = Array.isArray(optimized.chain_up_start) ? optimized.chain_up_start : [];
+  const optimizedChainUpEnd = Array.isArray(optimized.chain_up_end) ? optimized.chain_up_end : [];
+  const optimizedChainDownStart = Array.isArray(optimized.chain_down_start) ? optimized.chain_down_start : [];
+  const optimizedChainDownEnd = Array.isArray(optimized.chain_down_end) ? optimized.chain_down_end : [];
 
   console.log("Rendering MetricsTable with processed data:", {
     offsets,
@@ -46,11 +54,19 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
     avgDelayDown,
     maxDelayUp,
     maxDelayDown,
+    chainUpStart,
+    chainUpEnd,
+    chainDownStart,
+    chainDownEnd,
     optimizedOffsets,
     optimizedAvgDelayUp,
     optimizedAvgDelayDown,
     optimizedMaxDelayUp,
-    optimizedMaxDelayDown
+    optimizedMaxDelayDown,
+    optimizedChainUpStart,
+    optimizedChainUpEnd,
+    optimizedChainDownStart,
+    optimizedChainDownEnd
   });
 
   return (
@@ -135,8 +151,34 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
               </TableRow>
             ))}
 
+            {chainUpStart.map((chainValue, index) => (
+              <TableRow key={`chain-up-${index}`}>
+                <TableCell>רוחב פס למעלה צמתים {index + 1}-{index + 2}</TableCell>
+                <TableCell>{chainValue === null ? "N/A" : chainValue.toFixed(2)}</TableCell>
+                <TableCell>
+                  {optimizedChainUpStart[index] === null ? "N/A" : (optimizedChainUpStart[index] || 0).toFixed(2)}
+                </TableCell>
+                <TableCell>
+                  {compareValues(chainValue, optimizedChainUpStart[index])}
+                </TableCell>
+              </TableRow>
+            ))}
+
+            {chainDownStart.map((chainValue, index) => (
+              <TableRow key={`chain-down-${index}`}>
+                <TableCell>רוחב פס למטה צמתים {index + 2}-{index + 1}</TableCell>
+                <TableCell>{chainValue === null ? "N/A" : chainValue.toFixed(2)}</TableCell>
+                <TableCell>
+                  {optimizedChainDownStart[index] === null ? "N/A" : (optimizedChainDownStart[index] || 0).toFixed(2)}
+                </TableCell>
+                <TableCell>
+                  {compareValues(chainValue, optimizedChainDownStart[index])}
+                </TableCell>
+              </TableRow>
+            ))}
+
             <TableRow>
-              <TableCell>רוחב מסדרון למעלה</TableCell>
+              <TableCell>רוחב פס בציר למעלה</TableCell>
               <TableCell>{baseline.corridorBW_up === null ? "N/A" : baseline.corridorBW_up.toFixed(2)}</TableCell>
               <TableCell>{optimized.corridorBW_up === null ? "N/A" : optimized.corridorBW_up.toFixed(2)}</TableCell>
               <TableCell>
@@ -145,7 +187,7 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
             </TableRow>
 
             <TableRow>
-              <TableCell>רוחב מסדרון למטה</TableCell>
+              <TableCell>רוחב פס בציר למטה</TableCell>
               <TableCell>{baseline.corridorBW_down === null ? "N/A" : baseline.corridorBW_down.toFixed(2)}</TableCell>
               <TableCell>{optimized.corridorBW_down === null ? "N/A" : optimized.corridorBW_down.toFixed(2)}</TableCell>
               <TableCell>
