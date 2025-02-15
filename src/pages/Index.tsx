@@ -109,9 +109,16 @@ const Index = () => {
         weights,
         normalizedOffsets
       );
+      
       console.log("Manual calculation results received:", calculationResults);
+      
+      // וידוא שהתקבלו תוצאות ידניות
+      if (!calculationResults.manual_results) {
+        throw new Error("No manual results received from calculation");
+      }
+
       setResults(calculationResults);
-      setMode('manual'); // שינוי המצב ל'manual'
+      setMode('manual');
       setShowManualDialog(false);
       toast.success("חישוב הגל הירוק במצב ידני הושלם בהצלחה");
     } catch (error) {

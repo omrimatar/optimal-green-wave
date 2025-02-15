@@ -15,28 +15,29 @@ interface ResultsPanelProps {
 
 export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
   if (!results || !results.baseline_results || 
-     (!results.optimized_results && !results.manual_results)) {
+     (mode === 'manual' && !results.manual_results) ||
+     (mode !== 'manual' && !results.optimized_results)) {
     console.log("No results to display in ResultsPanel:", results);
     return null;
   }
 
-  console.log("Rendering ResultsPanel with data:", results);
+  console.log("Rendering ResultsPanel with mode:", mode);
+  console.log("Results data:", results);
+
+  // בחירת התוצאות המתאימות בהתאם למצב
+  const comparisonResults = mode === 'manual' ? results.manual_results! : results.optimized_results;
 
   return (
     <Card className="p-6 h-full">
       <div className="space-y-4">
         <OptimizationCharts
           baseline={results.baseline_results}
-          optimized={mode === 'manual' && results.manual_results ? 
-                    results.manual_results : 
-                    results.optimized_results}
+          optimized={comparisonResults}
           mode={mode}
         />
         <MetricsTable 
           baseline={results.baseline_results}
-          optimized={mode === 'manual' && results.manual_results ? 
-                    results.manual_results : 
-                    results.optimized_results}
+          optimized={comparisonResults}
           mode={mode}
         />
       </div>
