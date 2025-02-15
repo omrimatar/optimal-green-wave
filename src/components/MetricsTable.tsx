@@ -10,6 +10,21 @@ interface MetricsTableProps {
 }
 
 export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) => {
+  const getLabels = () => {
+    if (mode === 'manual') {
+      return {
+        baseline: 'מצב התחלתי',
+        optimized: 'מצב ידני'
+      };
+    }
+    return {
+      baseline: 'בסיס',
+      optimized: 'אופטימיזציה'
+    };
+  };
+
+  const labels = getLabels();
+
   const compareValues = (base: number | null, opt: number | null) => {
     if (base === null || opt === null) return "N/A";
     if (base === 0 && opt === 0) return "0%";
@@ -27,7 +42,6 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
     return null;
   }
 
-  // וידוא שכל המערכים קיימים והם באמת מערכים
   const offsets = Array.isArray(baseline.offsets) ? baseline.offsets : [];
   const avgDelayUp = Array.isArray(baseline.avg_delay_up) ? baseline.avg_delay_up : [];
   const avgDelayDown = Array.isArray(baseline.avg_delay_down) ? baseline.avg_delay_down : [];
@@ -73,7 +87,7 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
     <Card className="w-full table-fade-in">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          תוצאות האופטימיזציה
+          {mode === 'manual' ? 'תוצאות החישוב הידני' : 'תוצאות האופטימיזציה'}
           <Badge variant="outline" className="mr-2">
             {optimized.status === "Optimal" ? "אופטימלי" : optimized.status}
           </Badge>
@@ -84,8 +98,8 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
           <TableHeader>
             <TableRow>
               <TableHead>מדד</TableHead>
-              <TableHead>בסיס</TableHead>
-              <TableHead>לאחר אופטימיזציה</TableHead>
+              <TableHead>{labels.baseline}</TableHead>
+              <TableHead>{labels.optimized}</TableHead>
               <TableHead>שיפור</TableHead>
             </TableRow>
           </TableHeader>

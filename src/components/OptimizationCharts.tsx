@@ -121,8 +121,8 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
               <Legend />
               {comparisonType === 'optimization' ? (
                 <>
-                  <Bar dataKey="בסיס" fill="#8B5CF6" />
-                  <Bar dataKey="אופטימיזציה" fill="#F97316" />
+                  <Bar dataKey={labels.baseline} fill="#8B5CF6" />
+                  <Bar dataKey={labels.optimized} fill="#F97316" />
                 </>
               ) : (
                 <>
@@ -144,14 +144,14 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
               <PolarAngleAxis dataKey="metric" />
               <PolarRadiusAxis angle={90} domain={[-50, 50]} />
               <Radar 
-                name="לפני אופטימיזציה" 
+                name={labels.baseline}
                 dataKey="לפני"
                 stroke="#8B5CF6" 
                 fill="#8B5CF6" 
                 fillOpacity={0.6} 
               />
               <Radar 
-                name="אחרי אופטימיזציה" 
+                name={labels.optimized}
                 dataKey="אחרי"
                 stroke="#F97316" 
                 fill="#F97316" 
