@@ -27,6 +27,11 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
     return base !== null && opt !== null;
   };
 
+  // פונקציית עזר להצגת ערך מספרי
+  const formatNumber = (value: number | null) => {
+    return value !== null ? value.toFixed(2) : "-";
+  };
+
   if (!baseline || !optimized) {
     console.log("Missing data for MetricsTable:", { baseline, optimized });
     return null;
@@ -38,9 +43,7 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
   const maxDelayUp = Array.isArray(baseline.max_delay_up) ? baseline.max_delay_up : [];
   const maxDelayDown = Array.isArray(baseline.max_delay_down) ? baseline.max_delay_down : [];
   const chainUpStart = Array.isArray(baseline.chain_up_start) ? baseline.chain_up_start : [];
-  const chainUpEnd = Array.isArray(baseline.chain_up_end) ? baseline.chain_up_end : [];
   const chainDownStart = Array.isArray(baseline.chain_down_start) ? baseline.chain_down_start : [];
-  const chainDownEnd = Array.isArray(baseline.chain_down_end) ? baseline.chain_down_end : [];
 
   const optimizedOffsets = Array.isArray(optimized.offsets) ? optimized.offsets : [];
   const optimizedAvgDelayUp = Array.isArray(optimized.avg_delay_up) ? optimized.avg_delay_up : [];
@@ -48,9 +51,7 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
   const optimizedMaxDelayUp = Array.isArray(optimized.max_delay_up) ? optimized.max_delay_up : [];
   const optimizedMaxDelayDown = Array.isArray(optimized.max_delay_down) ? optimized.max_delay_down : [];
   const optimizedChainUpStart = Array.isArray(optimized.chain_up_start) ? optimized.chain_up_start : [];
-  const optimizedChainUpEnd = Array.isArray(optimized.chain_up_end) ? optimized.chain_up_end : [];
   const optimizedChainDownStart = Array.isArray(optimized.chain_down_start) ? optimized.chain_down_start : [];
-  const optimizedChainDownEnd = Array.isArray(optimized.chain_down_end) ? optimized.chain_down_end : [];
 
   return (
     <Card className="w-full table-fade-in">
@@ -73,22 +74,25 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {offsets.map((offset, index) => shouldShowRow(offset, optimizedOffsets[index]) && (
-              <TableRow key={`offset-${index}`}>
-                <TableCell>היסט צומת {index + 1}</TableCell>
-                <TableCell>{offset.toFixed(2)}</TableCell>
-                <TableCell>{(optimizedOffsets[index] || 0).toFixed(2)}</TableCell>
-                <TableCell>-</TableCell>
-              </TableRow>
-            ))}
+            {offsets.map((offset, index) => {
+              const optOffset = optimizedOffsets[index];
+              return shouldShowRow(offset, optOffset) && (
+                <TableRow key={`offset-${index}`}>
+                  <TableCell>היסט צומת {index + 1}</TableCell>
+                  <TableCell>{formatNumber(offset)}</TableCell>
+                  <TableCell>{formatNumber(optOffset)}</TableCell>
+                  <TableCell>-</TableCell>
+                </TableRow>
+              );
+            })}
 
             {avgDelayUp.map((delay, index) => {
               const optDelay = optimizedAvgDelayUp[index];
               return shouldShowRow(delay, optDelay) && (
                 <TableRow key={`delay-up-${index}`}>
                   <TableCell>עיכוב ממוצע למעלה צמתים {index + 1}-{index + 2}</TableCell>
-                  <TableCell>{delay.toFixed(2)}</TableCell>
-                  <TableCell>{optDelay.toFixed(2)}</TableCell>
+                  <TableCell>{formatNumber(delay)}</TableCell>
+                  <TableCell>{formatNumber(optDelay)}</TableCell>
                   <TableCell>{compareValues(delay, optDelay)}</TableCell>
                 </TableRow>
               );
@@ -99,8 +103,8 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
               return shouldShowRow(delay, optDelay) && (
                 <TableRow key={`delay-down-${index}`}>
                   <TableCell>עיכוב ממוצע למטה צמתים {index + 2}-{index + 1}</TableCell>
-                  <TableCell>{delay.toFixed(2)}</TableCell>
-                  <TableCell>{optDelay.toFixed(2)}</TableCell>
+                  <TableCell>{formatNumber(delay)}</TableCell>
+                  <TableCell>{formatNumber(optDelay)}</TableCell>
                   <TableCell>{compareValues(delay, optDelay)}</TableCell>
                 </TableRow>
               );
@@ -111,8 +115,8 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
               return shouldShowRow(delay, optDelay) && (
                 <TableRow key={`max-delay-up-${index}`}>
                   <TableCell>עיכוב מקסימלי למעלה צמתים {index + 1}-{index + 2}</TableCell>
-                  <TableCell>{delay.toFixed(2)}</TableCell>
-                  <TableCell>{optDelay.toFixed(2)}</TableCell>
+                  <TableCell>{formatNumber(delay)}</TableCell>
+                  <TableCell>{formatNumber(optDelay)}</TableCell>
                   <TableCell>{compareValues(delay, optDelay)}</TableCell>
                 </TableRow>
               );
@@ -123,8 +127,8 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
               return shouldShowRow(delay, optDelay) && (
                 <TableRow key={`max-delay-down-${index}`}>
                   <TableCell>עיכוב מקסימלי למטה צמתים {index + 2}-{index + 1}</TableCell>
-                  <TableCell>{delay.toFixed(2)}</TableCell>
-                  <TableCell>{optDelay.toFixed(2)}</TableCell>
+                  <TableCell>{formatNumber(delay)}</TableCell>
+                  <TableCell>{formatNumber(optDelay)}</TableCell>
                   <TableCell>{compareValues(delay, optDelay)}</TableCell>
                 </TableRow>
               );
@@ -135,8 +139,8 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
               return shouldShowRow(chainValue, optChainValue) && (
                 <TableRow key={`chain-up-${index}`}>
                   <TableCell>רוחב פס למעלה צמתים {index + 1}-{index + 2}</TableCell>
-                  <TableCell>{chainValue.toFixed(2)}</TableCell>
-                  <TableCell>{optChainValue.toFixed(2)}</TableCell>
+                  <TableCell>{formatNumber(chainValue)}</TableCell>
+                  <TableCell>{formatNumber(optChainValue)}</TableCell>
                   <TableCell>{compareValues(chainValue, optChainValue)}</TableCell>
                 </TableRow>
               );
@@ -147,8 +151,8 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
               return shouldShowRow(chainValue, optChainValue) && (
                 <TableRow key={`chain-down-${index}`}>
                   <TableCell>רוחב פס למטה צמתים {index + 2}-{index + 1}</TableCell>
-                  <TableCell>{chainValue.toFixed(2)}</TableCell>
-                  <TableCell>{optChainValue.toFixed(2)}</TableCell>
+                  <TableCell>{formatNumber(chainValue)}</TableCell>
+                  <TableCell>{formatNumber(optChainValue)}</TableCell>
                   <TableCell>{compareValues(chainValue, optChainValue)}</TableCell>
                 </TableRow>
               );
@@ -157,8 +161,8 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
             {shouldShowRow(baseline.corridorBW_up, optimized.corridorBW_up) && (
               <TableRow>
                 <TableCell>רוחב פס בציר למעלה</TableCell>
-                <TableCell>{baseline.corridorBW_up.toFixed(2)}</TableCell>
-                <TableCell>{optimized.corridorBW_up.toFixed(2)}</TableCell>
+                <TableCell>{formatNumber(baseline.corridorBW_up)}</TableCell>
+                <TableCell>{formatNumber(optimized.corridorBW_up)}</TableCell>
                 <TableCell>
                   {compareValues(baseline.corridorBW_up, optimized.corridorBW_up)}
                 </TableCell>
@@ -168,8 +172,8 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
             {shouldShowRow(baseline.corridorBW_down, optimized.corridorBW_down) && (
               <TableRow>
                 <TableCell>רוחב פס בציר למטה</TableCell>
-                <TableCell>{baseline.corridorBW_down.toFixed(2)}</TableCell>
-                <TableCell>{optimized.corridorBW_down.toFixed(2)}</TableCell>
+                <TableCell>{formatNumber(baseline.corridorBW_down)}</TableCell>
+                <TableCell>{formatNumber(optimized.corridorBW_down)}</TableCell>
                 <TableCell>
                   {compareValues(baseline.corridorBW_down, optimized.corridorBW_down)}
                 </TableCell>
