@@ -74,18 +74,17 @@ function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): { up:
 
   let minBandwidthUp = Infinity;
   let minBandwidthDown = Infinity;
-  let hasUp = false;     // נסמן אם בכלל יש מופע up בצמתים
-  let hasDown = false;   // idem ל-down
+  let foundUpPair = false;   // מסמן האם נמצא לפחות זוג אחד עם מופעי up
+  let foundDownPair = false; // מסמן האם נמצא לפחות זוג אחד עם מופעי down
 
   // כיוון UP
   for (let i = 0; i < intersections.length - 1; i++) {
     const curr = intersections[i];
     const next = intersections[i + 1];
     if (!curr.green_up?.length || !next.green_up?.length || !curr.cycle_up || !next.cycle_up) {
-      // דילוג
       continue;
     }
-    hasUp = true;
+    foundUpPair = true;
 
     const distance = next.distance - curr.distance;
     const travelTime = (distance / travel.up.speed) * 3.6;
@@ -110,7 +109,7 @@ function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): { up:
     if (!curr.green_down?.length || !prev.green_down?.length || !curr.cycle_down || !prev.cycle_down) {
       continue;
     }
-    hasDown = true;
+    foundDownPair = true;
 
     const distance = curr.distance - prev.distance;
     const travelTime = (distance / travel.down.speed) * 3.6;
@@ -128,8 +127,17 @@ function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): { up:
     minBandwidthDown = Math.min(minBandwidthDown, overlap);
   }
 
-  const upVal = hasUp ? (minBandwidthUp === Infinity ? 0 : minBandwidthUp) : null;
-  const downVal= hasDown? (minBandwidthDown===Infinity? 0 : minBandwidthDown): null;
+  let upVal: number|null = null;
+  if (foundUpPair) {
+    // במקרה זה באמת היה זוג אחד לפחות
+    upVal = minBandwidthUp === Infinity ? 0 : minBandwidthUp;
+  }
+
+  let downVal: number|null = null;
+  if (foundDownPair) {
+    // במקרה זה באמת היה זוג אחד לפחות
+    downVal = minBandwidthDown === Infinity ? 0 : minBandwidthDown;
+  }
 
   return { up: upVal, down: downVal };
 }
