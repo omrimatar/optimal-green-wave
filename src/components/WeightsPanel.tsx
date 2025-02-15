@@ -56,7 +56,6 @@ export const WeightsPanel = ({
                 onValueChange={(value) => onWeightChange('corridorBandwidth', 'upstream', value[0])}
                 max={100}
                 step={0.1}
-                defaultValue={[25]}
               />
               <Label>במורד הזרם ({formatNumber(weights.corridorBandwidth.downstream)}%)</Label>
               <Slider 
@@ -64,7 +63,6 @@ export const WeightsPanel = ({
                 onValueChange={(value) => onWeightChange('corridorBandwidth', 'downstream', value[0])}
                 max={100}
                 step={0.1}
-                defaultValue={[25]}
               />
             </div>
           </div>
@@ -78,7 +76,6 @@ export const WeightsPanel = ({
                 onValueChange={(value) => onWeightChange('adjacentPairs', 'upstream', value[0])}
                 max={100}
                 step={0.1}
-                defaultValue={[15]}
               />
               <Label>במורד הזרם ({formatNumber(weights.adjacentPairs.downstream)}%)</Label>
               <Slider 
@@ -86,7 +83,6 @@ export const WeightsPanel = ({
                 onValueChange={(value) => onWeightChange('adjacentPairs', 'downstream', value[0])}
                 max={100}
                 step={0.1}
-                defaultValue={[15]}
               />
             </div>
           </div>
@@ -100,7 +96,6 @@ export const WeightsPanel = ({
                 onValueChange={(value) => onWeightChange('delayMinimization', 'upstream', value[0])}
                 max={100}
                 step={0.1}
-                defaultValue={[10]}
               />
               <Label>במורד הזרם ({formatNumber(weights.delayMinimization.downstream)}%)</Label>
               <Slider 
@@ -108,7 +103,6 @@ export const WeightsPanel = ({
                 onValueChange={(value) => onWeightChange('delayMinimization', 'downstream', value[0])}
                 max={100}
                 step={0.1}
-                defaultValue={[10]}
               />
             </div>
           </div>
