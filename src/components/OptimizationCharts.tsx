@@ -118,7 +118,7 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
       case 'radar':
         return (
           <ResponsiveContainer width="100%" height={400}>
-            <RadarChart data={radarData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+            <RadarChart data={radarData}>
               <PolarGrid />
               <PolarAngleAxis dataKey="metric" />
               <PolarRadiusAxis />
@@ -132,42 +132,6 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
               <Radar 
                 name="אחרי אופטימיזציה" 
                 dataKey="רוחב מסדרון למעלה - אחרי" 
-                stroke="#22c55e" 
-                fill="#22c55e" 
-                fillOpacity={0.6} 
-              />
-              <Radar 
-                dataKey="רוחב מסדרון למטה - לפני" 
-                stroke="#1EAEDB" 
-                fill="#1EAEDB" 
-                fillOpacity={0.6} 
-              />
-              <Radar 
-                dataKey="רוחב מסדרון למטה - אחרי" 
-                stroke="#22c55e" 
-                fill="#22c55e" 
-                fillOpacity={0.6} 
-              />
-              <Radar 
-                dataKey="עיכוב ממוצע למעלה - לפני" 
-                stroke="#1EAEDB" 
-                fill="#1EAEDB" 
-                fillOpacity={0.6} 
-              />
-              <Radar 
-                dataKey="עיכוב ממוצע למעלה - אחרי" 
-                stroke="#22c55e" 
-                fill="#22c55e" 
-                fillOpacity={0.6} 
-              />
-              <Radar 
-                dataKey="עיכוב ממוצע למטה - לפני" 
-                stroke="#1EAEDB" 
-                fill="#1EAEDB" 
-                fillOpacity={0.6} 
-              />
-              <Radar 
-                dataKey="עיכוב ממוצע למטה - אחרי" 
                 stroke="#22c55e" 
                 fill="#22c55e" 
                 fillOpacity={0.6} 
