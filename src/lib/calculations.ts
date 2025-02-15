@@ -40,6 +40,11 @@ export async function calculateGreenWave(
     }
   };
 
+  console.log("Sending to optimization with manualOffsets:", manualOffsets);
+  
   // קריאה לפונקציית האופטימיזציה
-  return await greenWaveOptimization(networkData, weights || DEFAULT_WEIGHTS, manualOffsets);
+  const results = await greenWaveOptimization(networkData, weights || DEFAULT_WEIGHTS, manualOffsets);
+  console.log("Received results from optimization:", results);
+  
+  return results;
 }

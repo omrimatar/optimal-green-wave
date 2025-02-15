@@ -141,73 +141,77 @@ export async function greenWaveOptimization(
   data: NetworkData, 
   weights: Weights,
   manualOffsets?: number[]
-) {
-    try {
-        console.log('Starting optimization with data:', { 
-            intersections: data.intersections,
-            travel: data.travel,
-            manualOffsets
-        });
-        console.log('Using weights:', weights);
+): Promise<{
+  baseline_results: RunResult;
+  optimized_results: RunResult;
+  manual_results?: RunResult;
+}> {
+  try {
+    console.log('Starting optimization with data:', { 
+      intersections: data.intersections,
+      travel: data.travel,
+      manualOffsets
+    });
+    console.log('Using weights:', weights);
 
-        // בדיקת תקינות הנתונים לפני השליחה
-        if (!data.intersections || !data.travel || !weights) {
-            throw new Error('Missing required data for optimization');
-        }
-
-        // שליחת הבקשה לפונקציית Edge
-        console.log('Preparing request body...');
-        const requestBody = {
-            data: {
-                intersections: data.intersections,
-                travel: data.travel
-            },
-            weights,
-            manualOffsets
-        };
-        console.log('Request body:', requestBody);
-        
-        const functionUrl = `https://xfdqxyxvjzbvxewbzrpe.supabase.co/functions/v1/optimize?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZHF4eXh2anpidnhld2J6cnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NzE5MTIsImV4cCI6MjA1NTE0NzkxMn0.uhp87GwzK6g04w3ZTBE1vVe8dtDkXALlzrBsSjAuUtg`;
-        console.log('Function URL:', functionUrl);
-        
-        const response = await fetch(functionUrl, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(requestBody)
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const results = await response.json();
-
-        if (!results) {
-            throw new Error('No results returned from optimization');
-        }
-
-        console.log('Received results:', results);
-
-        // חישוב post-processing על התוצאות
-        if (results.baseline_results) {
-            console.log('Processing baseline results...');
-            chainPostProc(results.baseline_results, data);
-        }
-        if (results.optimized_results) {
-            console.log('Processing optimized results...');
-            chainPostProc(results.optimized_results, data);
-        }
-        if (results.manual_results) {
-            console.log('Processing manual results...');
-            chainPostProc(results.manual_results, data);
-        }
-
-        console.log('Final results:', results);
-        return results;
-    } catch (error) {
-        console.error('Error in greenWaveOptimization:', error);
-        throw error;
+    // בדיקת תקינות הנתונים לפני השליחה
+    if (!data.intersections || !data.travel || !weights) {
+      throw new Error('Missing required data for optimization');
     }
+
+    // שליחת הבקשה לפונקציית Edge
+    console.log('Preparing request body...');
+    const requestBody = {
+      data: {
+        intersections: data.intersections,
+        travel: data.travel
+      },
+      weights,
+      manualOffsets
+    };
+    console.log('Request body:', requestBody);
+    
+    const functionUrl = `https://xfdqxyxvjzbvxewbzrpe.supabase.co/functions/v1/optimize?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZHF4eXh2anpidnhld2J6cnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NzE5MTIsImV4cCI6MjA1NTE0NzkxMn0.uhp87GwzK6g04w3ZTBE1vVe8dtDkXALlzrBsSjAuUtg`;
+    console.log('Function URL:', functionUrl);
+        
+    const response = await fetch(functionUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const results = await response.json();
+    
+    if (!results) {
+      throw new Error('No results returned from optimization');
+    }
+
+    console.log('Received results:', results);
+
+    // חישוב post-processing על התוצאות
+    if (results.baseline_results) {
+      console.log('Processing baseline results...');
+      chainPostProc(results.baseline_results, data);
+    }
+    if (results.optimized_results) {
+      console.log('Processing optimized results...');
+      chainPostProc(results.optimized_results, data);
+    }
+    if (results.manual_results) {
+      console.log('Processing manual results...');
+      chainPostProc(results.manual_results, data);
+    }
+
+    console.log('Final results:', results);
+    return results;
+  } catch (error) {
+    console.error('Error in greenWaveOptimization:', error);
+    throw error;
+  }
 }
