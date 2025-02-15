@@ -1,5 +1,6 @@
 
 import { greenWaveOptimization } from "./traffic";
+import { DEFAULT_WEIGHTS } from "@/types/optimization";
 import type { Intersection, OptimizationWeights } from "@/types/optimization";
 import type { NetworkData, RunResult } from "@/types/traffic";
 

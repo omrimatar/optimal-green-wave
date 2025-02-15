@@ -8,7 +8,7 @@ import { OptimizationWeights } from "@/types/optimization";
 interface WeightsPanelProps {
   weights: OptimizationWeights;
   showWeights: boolean;
-  onWeightChange: (category: keyof OptimizationWeights, direction: 'upstream' | 'downstream', value: number) => void;
+  onWeightChange: (category: keyof OptimizationWeights, value: number) => void;
   onToggleWeights: () => void;
   onResetWeights: () => void;
 }
@@ -50,17 +50,17 @@ export const WeightsPanel = ({
           <div className="space-y-4">
             <h3 className="font-semibold">גל ירוק בציר</h3>
             <div className="space-y-2">
-              <Label>במעלה הזרם ({formatNumber(weights.corridorBandwidth.upstream)}%)</Label>
+              <Label>במעלה הזרם ({formatNumber(weights.corridor_up)})</Label>
               <Slider 
-                value={[weights.corridorBandwidth.upstream]}
-                onValueChange={(value) => onWeightChange('corridorBandwidth', 'upstream', value[0])}
+                value={[weights.corridor_up * 100]}
+                onValueChange={(value) => onWeightChange('corridor_up', value[0] / 100)}
                 max={100}
                 step={1}
               />
-              <Label>במורד הזרם ({formatNumber(weights.corridorBandwidth.downstream)}%)</Label>
+              <Label>במורד הזרם ({formatNumber(weights.corridor_down)})</Label>
               <Slider 
-                value={[weights.corridorBandwidth.downstream]}
-                onValueChange={(value) => onWeightChange('corridorBandwidth', 'downstream', value[0])}
+                value={[weights.corridor_down * 100]}
+                onValueChange={(value) => onWeightChange('corridor_down', value[0] / 100)}
                 max={100}
                 step={1}
               />
@@ -70,17 +70,17 @@ export const WeightsPanel = ({
           <div className="space-y-4">
             <h3 className="font-semibold">חפיפה בין צמתים סמוכים</h3>
             <div className="space-y-2">
-              <Label>במעלה הזרם ({formatNumber(weights.adjacentPairs.upstream)}%)</Label>
+              <Label>במעלה הזרם ({formatNumber(weights.overlap_up)})</Label>
               <Slider 
-                value={[weights.adjacentPairs.upstream]}
-                onValueChange={(value) => onWeightChange('adjacentPairs', 'upstream', value[0])}
+                value={[weights.overlap_up * 100]}
+                onValueChange={(value) => onWeightChange('overlap_up', value[0] / 100)}
                 max={100}
                 step={1}
               />
-              <Label>במורד הזרם ({formatNumber(weights.adjacentPairs.downstream)}%)</Label>
+              <Label>במורד הזרם ({formatNumber(weights.overlap_down)})</Label>
               <Slider 
-                value={[weights.adjacentPairs.downstream]}
-                onValueChange={(value) => onWeightChange('adjacentPairs', 'downstream', value[0])}
+                value={[weights.overlap_down * 100]}
+                onValueChange={(value) => onWeightChange('overlap_down', value[0] / 100)}
                 max={100}
                 step={1}
               />
@@ -88,19 +88,39 @@ export const WeightsPanel = ({
           </div>
 
           <div className="space-y-4">
-            <h3 className="font-semibold">מזעור עיכובים</h3>
+            <h3 className="font-semibold">עיכוב ממוצע</h3>
             <div className="space-y-2">
-              <Label>במעלה הזרם ({formatNumber(weights.delayMinimization.upstream)}%)</Label>
+              <Label>במעלה הזרם ({formatNumber(weights.avg_delay_up)})</Label>
               <Slider 
-                value={[weights.delayMinimization.upstream]}
-                onValueChange={(value) => onWeightChange('delayMinimization', 'upstream', value[0])}
+                value={[weights.avg_delay_up * 100]}
+                onValueChange={(value) => onWeightChange('avg_delay_up', value[0] / 100)}
                 max={100}
                 step={1}
               />
-              <Label>במורד הזרם ({formatNumber(weights.delayMinimization.downstream)}%)</Label>
+              <Label>במורד הזרם ({formatNumber(weights.avg_delay_down)})</Label>
               <Slider 
-                value={[weights.delayMinimization.downstream]}
-                onValueChange={(value) => onWeightChange('delayMinimization', 'downstream', value[0])}
+                value={[weights.avg_delay_down * 100]}
+                onValueChange={(value) => onWeightChange('avg_delay_down', value[0] / 100)}
+                max={100}
+                step={1}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="font-semibold">עיכוב מקסימלי</h3>
+            <div className="space-y-2">
+              <Label>במעלה הזרם ({formatNumber(weights.max_delay_up)})</Label>
+              <Slider 
+                value={[weights.max_delay_up * 100]}
+                onValueChange={(value) => onWeightChange('max_delay_up', value[0] / 100)}
+                max={100}
+                step={1}
+              />
+              <Label>במורד הזרם ({formatNumber(weights.max_delay_down)})</Label>
+              <Slider 
+                value={[weights.max_delay_down * 100]}
+                onValueChange={(value) => onWeightChange('max_delay_down', value[0] / 100)}
                 max={100}
                 step={1}
               />

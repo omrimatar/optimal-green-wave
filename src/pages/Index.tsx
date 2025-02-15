@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -52,7 +51,7 @@ const Index = () => {
   }]);
   const [speed, setSpeed] = useState(50);
   const [results, setResults] = useState<any>(null);
-  const [mode, setMode] = useState<'display' | 'calculate'>('calculate');
+  const [mode, setMode] = useState<'display' | 'calculate' | 'manual'>('calculate');
   const [weights, setWeights] = useState<OptimizationWeights>(DEFAULT_WEIGHTS);
   const [showWeights, setShowWeights] = useState(false);
   const [manualOffsets, setManualOffsets] = useState<number[]>([]);
@@ -139,22 +138,10 @@ const Index = () => {
     }
   };
 
-  const updateWeight = (category: keyof OptimizationWeights, direction: 'upstream' | 'downstream', value: number) => {
-    const newWeights = {
-      ...weights
-    };
-    newWeights[category][direction] = value;
-    const total = Object.values(newWeights).reduce((sum, cat) => sum + cat.upstream + cat.downstream, 0);
-    if (total !== 100) {
-      const scale = (100 - value) / (total - newWeights[category][direction]);
-      Object.entries(newWeights).forEach(([key, val]) => {
-        if (key !== category || key === category && direction === 'downstream') {
-          newWeights[key as keyof OptimizationWeights].upstream *= scale;
-          newWeights[key as keyof OptimizationWeights].downstream *= scale;
-        }
-      });
-    }
-    setWeights(newWeights);
+  const updateWeight = (category: keyof OptimizationWeights, value: number) => {
+    const updatedWeights = { ...weights };
+    updatedWeights[category] = value;
+    setWeights(updatedWeights);
   };
 
   const handleLoadInput = (data: {
@@ -250,8 +237,8 @@ const Index = () => {
                     <DialogHeader>
                       <DialogTitle>הזנת היסטים ידנית</DialogTitle>
                       <DialogDescription>
-                        הזן את ערכי ההיסט עבור כל צומת (בשניות).
-                        שים לב שההיסט של הצומת הראשון תמיד יהיה 0.
+                        הזן את ערכי ה.hist עבור כל צומת (בשניות).
+                        שים לב שה.hist של הצומת הראשון תמיד יהיה 0.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">

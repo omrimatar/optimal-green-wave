@@ -1,4 +1,3 @@
-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,9 +6,10 @@ import { RunResult } from "@/types/traffic";
 interface MetricsTableProps {
   baseline: RunResult;
   optimized: RunResult;
+  mode: 'display' | 'calculate' | 'manual';
 }
 
-export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
+export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) => {
   const compareValues = (base: number | null, opt: number | null) => {
     if (base === null || opt === null) return "N/A";
     if (base === 0 && opt === 0) return "0%";
