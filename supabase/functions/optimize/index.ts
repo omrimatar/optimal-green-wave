@@ -8,21 +8,22 @@ console.log("Loading optimize function");
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 204
+    });
   }
 
   try {
-    // קבלת הפרמטרים מה-request
     const { data, weights } = await req.json();
+    console.log('Received request with data:', { data, weights });
     
-    // התחברות ל-Supabase עם service role key
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       { auth: { persistSession: false } }
     );
 
-    // קריאה לפונקציה שהגדרנו במסד הנתונים
     const { data: dbResult, error: dbError } = await supabaseClient
       .rpc('invoke_optimize_function', { data: { data, weights } });
 
@@ -33,7 +34,6 @@ serve(async (req) => {
 
     console.log('Database result:', dbResult);
     
-    // כרגע נחזיר תוצאות דמה לצורך בדיקת התקשורת
     const n = data.intersections.length;
     const baselineRes = {
       status: "Optimal",
@@ -73,7 +73,8 @@ serve(async (req) => {
         headers: { 
           ...corsHeaders,
           "Content-Type": "application/json"
-        } 
+        },
+        status: 200
       }
     );
   } catch (error) {
@@ -87,3 +88,4 @@ serve(async (req) => {
     );
   }
 });
+

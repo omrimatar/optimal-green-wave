@@ -11,5 +11,7 @@ port = 54321
 # Port to use for the database URL.
 port = 54322
 
+[functions]
 [functions.optimize]
 verify_jwt = false
+
