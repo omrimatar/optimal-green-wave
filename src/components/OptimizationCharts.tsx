@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -24,78 +25,95 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
   // הכנת נתונים להשוואת אופטימיזציה
   const optimizationData = [
     {
-      metric: 'רוחב מסדרון למעלה',
-      בסיס: Number(baseline.corridorBW_up.toFixed(1)),
-      אופטימיזציה: Number(optimized.corridorBW_up.toFixed(1))
+      metric: 'רוחב פס למעלה',
+      בסיס: baseline.corridorBW_up !== null ? Number(baseline.corridorBW_up.toFixed(1)) : null,
+      אופטימיזציה: optimized.corridorBW_up !== null ? Number(optimized.corridorBW_up.toFixed(1)) : null
     },
     {
-      metric: 'רוחב מסדרון למטה',
-      בסיס: Number(baseline.corridorBW_down.toFixed(1)),
-      אופטימיזציה: Number(optimized.corridorBW_down.toFixed(1))
+      metric: 'רוחב פס למטה',
+      בסיס: baseline.corridorBW_down !== null ? Number(baseline.corridorBW_down.toFixed(1)) : null,
+      אופטימיזציה: optimized.corridorBW_down !== null ? Number(optimized.corridorBW_down.toFixed(1)) : null
     },
-    ...(baseline.avg_delay_up?.map((_, index) => ({
+    ...(baseline.avg_delay_up?.map((delay, index) => ({
       metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
-      בסיס: -Number(baseline.avg_delay_up[index].toFixed(1)),
-      אופטימיזציה: -Number(optimized.avg_delay_up?.[index].toFixed(1))
+      בסיס: delay !== null ? -Number(delay.toFixed(1)) : null,
+      אופטימיזציה: optimized.avg_delay_up?.[index] !== null ? -Number(optimized.avg_delay_up[index].toFixed(1)) : null
     })) || []),
-    ...(baseline.max_delay_up?.map((_, index) => ({
+    ...(baseline.max_delay_up?.map((delay, index) => ({
       metric: `עיכוב מקסימלי ${index + 1}-${index + 2}`,
-      בסיס: -Number(baseline.max_delay_up[index].toFixed(1)),
-      אופטימיזציה: -Number(optimized.max_delay_up?.[index].toFixed(1))
+      בסיס: delay !== null ? -Number(delay.toFixed(1)) : null,
+      אופטימיזציה: optimized.max_delay_up?.[index] !== null ? -Number(optimized.max_delay_up[index].toFixed(1)) : null
     })) || [])
   ];
 
   // הכנת נתונים להשוואת כיוונים
   const directionData = [
     {
-      metric: 'רוחב מסדרון',
-      'מעלה הזרם - בסיס': Number(baseline.corridorBW_up.toFixed(1)),
-      'מעלה הזרם - אופטימיזציה': Number(optimized.corridorBW_up.toFixed(1)),
-      'מורד הזרם - בסיס': Number(baseline.corridorBW_down.toFixed(1)),
-      'מורד הזרם - אופטימיזציה': Number(optimized.corridorBW_down.toFixed(1))
+      metric: 'רוחב פס',
+      'מעלה הזרם - בסיס': baseline.corridorBW_up !== null ? Number(baseline.corridorBW_up.toFixed(1)) : null,
+      'מעלה הזרם - אופטימיזציה': optimized.corridorBW_up !== null ? Number(optimized.corridorBW_up.toFixed(1)) : null,
+      'מורד הזרם - בסיס': baseline.corridorBW_down !== null ? Number(baseline.corridorBW_down.toFixed(1)) : null,
+      'מורד הזרם - אופטימיזציה': optimized.corridorBW_down !== null ? Number(optimized.corridorBW_down.toFixed(1)) : null
     },
     ...(baseline.avg_delay_up?.map((_, index) => ({
       metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
-      'מעלה הזרם - בסיס': -Number(baseline.avg_delay_up[index].toFixed(1)),
-      'מעלה הזרם - אופטימיזציה': -Number(optimized.avg_delay_up?.[index].toFixed(1)),
-      'מורד הזרם - בסיס': -Number(baseline.avg_delay_down?.[index].toFixed(1)),
-      'מורד הזרם - אופטימיזציה': -Number(optimized.avg_delay_down?.[index].toFixed(1))
+      'מעלה הזרם - בסיס': baseline.avg_delay_up[index] !== null ? -Number(baseline.avg_delay_up[index].toFixed(1)) : null,
+      'מעלה הזרם - אופטימיזציה': optimized.avg_delay_up?.[index] !== null ? -Number(optimized.avg_delay_up[index].toFixed(1)) : null,
+      'מורד הזרם - בסיס': baseline.avg_delay_down?.[index] !== null ? -Number(baseline.avg_delay_down[index].toFixed(1)) : null,
+      'מורד הזרם - אופטימיזציה': optimized.avg_delay_down?.[index] !== null ? -Number(optimized.avg_delay_down[index].toFixed(1)) : null
     })) || [])
   ];
 
   // הכנת נתונים לגרף רדאר - 4 מדדים
-  const calculateAverage = (arr: number[] = []): number => {
-    if (arr.length === 0) return 0;
-    return arr.reduce((sum, val) => sum + val, 0) / arr.length;
+  const calculateAverage = (arr: (number | null)[] = []): number | null => {
+    const validNumbers = arr.filter((val): val is number => val !== null);
+    if (validNumbers.length === 0) return null;
+    return validNumbers.reduce((sum, val) => sum + val, 0) / validNumbers.length;
+  };
+
+  const formatValue = (value: number | null): number | null => {
+    return value !== null ? Number(value.toFixed(1)) : null;
   };
 
   const radarData = [
     {
-      metric: 'רוחב מסדרון למעלה',
-      לפני: Number(baseline.corridorBW_up.toFixed(1)),
-      אחרי: Number(optimized.corridorBW_up.toFixed(1)),
+      metric: 'רוחב פס למעלה',
+      לפני: formatValue(baseline.corridorBW_up),
+      אחרי: formatValue(optimized.corridorBW_up),
     },
     {
-      metric: 'רוחב מסדרון למטה',
-      לפני: Number(baseline.corridorBW_down.toFixed(1)),
-      אחרי: Number(optimized.corridorBW_down.toFixed(1)),
+      metric: 'רוחב פס למטה',
+      לפני: formatValue(baseline.corridorBW_down),
+      אחרי: formatValue(optimized.corridorBW_down),
     },
     {
       metric: 'עיכוב ממוצע למעלה',
-      לפני: -Number(calculateAverage(baseline.avg_delay_up).toFixed(1)),
-      אחרי: -Number(calculateAverage(optimized.avg_delay_up).toFixed(1)),
+      לפני: formatValue(calculateAverage(baseline.avg_delay_up)?.map(x => -x)),
+      אחרי: formatValue(calculateAverage(optimized.avg_delay_up)?.map(x => -x)),
     },
     {
       metric: 'עיכוב ממוצע למטה',
-      לפני: -Number(calculateAverage(baseline.avg_delay_down).toFixed(1)),
-      אחרי: -Number(calculateAverage(optimized.avg_delay_down).toFixed(1)),
+      לפני: formatValue(calculateAverage(baseline.avg_delay_down)?.map(x => -x)),
+      אחרי: formatValue(calculateAverage(optimized.avg_delay_down)?.map(x => -x)),
     }
   ];
 
-  const currentData = chartType === 'radar' ? radarData : 
-                     comparisonType === 'optimization' ? optimizationData : directionData;
+  const currentData = chartType === 'radar' ? radarData.filter(item => 
+    item.לפני !== null || item.אחרי !== null
+  ) : comparisonType === 'optimization' ? optimizationData.filter(item =>
+    item.בסיס !== null || item.אופטימיזציה !== null
+  ) : directionData.filter(item => 
+    item['מעלה הזרם - בסיס'] !== null || 
+    item['מעלה הזרם - אופטימיזציה'] !== null ||
+    item['מורד הזרם - בסיס'] !== null ||
+    item['מורד הזרם - אופטימיזציה'] !== null
+  );
 
   const renderChart = () => {
+    if (currentData.length === 0) {
+      return <div className="text-center py-8 text-gray-500">אין מספיק נתונים להצגת הגרף</div>;
+    }
+
     switch (chartType) {
       case 'bar':
         return (
@@ -126,7 +144,7 @@ export const OptimizationCharts = ({ baseline, optimized }: OptimizationChartsPr
       case 'radar':
         return (
           <ResponsiveContainer width="100%" height={400}>
-            <RadarChart data={radarData}>
+            <RadarChart data={currentData}>
               <PolarGrid />
               <PolarAngleAxis dataKey="metric" />
               <PolarRadiusAxis angle={90} domain={[-50, 50]} />
