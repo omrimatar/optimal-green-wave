@@ -10,9 +10,10 @@ interface MetricsTableProps {
 }
 
 export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
-  const compareValues = (base: number, opt: number) => {
-    if (!base && !opt) return "0%";
-    if (!base || !opt) return null;
+  const compareValues = (base: number | null, opt: number | null) => {
+    if (base === null || opt === null) return "N/A";
+    if (base === 0 && opt === 0) return "0%";
+    if (base === 0) return null;
     const improvement = ((opt - base) / base) * 100;
     return (
       <span className={improvement > 0 ? "text-green-600" : "text-red-600"}>
@@ -26,14 +27,31 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
     return null;
   }
 
-  console.log("Rendering MetricsTable with data:", { baseline, optimized });
+  // וידוא שכל המערכים קיימים והם באמת מערכים
+  const offsets = Array.isArray(baseline.offsets) ? baseline.offsets : [];
+  const avgDelayUp = Array.isArray(baseline.avg_delay_up) ? baseline.avg_delay_up : [];
+  const avgDelayDown = Array.isArray(baseline.avg_delay_down) ? baseline.avg_delay_down : [];
+  const maxDelayUp = Array.isArray(baseline.max_delay_up) ? baseline.max_delay_up : [];
+  const maxDelayDown = Array.isArray(baseline.max_delay_down) ? baseline.max_delay_down : [];
 
-  // וידוא שכל המערכים קיימים
-  const offsets = baseline.offsets || [];
-  const avgDelayUp = baseline.avg_delay_up || [];
-  const avgDelayDown = baseline.avg_delay_down || [];
-  const maxDelayUp = baseline.max_delay_up || [];
-  const maxDelayDown = baseline.max_delay_down || [];
+  const optimizedOffsets = Array.isArray(optimized.offsets) ? optimized.offsets : [];
+  const optimizedAvgDelayUp = Array.isArray(optimized.avg_delay_up) ? optimized.avg_delay_up : [];
+  const optimizedAvgDelayDown = Array.isArray(optimized.avg_delay_down) ? optimized.avg_delay_down : [];
+  const optimizedMaxDelayUp = Array.isArray(optimized.max_delay_up) ? optimized.max_delay_up : [];
+  const optimizedMaxDelayDown = Array.isArray(optimized.max_delay_down) ? optimized.max_delay_down : [];
+
+  console.log("Rendering MetricsTable with processed data:", {
+    offsets,
+    avgDelayUp,
+    avgDelayDown,
+    maxDelayUp,
+    maxDelayDown,
+    optimizedOffsets,
+    optimizedAvgDelayUp,
+    optimizedAvgDelayDown,
+    optimizedMaxDelayUp,
+    optimizedMaxDelayDown
+  });
 
   return (
     <Card className="w-full table-fade-in">
@@ -60,7 +78,7 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
               <TableRow key={`offset-${index}`}>
                 <TableCell>היסט צומת {index + 1}</TableCell>
                 <TableCell>{offset.toFixed(2)}</TableCell>
-                <TableCell>{(optimized.offsets?.[index] ?? 0).toFixed(2)}</TableCell>
+                <TableCell>{(optimizedOffsets[index] || 0).toFixed(2)}</TableCell>
                 <TableCell>-</TableCell>
               </TableRow>
             ))}
@@ -70,14 +88,10 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
                 <TableCell>עיכוב ממוצע למעלה צמתים {index + 1}-{index + 2}</TableCell>
                 <TableCell>{delay === null ? "N/A" : delay.toFixed(2)}</TableCell>
                 <TableCell>
-                  {optimized.avg_delay_up?.[index] === null 
-                    ? "N/A" 
-                    : (optimized.avg_delay_up?.[index] ?? 0).toFixed(2)}
+                  {optimizedAvgDelayUp[index] === null ? "N/A" : (optimizedAvgDelayUp[index] || 0).toFixed(2)}
                 </TableCell>
                 <TableCell>
-                  {delay === null || optimized.avg_delay_up?.[index] === null 
-                    ? "N/A" 
-                    : compareValues(delay, optimized.avg_delay_up[index])}
+                  {compareValues(delay, optimizedAvgDelayUp[index])}
                 </TableCell>
               </TableRow>
             ))}
@@ -87,14 +101,10 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
                 <TableCell>עיכוב ממוצע למטה צמתים {index + 2}-{index + 1}</TableCell>
                 <TableCell>{delay === null ? "N/A" : delay.toFixed(2)}</TableCell>
                 <TableCell>
-                  {optimized.avg_delay_down?.[index] === null 
-                    ? "N/A" 
-                    : (optimized.avg_delay_down?.[index] ?? 0).toFixed(2)}
+                  {optimizedAvgDelayDown[index] === null ? "N/A" : (optimizedAvgDelayDown[index] || 0).toFixed(2)}
                 </TableCell>
                 <TableCell>
-                  {delay === null || optimized.avg_delay_down?.[index] === null 
-                    ? "N/A" 
-                    : compareValues(delay, optimized.avg_delay_down[index])}
+                  {compareValues(delay, optimizedAvgDelayDown[index])}
                 </TableCell>
               </TableRow>
             ))}
@@ -104,14 +114,10 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
                 <TableCell>עיכוב מקסימלי למעלה צמתים {index + 1}-{index + 2}</TableCell>
                 <TableCell>{delay === null ? "N/A" : delay.toFixed(2)}</TableCell>
                 <TableCell>
-                  {optimized.max_delay_up?.[index] === null 
-                    ? "N/A" 
-                    : (optimized.max_delay_up?.[index] ?? 0).toFixed(2)}
+                  {optimizedMaxDelayUp[index] === null ? "N/A" : (optimizedMaxDelayUp[index] || 0).toFixed(2)}
                 </TableCell>
                 <TableCell>
-                  {delay === null || optimized.max_delay_up?.[index] === null 
-                    ? "N/A" 
-                    : compareValues(delay, optimized.max_delay_up[index])}
+                  {compareValues(delay, optimizedMaxDelayUp[index])}
                 </TableCell>
               </TableRow>
             ))}
@@ -121,14 +127,10 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
                 <TableCell>עיכוב מקסימלי למטה צמתים {index + 2}-{index + 1}</TableCell>
                 <TableCell>{delay === null ? "N/A" : delay.toFixed(2)}</TableCell>
                 <TableCell>
-                  {optimized.max_delay_down?.[index] === null 
-                    ? "N/A" 
-                    : (optimized.max_delay_down?.[index] ?? 0).toFixed(2)}
+                  {optimizedMaxDelayDown[index] === null ? "N/A" : (optimizedMaxDelayDown[index] || 0).toFixed(2)}
                 </TableCell>
                 <TableCell>
-                  {delay === null || optimized.max_delay_down?.[index] === null 
-                    ? "N/A" 
-                    : compareValues(delay, optimized.max_delay_down[index])}
+                  {compareValues(delay, optimizedMaxDelayDown[index])}
                 </TableCell>
               </TableRow>
             ))}
@@ -138,9 +140,7 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
               <TableCell>{baseline.corridorBW_up === null ? "N/A" : baseline.corridorBW_up.toFixed(2)}</TableCell>
               <TableCell>{optimized.corridorBW_up === null ? "N/A" : optimized.corridorBW_up.toFixed(2)}</TableCell>
               <TableCell>
-                {baseline.corridorBW_up === null || optimized.corridorBW_up === null 
-                  ? "N/A" 
-                  : compareValues(baseline.corridorBW_up, optimized.corridorBW_up)}
+                {compareValues(baseline.corridorBW_up, optimized.corridorBW_up)}
               </TableCell>
             </TableRow>
 
@@ -149,9 +149,7 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
               <TableCell>{baseline.corridorBW_down === null ? "N/A" : baseline.corridorBW_down.toFixed(2)}</TableCell>
               <TableCell>{optimized.corridorBW_down === null ? "N/A" : optimized.corridorBW_down.toFixed(2)}</TableCell>
               <TableCell>
-                {baseline.corridorBW_down === null || optimized.corridorBW_down === null
-                  ? "N/A"
-                  : compareValues(baseline.corridorBW_down, optimized.corridorBW_down)}
+                {compareValues(baseline.corridorBW_down, optimized.corridorBW_down)}
               </TableCell>
             </TableRow>
           </TableBody>
