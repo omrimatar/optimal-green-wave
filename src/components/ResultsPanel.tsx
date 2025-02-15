@@ -13,8 +13,11 @@ interface ResultsPanelProps {
 
 export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
   if (!results || !results.baseline_results || !results.optimized_results) {
+    console.log("No results to display in ResultsPanel:", results);
     return null;
   }
+
+  console.log("Rendering ResultsPanel with data:", results);
 
   return (
     <Card className="p-6 h-full">
