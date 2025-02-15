@@ -20,6 +20,11 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
     );
   };
 
+  const formatArray = (arr: number[] | undefined) => {
+    if (!arr || arr.length === 0) return "N/A";
+    return arr.map(val => val.toFixed(2)).join(", ");
+  };
+
   if (!baseline || !optimized) {
     console.log("Missing data for MetricsTable:", { baseline, optimized });
     return null;
@@ -49,6 +54,12 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
           </TableHeader>
           <TableBody>
             <TableRow>
+              <TableCell>היסטים</TableCell>
+              <TableCell>{baseline.offsets?.join(", ") ?? "N/A"}</TableCell>
+              <TableCell>{optimized.offsets?.join(", ") ?? "N/A"}</TableCell>
+              <TableCell>-</TableCell>
+            </TableRow>
+            <TableRow>
               <TableCell>רוחב מסדרון למעלה</TableCell>
               <TableCell>{baseline.corridorBW_up?.toFixed(2) ?? "N/A"}</TableCell>
               <TableCell>{optimized.corridorBW_up?.toFixed(2) ?? "N/A"}</TableCell>
@@ -70,8 +81,8 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
             </TableRow>
             <TableRow>
               <TableCell>עיכוב ממוצע למעלה</TableCell>
-              <TableCell>{baseline.avg_delay_up?.[0]?.toFixed(2) ?? "N/A"}</TableCell>
-              <TableCell>{optimized.avg_delay_up?.[0]?.toFixed(2) ?? "N/A"}</TableCell>
+              <TableCell>{formatArray(baseline.avg_delay_up)}</TableCell>
+              <TableCell>{formatArray(optimized.avg_delay_up)}</TableCell>
               <TableCell>
                 {baseline.avg_delay_up?.[0] != null && optimized.avg_delay_up?.[0] != null
                   ? compareValues(baseline.avg_delay_up[0], optimized.avg_delay_up[0])
@@ -80,8 +91,8 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
             </TableRow>
             <TableRow>
               <TableCell>עיכוב ממוצע למטה</TableCell>
-              <TableCell>{baseline.avg_delay_down?.[0]?.toFixed(2) ?? "N/A"}</TableCell>
-              <TableCell>{optimized.avg_delay_down?.[0]?.toFixed(2) ?? "N/A"}</TableCell>
+              <TableCell>{formatArray(baseline.avg_delay_down)}</TableCell>
+              <TableCell>{formatArray(optimized.avg_delay_down)}</TableCell>
               <TableCell>
                 {baseline.avg_delay_down?.[0] != null && optimized.avg_delay_down?.[0] != null
                   ? compareValues(baseline.avg_delay_down[0], optimized.avg_delay_down[0])
@@ -90,8 +101,8 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
             </TableRow>
             <TableRow>
               <TableCell>עיכוב מקסימלי למעלה</TableCell>
-              <TableCell>{baseline.max_delay_up?.[0]?.toFixed(2) ?? "N/A"}</TableCell>
-              <TableCell>{optimized.max_delay_up?.[0]?.toFixed(2) ?? "N/A"}</TableCell>
+              <TableCell>{formatArray(baseline.max_delay_up)}</TableCell>
+              <TableCell>{formatArray(optimized.max_delay_up)}</TableCell>
               <TableCell>
                 {baseline.max_delay_up?.[0] != null && optimized.max_delay_up?.[0] != null
                   ? compareValues(baseline.max_delay_up[0], optimized.max_delay_up[0])
@@ -100,14 +111,38 @@ export const MetricsTable = ({ baseline, optimized }: MetricsTableProps) => {
             </TableRow>
             <TableRow>
               <TableCell>עיכוב מקסימלי למטה</TableCell>
-              <TableCell>{baseline.max_delay_down?.[0]?.toFixed(2) ?? "N/A"}</TableCell>
-              <TableCell>{optimized.max_delay_down?.[0]?.toFixed(2) ?? "N/A"}</TableCell>
+              <TableCell>{formatArray(baseline.max_delay_down)}</TableCell>
+              <TableCell>{formatArray(optimized.max_delay_down)}</TableCell>
               <TableCell>
                 {baseline.max_delay_down?.[0] != null && optimized.max_delay_down?.[0] != null
                   ? compareValues(baseline.max_delay_down[0], optimized.max_delay_down[0])
                   : "N/A"}
               </TableCell>
             </TableRow>
+            {(baseline.chain_corridorBW_up != null || baseline.chain_corridorBW_down != null) && (
+              <>
+                <TableRow>
+                  <TableCell>רוחב מסדרון מאושרר למעלה</TableCell>
+                  <TableCell>{baseline.chain_corridorBW_up?.toFixed(2) ?? "N/A"}</TableCell>
+                  <TableCell>{optimized.chain_corridorBW_up?.toFixed(2) ?? "N/A"}</TableCell>
+                  <TableCell>
+                    {baseline.chain_corridorBW_up != null && optimized.chain_corridorBW_up != null
+                      ? compareValues(baseline.chain_corridorBW_up, optimized.chain_corridorBW_up)
+                      : "N/A"}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>רוחב מסדרון מאושרר למטה</TableCell>
+                  <TableCell>{baseline.chain_corridorBW_down?.toFixed(2) ?? "N/A"}</TableCell>
+                  <TableCell>{optimized.chain_corridorBW_down?.toFixed(2) ?? "N/A"}</TableCell>
+                  <TableCell>
+                    {baseline.chain_corridorBW_down != null && optimized.chain_corridorBW_down != null
+                      ? compareValues(baseline.chain_corridorBW_down, optimized.chain_corridorBW_down)
+                      : "N/A"}
+                  </TableCell>
+                </TableRow>
+              </>
+            )}
           </TableBody>
         </Table>
       </CardContent>
