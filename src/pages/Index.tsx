@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -54,7 +55,7 @@ const Index = () => {
   const [mode, setMode] = useState<'display' | 'calculate' | 'manual'>('calculate');
   const [weights, setWeights] = useState<OptimizationWeights>(DEFAULT_WEIGHTS);
   const [showWeights, setShowWeights] = useState(false);
-  const [manualOffsets, setManualOffsets] = useState<number[]>([]);
+  const [manualOffsets, setManualOffsets] = useState<number[]>([0, 0]); // אתחול עם שני אפסים עבור שני הצמתים ההתחלתיים
   const [showManualDialog, setShowManualDialog] = useState(false);
 
   const handleAddIntersection = () => {
@@ -75,8 +76,47 @@ const Index = () => {
         duration: 45
       }]
     }]);
-    // עדכון מערך האופסטים הידניים
+    // עדכון מערך האופסטים הידניים - הוספת 0 לצומת החדש
     setManualOffsets(prev => [...prev, 0]);
+  };
+
+  const handleManualCalculate = async () => {
+    try {
+      // וידוא שיש מספיק אופסטים
+      const currentOffsets = [...manualOffsets];
+      // השלמת אופסטים חסרים עם 0 אם צריך
+      while (currentOffsets.length < intersections.length) {
+        currentOffsets.push(0);
+      }
+      // קיצוץ אופסטים עודפים אם יש
+      while (currentOffsets.length > intersections.length) {
+        currentOffsets.pop();
+      }
+      // וידוא שהאופסט הראשון הוא 0
+      currentOffsets[0] = 0;
+
+      const calculationResults = await calculateGreenWave(
+        intersections, 
+        speed, 
+        weights,
+        currentOffsets
+      );
+      
+      console.log("Manual calculation results received:", calculationResults);
+      
+      // וידוא שהתקבלו תוצאות ידניות
+      if (!calculationResults.manual_results) {
+        throw new Error("No manual results received from calculation");
+      }
+
+      setResults(calculationResults);
+      setMode('manual');
+      setShowManualDialog(false);
+      toast.success("חישוב הגל הירוק במצב ידני הושלם בהצלחה");
+    } catch (error) {
+      console.error("Error in manual calculation:", error);
+      toast.error("שגיאה בחישוב הגל הירוק במצב ידני");
+    }
   };
 
   const handleCalculate = async () => {
@@ -94,36 +134,6 @@ const Index = () => {
     } catch (error) {
       console.error("Error in calculation:", error);
       toast.error("שגיאה בחישוב הגל הירוק");
-    }
-  };
-
-  const handleManualCalculate = async () => {
-    try {
-      // וידוא שהאופסט הראשון הוא 0
-      const normalizedOffsets = [...manualOffsets];
-      normalizedOffsets[0] = 0;
-
-      const calculationResults = await calculateGreenWave(
-        intersections, 
-        speed, 
-        weights,
-        normalizedOffsets
-      );
-      
-      console.log("Manual calculation results received:", calculationResults);
-      
-      // וידוא שהתקבלו תוצאות ידניות
-      if (!calculationResults.manual_results) {
-        throw new Error("No manual results received from calculation");
-      }
-
-      setResults(calculationResults);
-      setMode('manual');
-      setShowManualDialog(false);
-      toast.success("חישוב הגל הירוק במצב ידני הושלם בהצלחה");
-    } catch (error) {
-      console.error("Error in manual calculation:", error);
-      toast.error("שגיאה בחישוב הגל הירוק במצב ידני");
     }
   };
 
@@ -157,12 +167,14 @@ const Index = () => {
   }) => {
     setSpeed(data.speed);
     setIntersections(data.intersections);
+    // איפוס מערך האופסטים הידניים למערך של אפסים באורך המתאים
+    setManualOffsets(new Array(data.intersections.length).fill(0));
   };
 
   const handleResetWeights = () => {
     setWeights(DEFAULT_WEIGHTS);
-    setResults(null); // מנקה את תוצאות החישוב
-    setMode('calculate'); // מחזיר למצב חישוב
+    setResults(null);
+    setMode('calculate');
     toast.success("המשקולות אופסו לברירת המחדל");
   };
 
@@ -215,7 +227,7 @@ const Index = () => {
                     onDelete={() => {
                       if (intersections.length > 2) {
                         setIntersections(intersections.filter(i => i.id !== intersection.id));
-                        // עדכון מערך האופסטים הידניים
+                        // עדכון מערך האופסטים הידניים - מחיקת האופסט המתאים
                         setManualOffsets(prev => {
                           const newOffsets = [...prev];
                           newOffsets.splice(index, 1);
@@ -244,8 +256,8 @@ const Index = () => {
                     <DialogHeader>
                       <DialogTitle>הזנת היסטים ידנית</DialogTitle>
                       <DialogDescription>
-                        הזן את ערכי ה.hist עבור כל צומת (בשניות).
-                        שים לב שה.hist של הצומת הראשון תמיד יהיה 0.
+                        הזן את ערכי ה-offset עבור כל צומת (בשניות).
+                        שים לב שה-offset של הצומת הראשון תמיד יהיה 0.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
