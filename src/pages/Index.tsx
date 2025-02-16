@@ -75,6 +75,7 @@ const Index = () => {
         duration: 45
       }]
     }]);
+    // עדכון מערך האופסטים הידניים
     setManualOffsets(prev => [...prev, 0]);
   };
 
@@ -98,6 +99,7 @@ const Index = () => {
 
   const handleManualCalculate = async () => {
     try {
+      // וידוא שהאופסט הראשון הוא 0
       const normalizedOffsets = [...manualOffsets];
       normalizedOffsets[0] = 0;
 
@@ -110,9 +112,9 @@ const Index = () => {
       
       console.log("Manual calculation results received:", calculationResults);
       
-      if (!calculationResults || !calculationResults.manual_results) {
-        console.error("Missing manual results:", calculationResults);
-        throw new Error("תוצאות החישוב הידני חסרות או שגויות");
+      // וידוא שהתקבלו תוצאות ידניות
+      if (!calculationResults.manual_results) {
+        throw new Error("No manual results received from calculation");
       }
 
       setResults(calculationResults);
@@ -121,7 +123,7 @@ const Index = () => {
       toast.success("חישוב הגל הירוק במצב ידני הושלם בהצלחה");
     } catch (error) {
       console.error("Error in manual calculation:", error);
-      toast.error(error instanceof Error ? error.message : "שגיאה בחישוב הגל הירוק במצב ידני");
+      toast.error("שגיאה בחישוב הגל הירוק במצב ידני");
     }
   };
 
@@ -159,8 +161,8 @@ const Index = () => {
 
   const handleResetWeights = () => {
     setWeights(DEFAULT_WEIGHTS);
-    setResults(null);
-    setMode('calculate');
+    setResults(null); // מנקה את תוצאות החישוב
+    setMode('calculate'); // מחזיר למצב חישוב
     toast.success("המשקולות אופסו לברירת המחדל");
   };
 
@@ -213,6 +215,7 @@ const Index = () => {
                     onDelete={() => {
                       if (intersections.length > 2) {
                         setIntersections(intersections.filter(i => i.id !== intersection.id));
+                        // עדכון מערך האופסטים הידניים
                         setManualOffsets(prev => {
                           const newOffsets = [...prev];
                           newOffsets.splice(index, 1);
