@@ -40,16 +40,7 @@ export async function calculateGreenWave(
     }
   };
 
-  // וידוא שיש אופסטים ידניים כשצריך
-  if (manualOffsets && manualOffsets.length !== intersections.length) {
-    throw new Error("מספר האופסטים הידניים חייב להתאים למספר הצמתים");
-  }
-
-  console.log("Sending to optimization:", {
-    networkData,
-    weights: weights || DEFAULT_WEIGHTS,
-    manualOffsets
-  });
+  console.log("Sending to optimization with manualOffsets:", manualOffsets);
   
   // קריאה לפונקציית האופטימיזציה
   const results = await greenWaveOptimization(networkData, weights || DEFAULT_WEIGHTS, manualOffsets);
