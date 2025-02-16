@@ -191,6 +191,32 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
               </TableRow>
             ))}
 
+            {baseline.local_up?.map((value, index) => (
+              <TableRow key={`local-up-${index}`}>
+                <TableCell>רוחב פס מקומי למעלה {index + 1}-{index + 2}</TableCell>
+                <TableCell>{value === null ? "N/A" : value.toFixed(2)}</TableCell>
+                <TableCell>
+                  {optimized.local_up?.[index] === null ? "N/A" : optimized.local_up[index].toFixed(2)}
+                </TableCell>
+                <TableCell>
+                  {compareValues(value, optimized.local_up?.[index])}
+                </TableCell>
+              </TableRow>
+            ))}
+
+            {baseline.local_down?.map((value, index) => (
+              <TableRow key={`local-down-${index}`}>
+                <TableCell>רוחב פס מקומי למטה {index + 2}-{index + 1}</TableCell>
+                <TableCell>{value === null ? "N/A" : value.toFixed(2)}</TableCell>
+                <TableCell>
+                  {optimized.local_down?.[index] === null ? "N/A" : optimized.local_down[index].toFixed(2)}
+                </TableCell>
+                <TableCell>
+                  {compareValues(value, optimized.local_down?.[index])}
+                </TableCell>
+              </TableRow>
+            ))}
+
             <TableRow>
               <TableCell>רוחב פס בציר למעלה</TableCell>
               <TableCell>{baseline.corridorBW_up === null ? "N/A" : baseline.corridorBW_up.toFixed(2)}</TableCell>

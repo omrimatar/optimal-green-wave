@@ -1,26 +1,99 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { NetworkData, Weights, RunResult } from "@/types/traffic";
 
-// הגדרת מופע ירוק בצומת
 export interface GreenPhase {
-    start: number; // זמן תחילת המופע במחזור
-    duration: number; // משך המופע
+    start: number;
+    duration: number;
 }
 
-// הגדרת צומת
 export interface Intersection {
     id: number;
-    distance: number; // מרחק לאורך הציר
-    green_up: GreenPhase[]; // רשימת מופעים בכיוון up
-    green_down: GreenPhase[]; // רשימת מופעים בכיוון down
-    cycle_up: number; // אורך מחזור בכיוון up
-    cycle_down: number; // אורך מחזור בכיוון down
+    distance: number;
+    green_up: GreenPhase[];
+    green_down: GreenPhase[];
+    cycle_up: number;
+    cycle_down: number;
 }
 
-/*******************************************************************
-* פונקציית עזר לחישוב L_i,U_i בצורה חיצונית + שרשור
-******************************************************************/
-export function chainPostProc(run: RunResult, data: NetworkData) {
+function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): { 
+  up: number|null; 
+  down: number|null;
+  local_up: Array<number|null>;
+  local_down: Array<number|null>;
+} {
+  const { intersections, travel } = data;
+
+  let minBandwidthUp = Infinity;
+  let minBandwidthDown = Infinity;
+  let hasUp = false;
+  let hasDown = false;
+  const local_up: Array<number|null> = [];
+  const local_down: Array<number|null> = [];
+
+  for (let i = 0; i < intersections.length - 1; i++) {
+    const curr = intersections[i];
+    const next = intersections[i + 1];
+    if (!curr.green_up?.length || !next.green_up?.length || !curr.cycle_up || !next.cycle_up) {
+      local_up.push(null);
+      continue;
+    }
+    hasUp = true;
+
+    const distance = next.distance - curr.distance;
+    const travelTime = (distance / travel.up.speed) * 3.6;
+
+    const currGreen = curr.green_up[0];
+    const nextGreen = next.green_up[0];
+    const currStart = (offsets[i] + currGreen.start) % curr.cycle_up;
+    const nextStart = (offsets[i + 1] + nextGreen.start) % next.cycle_up;
+    
+    const arrivalTime = (currStart + currGreen.duration/2 + travelTime) % next.cycle_up;
+    const overlap = Math.min(
+      nextGreen.duration,
+      Math.max(0, nextGreen.duration - Math.abs(arrivalTime - (nextStart + nextGreen.duration/2)))
+    );
+    local_up.push(overlap);
+    minBandwidthUp = Math.min(minBandwidthUp, overlap);
+  }
+
+  for (let i = intersections.length - 1; i > 0; i--) {
+    const curr = intersections[i];
+    const prev = intersections[i - 1];
+    if (!curr.green_down?.length || !prev.green_down?.length || !curr.cycle_down || !prev.cycle_down) {
+      local_down.push(null);
+      continue;
+    }
+    hasDown = true;
+
+    const distance = curr.distance - prev.distance;
+    const travelTime = (distance / travel.down.speed) * 3.6;
+
+    const currGreen = curr.green_down[0];
+    const prevGreen = prev.green_down[0];
+    const currStart = (offsets[i] + currGreen.start) % curr.cycle_down;
+    const prevStart = (offsets[i - 1] + prevGreen.start) % prev.cycle_down;
+    
+    const arrivalTime = (currStart + currGreen.duration/2 + travelTime) % prev.cycle_down;
+    const overlap = Math.min(
+      prevGreen.duration,
+      Math.max(0, prevGreen.duration - Math.abs(arrivalTime - (prevStart + prevGreen.duration/2)))
+    );
+    local_down.unshift(overlap);
+    minBandwidthDown = Math.min(minBandwidthDown, overlap);
+  }
+
+  const upVal = hasUp ? (minBandwidthUp === Infinity ? 0 : minBandwidthUp) : null;
+  const downVal = hasDown ? (minBandwidthDown === Infinity ? 0 : minBandwidthDown) : null;
+
+  return { 
+    up: upVal, 
+    down: downVal,
+    local_up,
+    local_down
+  };
+}
+
+function chainPostProc(run: RunResult, data: NetworkData) {
     const n = data.intersections.length;
     const travelUp: number[] = [];
     const travelDown: number[] = [];
@@ -34,16 +107,12 @@ export function chainPostProc(run: RunResult, data: NetworkData) {
     const corrUp = chainBWUp(run.offsets, data, travelUp);
     const corrDown = chainBWDown(run.offsets, data, travelDown);
 
-    // תיקון הטיפוסים - התאמה למערכים
     run.chain_up_start = corrUp.chain_up_start;
     run.chain_up_end = corrUp.chain_up_end;
     run.chain_down_start = corrDown.chain_down_start;
     run.chain_down_end = corrDown.chain_down_end;
 }
 
-/*******************************************************************
-* שרשור UP
-******************************************************************/
 function chainBWUp(offsets: number[], data: NetworkData, travelUp: number[]): {
     chain_up_start: Array<number|null>;
     chain_up_end: Array<number|null>;
@@ -87,9 +156,6 @@ function chainBWUp(offsets: number[], data: NetworkData, travelUp: number[]): {
     return {chain_up_start: [Math.max(0, Uc-Lc)], chain_up_end: [Math.max(0, Uc-Lc)]};
 }
 
-/*******************************************************************
-* שרשור DOWN
-******************************************************************/
 function chainBWDown(offsets: number[], data: NetworkData, travelDown: number[]): {
     chain_down_start: Array<number|null>;
     chain_down_end: Array<number|null>;
@@ -134,9 +200,6 @@ function chainBWDown(offsets: number[], data: NetworkData, travelDown: number[])
     return {chain_down_start: [Math.max(0, Uc-Lc)], chain_down_end: [Math.max(0, Uc-Lc)]};
 }
 
-/*******************************************************************
-* פונקציית האופטימיזציה הראשית
-******************************************************************/
 export async function greenWaveOptimization(
   data: NetworkData, 
   weights: Weights,
@@ -154,12 +217,10 @@ export async function greenWaveOptimization(
     });
     console.log('Using weights:', weights);
 
-    // בדיקת תקינות הנתונים לפני השליחה
     if (!data.intersections || !data.travel || !weights) {
       throw new Error('Missing required data for optimization');
     }
 
-    // שליחת הבקשה לפונקציית Edge
     console.log('Preparing request body...');
     const requestBody = {
       data: {
@@ -194,18 +255,26 @@ export async function greenWaveOptimization(
 
     console.log('Received results:', results);
 
-    // חישוב post-processing על התוצאות
     if (results.baseline_results) {
-      console.log('Processing baseline results...');
-      chainPostProc(results.baseline_results, data);
+      const baselineBandwidth = calculateCorridorBandwidth(data, results.baseline_results.offsets);
+      results.baseline_results.corridorBW_up = baselineBandwidth.up || 0;
+      results.baseline_results.corridorBW_down = baselineBandwidth.down || 0;
+      results.baseline_results.local_up = baselineBandwidth.local_up;
+      results.baseline_results.local_down = baselineBandwidth.local_down;
     }
     if (results.optimized_results) {
-      console.log('Processing optimized results...');
-      chainPostProc(results.optimized_results, data);
+      const optimizedBandwidth = calculateCorridorBandwidth(data, results.optimized_results.offsets);
+      results.optimized_results.corridorBW_up = optimizedBandwidth.up || 0;
+      results.optimized_results.corridorBW_down = optimizedBandwidth.down || 0;
+      results.optimized_results.local_up = optimizedBandwidth.local_up;
+      results.optimized_results.local_down = optimizedBandwidth.local_down;
     }
     if (results.manual_results) {
-      console.log('Processing manual results...');
-      chainPostProc(results.manual_results, data);
+      const manualBandwidth = calculateCorridorBandwidth(data, results.manual_results.offsets);
+      results.manual_results.corridorBW_up = manualBandwidth.up || 0;
+      results.manual_results.corridorBW_down = manualBandwidth.down || 0;
+      results.manual_results.local_up = manualBandwidth.local_up;
+      results.manual_results.local_down = manualBandwidth.local_down;
     }
 
     console.log('Final results:', results);
