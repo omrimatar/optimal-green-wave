@@ -1,6 +1,20 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { NetworkData, Weights, RunResult } from "@/types/traffic";
 
+export interface GreenPhase {
+    start: number;
+    duration: number;
+}
+
+export interface Intersection {
+    id: number;
+    distance: number;
+    green_up: GreenPhase[];
+    green_down: GreenPhase[];
+    cycle_up: number;
+    cycle_down: number;
+}
+
 function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): { 
   up: number|null; 
   down: number|null;
@@ -26,7 +40,7 @@ function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): {
     hasUp = true;
 
     const distance = next.distance - curr.distance;
-    const travelTime = (distance / travel.speedUp) * 3.6;
+    const travelTime = (distance / travel.up.speed) * 3.6;
 
     const currGreen = curr.green_up[0];
     const nextGreen = next.green_up[0];
@@ -52,7 +66,7 @@ function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): {
     hasDown = true;
 
     const distance = curr.distance - prev.distance;
-    const travelTime = (distance / travel.speedDown) * 3.6;
+    const travelTime = (distance / travel.down.speed) * 3.6;
 
     const currGreen = curr.green_down[0];
     const prevGreen = prev.green_down[0];
@@ -86,17 +100,17 @@ function chainPostProc(run: RunResult, data: NetworkData) {
     
     for(let i = 0; i < n-1; i++) {
         const dist = data.intersections[i+1].distance - data.intersections[i].distance;
-        travelUp[i] = Math.round(dist * 3.6 / data.travel.speedUp);
-        travelDown[i] = Math.round(dist * 3.6 / data.travel.speedDown);
+        travelUp[i] = Math.round(dist * 3.6 / data.travel.up.speed);
+        travelDown[i] = Math.round(dist * 3.6 / data.travel.down.speed);
     }
 
     const diagonalUp = chainBWUp(run.offsets, data, travelUp);
     const diagonalDown = chainBWDown(run.offsets, data, travelDown);
 
-    run.chain_up_start = diagonalUp.diagonal_up_start;
-    run.chain_up_end = diagonalUp.diagonal_up_end;
-    run.chain_down_start = diagonalDown.diagonal_down_start;
-    run.chain_down_end = diagonalDown.diagonal_down_end;
+    run.diagonal_up_start = diagonalUp.diagonal_up_start;
+    run.diagonal_up_end = diagonalUp.diagonal_up_end;
+    run.diagonal_down_start = diagonalDown.diagonal_down_start;
+    run.diagonal_down_end = diagonalDown.diagonal_down_end;
 }
 
 function chainBWUp(offsets: number[], data: NetworkData, travelUp: number[]): {
@@ -218,15 +232,23 @@ export async function greenWaveOptimization(
     };
     console.log('Request body:', requestBody);
     
-    const { data: results, error } = await supabase.functions.invoke('optimize', {
-      body: requestBody
+    const functionUrl = `https://xfdqxyxvjzbvxewbzrpe.supabase.co/functions/v1/optimize?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZHF4eXh2anpidnhld2J6cnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NzE5MTIsImV4cCI6MjA1NTE0NzkxMn0.uhp87GwzK6g04w3ZTBE1vVe8dtDkXALlzrBsSjAuUtg`;
+    console.log('Function URL:', functionUrl);
+        
+    const response = await fetch(functionUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(requestBody)
     });
 
-    if (error) {
-      console.error('Supabase function error:', error);
-      throw error;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
+    const results = await response.json();
+    
     if (!results) {
       throw new Error('No results returned from optimization');
     }
