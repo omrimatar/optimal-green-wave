@@ -1,10 +1,9 @@
-
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import * as glpk from "https://cdn.jsdelivr.net/npm/glpk.js@4.0.1/dist/glpk.min.js";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 interface GreenPhase {
@@ -148,7 +147,6 @@ function chainBWDown(offsets: number[], data: NetworkData, travelDown: number[])
 function computeBaseline(data: NetworkData, weights: Weights): RunResult {
   const n = data.intersections.length;
   
-  // חישוב זמני נסיעה
   const travelUp: number[] = [];
   const travelDown: number[] = [];
   for (let i = 0; i < n - 1; i++) {
@@ -187,7 +185,6 @@ function computeBaseline(data: NetworkData, weights: Weights): RunResult {
 function createOptimizationModel(data: NetworkData, weights: Weights) {
   const n = data.intersections.length;
   
-  // יצירת בעיית האופטימיזציה
   const problem = {
     name: 'GreenWaveOptimization',
     objective: {
@@ -203,7 +200,6 @@ function createOptimizationModel(data: NetworkData, weights: Weights) {
     bounds: [] as { name: string; type: number; ub?: number; lb?: number }[]
   };
 
-  // חישוב זמני נסיעה
   const travelUp: number[] = [];
   const travelDown: number[] = [];
   for (let i = 0; i < n - 1; i++) {
@@ -212,7 +208,6 @@ function createOptimizationModel(data: NetworkData, weights: Weights) {
     travelDown.push(Math.round((dist * 3.6) / data.travel.speedDown));
   }
 
-  // הוספת משתני ההיסט
   for (let i = 0; i < n; i++) {
     problem.bounds.push({
       name: `offset_${i}`,
@@ -226,9 +221,7 @@ function createOptimizationModel(data: NetworkData, weights: Weights) {
     });
   }
 
-  // משתנים לרוחב פס וחפיפה
   for (let i = 0; i < n - 1; i++) {
-    // רוחב פס למעלה
     problem.bounds.push({
       name: `overlap_up_${i}`,
       type: glpk.GLP_DB,
@@ -243,7 +236,6 @@ function createOptimizationModel(data: NetworkData, weights: Weights) {
       coef: weights.overlap_up
     });
 
-    // רוחב פס למטה
     problem.bounds.push({
       name: `overlap_down_${i}`,
       type: glpk.GLP_DB,
@@ -258,7 +250,6 @@ function createOptimizationModel(data: NetworkData, weights: Weights) {
       coef: weights.overlap_down
     });
 
-    // אילוצי חפיפה למעלה
     const currUp = data.intersections[i].green_up![0];
     const nextUp = data.intersections[i + 1].green_up![0];
     problem.subjectTo.push({
@@ -271,7 +262,6 @@ function createOptimizationModel(data: NetworkData, weights: Weights) {
       bnds: { type: glpk.GLP_UP, ub: -travelUp[i] - currUp.start + nextUp.start }
     });
 
-    // אילוצי חפיפה למטה
     const currDown = data.intersections[i].green_down![0];
     const nextDown = data.intersections[i + 1].green_down![0];
     problem.subjectTo.push({
@@ -292,14 +282,12 @@ function optimizeGreenWave(data: NetworkData, weights: Weights): RunResult {
   const n = data.intersections.length;
   const { problem, travelUp, travelDown } = createOptimizationModel(data, weights);
 
-  // יצירת המודל ופתרון
   try {
     console.log("Creating GLPK problem...");
     const lp = glpk.glp_create_prob();
     glpk.glp_set_prob_name(lp, problem.name);
     glpk.glp_set_obj_dir(lp, problem.objective.direction);
 
-    // הוספת משתנים
     const numVars = problem.bounds.length;
     glpk.glp_add_cols(lp, numVars);
     problem.bounds.forEach((bound, i) => {
@@ -307,7 +295,6 @@ function optimizeGreenWave(data: NetworkData, weights: Weights): RunResult {
       glpk.glp_set_col_bnds(lp, i + 1, bound.type, bound.lb || 0, bound.ub || 0);
     });
 
-    // הוספת אילוצים
     const numConstraints = problem.subjectTo.length;
     glpk.glp_add_rows(lp, numConstraints);
     problem.subjectTo.forEach((constraint, i) => {
@@ -315,7 +302,6 @@ function optimizeGreenWave(data: NetworkData, weights: Weights): RunResult {
       glpk.glp_set_row_bnds(lp, i + 1, constraint.bnds.type, 0, constraint.bnds.ub || 0);
     });
 
-    // הגדרת פונקציית המטרה
     problem.objective.vars.forEach((v, i) => {
       glpk.glp_set_obj_coef(lp, i + 1, v.coef);
     });
@@ -329,7 +315,6 @@ function optimizeGreenWave(data: NetworkData, weights: Weights): RunResult {
       throw new Error("Optimization failed");
     }
 
-    // חילוץ התוצאות
     const offsets = Array(n).fill(0).map((_, i) => 
       Math.round(glpk.glp_get_col_prim(lp, i + 1))
     );
@@ -391,29 +376,46 @@ function optimizeGreenWave(data: NetworkData, weights: Weights): RunResult {
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders, status: 204 });
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: corsHeaders,
+      status: 204,
+    });
   }
+
   try {
+    if (req.method !== 'POST') {
+      throw new Error('Method not allowed');
+    }
+
     const bodyText = await req.text();
-    if (!bodyText) throw new Error("Request body is empty");
+    if (!bodyText) {
+      throw new Error('Request body is empty');
+    }
+
     let parsedBody: any;
     try {
       parsedBody = JSON.parse(bodyText);
     } catch (e) {
-      throw new Error("Invalid JSON in request body");
+      throw new Error('Invalid JSON in request body');
     }
+
     const { data, weights, manualOffsets } = parsedBody;
-    if (!data || !weights) throw new Error("Missing required fields: data or weights");
-    
-    // baseline
+    if (!data || !weights) {
+      throw new Error('Missing required fields: data or weights');
+    }
+
+    console.log('Received request with data:', data);
+    console.log('Weights:', weights);
+    console.log('Manual offsets:', manualOffsets);
+
     const baselineRes = computeBaseline(data, weights);
-    
-    // optimized - כעת משתמשים באופטימיזציה
+    console.log('Baseline results:', baselineRes);
+
     const optimizedRes = optimizeGreenWave(data, weights);
-    
-    // manual
-    let manual_results = null;
+    console.log('Optimized results:', optimizedRes);
+
+    let manualRes = null;
     if (manualOffsets && manualOffsets.length === data.intersections.length) {
       const normalizedOffsets = [...manualOffsets];
       normalizedOffsets[0] = 0;
@@ -429,7 +431,7 @@ serve(async (req) => {
       const chainUp = chainBWUp(normalizedOffsets, data, travelUp);
       const chainDown = chainBWDown(normalizedOffsets, data, travelDown);
       
-      manual_results = {
+      manualRes = {
         status: "Success",
         offsets: normalizedOffsets,
         objective_value: null,
@@ -451,22 +453,31 @@ serve(async (req) => {
         chain_down_end: []
       };
     }
-    
+
     const response = {
       baseline_results: baselineRes,
       optimized_results: optimizedRes,
-      manual_results,
+      manual_results: manualRes,
     };
-    
+
+    console.log('Sending response:', response);
+
     return new Response(JSON.stringify(response), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (error: any) {
-    console.error("Function error:", error);
+    console.error('Function error:', error);
     return new Response(
-      JSON.stringify({ error: error.message, type: error.constructor.name }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      JSON.stringify({ 
+        error: error.message, 
+        type: error.constructor.name,
+        stack: error.stack 
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+        status: 400 
+      }
     );
   }
 });
