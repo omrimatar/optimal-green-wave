@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
-import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 import glpk from 'npm:glpk.js@4.0.0';
 
 const corsHeaders = {
@@ -97,7 +96,6 @@ function defineOverlapAndDelay(
   const offI = `off_${i}`;
   const offJ = `off_${j}`;
 
-  // Constraints for overlap
   model.constraints[`overlap_constr1_${direction}_${i}_${j}`] = {
     vars: {
       [overlapName]: 1,
@@ -123,7 +121,6 @@ function defineOverlapAndDelay(
     bnds: { type: "lb", ub: Infinity, lb: 0 },
   };
 
-  // Constraints for delay
   model.constraints[`delay_constr1_${direction}_${i}_${j}`] = {
     vars: {
       [delayName]: 1,
@@ -149,7 +146,6 @@ function defineOverlapAndDelay(
     bnds: { type: "lb", ub: Infinity, lb: 0 },
   };
 
-  // Constraints for max delay
   model.constraints[`max_delay_constr1_${direction}_${i}_${j}`] = {
     vars: {
       [maxDelayName]: 1,
@@ -212,19 +208,16 @@ function greenWaveOptimization(
     },
   };
 
-  // Define offset variables
   for (let i = 0; i < numIntersections; i++) {
     const offName = `off_${i}`;
     model.vars[offName] = { obj: 0, bnds: { min: 0, max: data.intersections[i].cycle_up } };
   }
 
-  // Fix the offset of the first intersection to 0
   model.constraints["first_offset_fixed"] = {
     vars: { off_0: 1 },
     bnds: { min: 0, max: 0 },
   };
 
-  // Define overlap and delay for each pair of intersections (up and down)
   const travel_up: number[] = [];
   const travel_down: number[] = [];
 
@@ -261,17 +254,14 @@ function greenWaveOptimization(
     maxDelayDownVars.push(maxDelayDownName);
   }
 
-  // Solve the model
   const results = glpk.solve(model, { msglev: glpk.GLP_MSG_OFF });
 
-  // Extract the offsets
   const offsets: number[] = [];
   for (let i = 0; i < numIntersections; i++) {
     const offName = `off_${i}`;
     offsets.push(results.vars[offName].prim);
   }
 
-  // Extract overlap, delay, and max delay values
   const extractValues = (vars: string[]): number[] => vars.map((v) => results.vars[v].prim);
 
   const overlap_up = extractValues(overlapUpVars);
@@ -317,7 +307,6 @@ function greenWaveOptimization(
 }
 
 function chainPostProc(run: RunResult, data: NetworkData): void {
-  // Implementation from the provided code
 }
 
 function chainBWUp(
@@ -325,7 +314,6 @@ function chainBWUp(
   data: NetworkData,
   travelUp: number[]
 ): number {
-  // Implementation from the provided code
   return 0;
 }
 
@@ -334,25 +322,26 @@ function chainBWDown(
   data: NetworkData,
   travelDown: number[]
 ): number {
-  // Implementation from the provided code
   return 0;
 }
 
-const app = new Application();
-const router = new Router();
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
 
-router.post("/optimize", async (context) => {
   try {
-    const body = await context.request.body().value;
-    const { data, weights, manualOffsets } = body;
-    
-    if (!data || !weights) {
-      context.response.status = 400;
-      context.response.body = { error: "Missing required fields: data or weights" };
-      return;
+    if (req.method !== 'POST') {
+      throw new Error(`HTTP method ${req.method} is not supported.`);
     }
 
-    // baseline
+    const body = await req.json();
+    const { data, weights, manualOffsets } = body;
+
+    if (!data || !weights) {
+      throw new Error('Missing required fields: data or weights');
+    }
+
     const baselineRes = computeBaseline(data, weights, 3);
     const baselineBandwidth = chainBWUp(
       baselineRes.offsets,
@@ -366,10 +355,8 @@ router.post("/optimize", async (context) => {
       })
     );
 
-    // optimized
     const { baseline_results, optimized_results } = greenWaveOptimization(data, weights, 3);
 
-    // manual offsets
     let manual_results = null;
     if (manualOffsets && manualOffsets.length === data.intersections.length) {
       const normalizedOffsets = [...manualOffsets];
@@ -422,33 +409,30 @@ router.post("/optimize", async (context) => {
       manual_results
     };
 
-    context.response.headers.set('Access-Control-Allow-Origin', '*');
-    context.response.headers.set('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type');
-    context.response.type = 'application/json';
-    context.response.body = response;
+    return new Response(
+      JSON.stringify(response),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
 
   } catch (error) {
     console.error('Function error:', error);
-    context.response.status = 400;
-    context.response.body = {
-      error: error.message,
-      type: error.constructor.name
-    };
+    return new Response(
+      JSON.stringify({
+        error: error.message,
+        type: error.constructor.name
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        },
+        status: 400
+      }
+    );
   }
 });
-
-// CORS preflight
-router.options("/optimize", (context) => {
-  context.response.headers.set('Access-Control-Allow-Origin', '*');
-  context.response.headers.set('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type');
-  context.response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  context.response.status = 204;
-});
-
-app.use(router.routes());
-app.use(router.allowedMethods());
-
-const port = 3000;
-console.log(`Server running on port ${port}`);
-
-await app.listen({ port });
