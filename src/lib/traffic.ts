@@ -218,23 +218,15 @@ export async function greenWaveOptimization(
     };
     console.log('Request body:', requestBody);
     
-    const functionUrl = `https://xfdqxyxvjzbvxewbzrpe.supabase.co/functions/v1/optimize?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZHF4eXh2anpidnhld2J6cnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NzE5MTIsImV4cCI6MjA1NTE0NzkxMn0.uhp87GwzK6g04w3ZTBE1vVe8dtDkXALlzrBsSjAuUtg`;
-    console.log('Function URL:', functionUrl);
-        
-    const response = await fetch(functionUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(requestBody)
+    const { data: results, error } = await supabase.functions.invoke('optimize', {
+      body: requestBody
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (error) {
+      console.error('Supabase function error:', error);
+      throw error;
     }
 
-    const results = await response.json();
-    
     if (!results) {
       throw new Error('No results returned from optimization');
     }
