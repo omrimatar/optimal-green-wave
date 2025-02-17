@@ -1,5 +1,6 @@
+
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
-import * as glpk from "https://esm.sh/glpk.js@6.0.1";
+import * as glpk from "https://cdn.jsdelivr.net/npm/glpk.js@4.0.1/dist/glpk.min.js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
