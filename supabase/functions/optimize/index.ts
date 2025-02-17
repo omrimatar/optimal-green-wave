@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
-import * as glpk from "https://esm.sh/glpk.js";
+import * as glpk from "https://esm.sh/glpk.js@6.0.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -185,16 +185,22 @@ function computeBaseline(data: NetworkData, weights: Weights): RunResult {
 
 function createOptimizationModel(data: NetworkData, weights: Weights) {
   const n = data.intersections.length;
-  const lp = glpk.LP({
+  
+  // יצירת בעיית האופטימיזציה
+  const problem = {
     name: 'GreenWaveOptimization',
-    sense: glpk.GLP_MAX,
     objective: {
-      name: 'z',
-      vars: []
+      direction: glpk.GLP_MAX,
+      name: 'obj',
+      vars: [] as { name: string; coef: number }[]
     },
-    subjectTo: [],
-    bounds: []
-  });
+    subjectTo: [] as {
+      name: string;
+      vars: { name: string; coef: number }[];
+      bnds: { type: number; ub?: number; lb?: number };
+    }[],
+    bounds: [] as { name: string; type: number; ub?: number; lb?: number }[]
+  };
 
   // חישוב זמני נסיעה
   const travelUp: number[] = [];
@@ -207,13 +213,13 @@ function createOptimizationModel(data: NetworkData, weights: Weights) {
 
   // הוספת משתני ההיסט
   for (let i = 0; i < n; i++) {
-    lp.bounds.push({
+    problem.bounds.push({
       name: `offset_${i}`,
       type: glpk.GLP_DB,
       ub: i === 0 ? 0 : data.intersections[i].cycle_up! - 1,
       lb: 0
     });
-    lp.objective.vars.push({
+    problem.objective.vars.push({
       name: `offset_${i}`,
       coef: 0
     });
@@ -222,7 +228,7 @@ function createOptimizationModel(data: NetworkData, weights: Weights) {
   // משתנים לרוחב פס וחפיפה
   for (let i = 0; i < n - 1; i++) {
     // רוחב פס למעלה
-    lp.bounds.push({
+    problem.bounds.push({
       name: `overlap_up_${i}`,
       type: glpk.GLP_DB,
       ub: Math.min(
@@ -231,13 +237,13 @@ function createOptimizationModel(data: NetworkData, weights: Weights) {
       ),
       lb: 0
     });
-    lp.objective.vars.push({
+    problem.objective.vars.push({
       name: `overlap_up_${i}`,
       coef: weights.overlap_up
     });
 
     // רוחב פס למטה
-    lp.bounds.push({
+    problem.bounds.push({
       name: `overlap_down_${i}`,
       type: glpk.GLP_DB,
       ub: Math.min(
@@ -246,7 +252,7 @@ function createOptimizationModel(data: NetworkData, weights: Weights) {
       ),
       lb: 0
     });
-    lp.objective.vars.push({
+    problem.objective.vars.push({
       name: `overlap_down_${i}`,
       coef: weights.overlap_down
     });
@@ -254,7 +260,7 @@ function createOptimizationModel(data: NetworkData, weights: Weights) {
     // אילוצי חפיפה למעלה
     const currUp = data.intersections[i].green_up![0];
     const nextUp = data.intersections[i + 1].green_up![0];
-    lp.subjectTo.push({
+    problem.subjectTo.push({
       name: `overlap_up_constraint_${i}`,
       vars: [
         { name: `offset_${i}`, coef: 1 },
@@ -267,7 +273,7 @@ function createOptimizationModel(data: NetworkData, weights: Weights) {
     // אילוצי חפיפה למטה
     const currDown = data.intersections[i].green_down![0];
     const nextDown = data.intersections[i + 1].green_down![0];
-    lp.subjectTo.push({
+    problem.subjectTo.push({
       name: `overlap_down_constraint_${i}`,
       vars: [
         { name: `offset_${i}`, coef: 1 },
@@ -278,18 +284,91 @@ function createOptimizationModel(data: NetworkData, weights: Weights) {
     });
   }
 
-  return { lp, travelUp, travelDown };
+  return { problem, travelUp, travelDown };
 }
 
 function optimizeGreenWave(data: NetworkData, weights: Weights): RunResult {
   const n = data.intersections.length;
-  const { lp, travelUp, travelDown } = createOptimizationModel(data, weights);
+  const { problem, travelUp, travelDown } = createOptimizationModel(data, weights);
 
-  // פתרון המודל
-  const solution = glpk.solve(lp);
-  console.log("Optimization solution:", solution);
+  // יצירת המודל ופתרון
+  try {
+    console.log("Creating GLPK problem...");
+    const lp = glpk.glp_create_prob();
+    glpk.glp_set_prob_name(lp, problem.name);
+    glpk.glp_set_obj_dir(lp, problem.objective.direction);
 
-  if (solution.result.status !== glpk.GLP_OPT) {
+    // הוספת משתנים
+    const numVars = problem.bounds.length;
+    glpk.glp_add_cols(lp, numVars);
+    problem.bounds.forEach((bound, i) => {
+      glpk.glp_set_col_name(lp, i + 1, bound.name);
+      glpk.glp_set_col_bnds(lp, i + 1, bound.type, bound.lb || 0, bound.ub || 0);
+    });
+
+    // הוספת אילוצים
+    const numConstraints = problem.subjectTo.length;
+    glpk.glp_add_rows(lp, numConstraints);
+    problem.subjectTo.forEach((constraint, i) => {
+      glpk.glp_set_row_name(lp, i + 1, constraint.name);
+      glpk.glp_set_row_bnds(lp, i + 1, constraint.bnds.type, 0, constraint.bnds.ub || 0);
+    });
+
+    // הגדרת פונקציית המטרה
+    problem.objective.vars.forEach((v, i) => {
+      glpk.glp_set_obj_coef(lp, i + 1, v.coef);
+    });
+
+    console.log("Solving problem...");
+    const solution = glpk.glp_simplex(lp, { presolve: glpk.GLP_ON });
+    console.log("Solution status:", solution);
+
+    if (solution.result !== 0) {
+      console.error("Failed to solve problem");
+      throw new Error("Optimization failed");
+    }
+
+    // חילוץ התוצאות
+    const offsets = Array(n).fill(0).map((_, i) => 
+      Math.round(glpk.glp_get_col_prim(lp, i + 1))
+    );
+
+    const overlap_up = Array(n-1).fill(0).map((_, i) => 
+      glpk.glp_get_col_prim(lp, n + i + 1)
+    );
+
+    const overlap_down = Array(n-1).fill(0).map((_, i) => 
+      glpk.glp_get_col_prim(lp, n + (n-1) + i + 1)
+    );
+
+    const chainUp = chainBWUp(offsets, data, travelUp);
+    const chainDown = chainBWDown(offsets, data, travelDown);
+
+    glpk.glp_delete_prob(lp);
+
+    return {
+      status: "Optimal",
+      offsets,
+      objective_value: glpk.glp_get_obj_val(lp),
+      corridorBW_up: chainUp,
+      corridorBW_down: chainDown,
+      chain_corridorBW_up: chainUp,
+      chain_corridorBW_down: chainDown,
+      overlap_up,
+      overlap_down,
+      avg_delay_up: [],
+      avg_delay_down: [],
+      max_delay_up: [],
+      max_delay_down: [],
+      local_up: [],
+      local_down: [],
+      chain_up_start: [],
+      chain_up_end: [],
+      chain_down_start: [],
+      chain_down_end: []
+    };
+  } catch (error) {
+    console.error("Optimization error:", error);
     return {
       status: "Failed",
       offsets: Array(n).fill(0),
@@ -308,44 +387,6 @@ function optimizeGreenWave(data: NetworkData, weights: Weights): RunResult {
       overlap_down: []
     };
   }
-
-  // חילוץ התוצאות
-  const offsets = Array(n).fill(0).map((_, i) => 
-    Math.round(solution.result.vars[`offset_${i}`])
-  );
-
-  const overlap_up = Array(n-1).fill(0).map((_, i) => 
-    solution.result.vars[`overlap_up_${i}`]
-  );
-  
-  const overlap_down = Array(n-1).fill(0).map((_, i) => 
-    solution.result.vars[`overlap_down_${i}`]
-  );
-
-  const chainUp = chainBWUp(offsets, data, travelUp);
-  const chainDown = chainBWDown(offsets, data, travelDown);
-
-  return {
-    status: "Optimal",
-    offsets,
-    objective_value: solution.result.z,
-    corridorBW_up: chainUp,
-    corridorBW_down: chainDown,
-    chain_corridorBW_up: chainUp,
-    chain_corridorBW_down: chainDown,
-    overlap_up,
-    overlap_down,
-    avg_delay_up: [],
-    avg_delay_down: [],
-    max_delay_up: [],
-    max_delay_down: [],
-    local_up: [],
-    local_down: [],
-    chain_up_start: [],
-    chain_up_end: [],
-    chain_down_start: [],
-    chain_down_end: []
-  };
 }
 
 serve(async (req) => {
