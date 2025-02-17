@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
-import * as glpk from "https://esm.sh/glpk.js@4.0.0";
+import { Application, Router } from "https://deno.land/x/oak/mod.ts";
+import glpk from 'npm:glpk.js@4.0.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -55,10 +56,10 @@ interface RunResult {
   chain_corridorBW_down: number | null;
 }
 
-interface OptimizationResponse {
-  baseline_results: RunResult;
-  optimized_results: RunResult;
-  manual_results?: RunResult;
+interface OverDelayVars {
+  overlapName: string;
+  avgDelayName: string;
+  maxDelayName: string;
 }
 
 function defineOverlapAndDelay(
@@ -70,7 +71,7 @@ function defineOverlapAndDelay(
   travel_down: number[],
   M: number,
   weights: Weights
-): { overlapName: string; avgDelayName: string; maxDelayName: string } {
+): OverDelayVars {
   const isUpstream = direction === "up";
   const i = isUpstream ? i_pair : data.intersections.length - 2 - i_pair;
   const j = i + 1;
@@ -337,30 +338,18 @@ function chainBWDown(
   return 0;
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: corsHeaders,
-      status: 204
-    });
-  }
+const app = new Application();
+const router = new Router();
 
+router.post("/optimize", async (context) => {
   try {
-    const bodyText = await req.text();
-    if (!bodyText) {
-      throw new Error("Request body is empty");
-    }
-
-    let parsedBody;
-    try {
-      parsedBody = JSON.parse(bodyText);
-    } catch (e) {
-      throw new Error("Invalid JSON in request body");
-    }
-
-    const { data, weights, manualOffsets } = parsedBody;
+    const body = await context.request.body().value;
+    const { data, weights, manualOffsets } = body;
+    
     if (!data || !weights) {
-      throw new Error("Missing required fields: data or weights");
+      context.response.status = 400;
+      context.response.body = { error: "Missing required fields: data or weights" };
+      return;
     }
 
     // baseline
@@ -433,27 +422,33 @@ serve(async (req) => {
       manual_results
     };
 
-    return new Response(
-      JSON.stringify(response),
-      {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        },
-        status: 200
-      }
-    );
+    context.response.headers.set('Access-Control-Allow-Origin', '*');
+    context.response.headers.set('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type');
+    context.response.type = 'application/json';
+    context.response.body = response;
+
   } catch (error) {
     console.error('Function error:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        type: error.constructor.name
-      }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400
-      }
-    );
+    context.response.status = 400;
+    context.response.body = {
+      error: error.message,
+      type: error.constructor.name
+    };
   }
 });
+
+// CORS preflight
+router.options("/optimize", (context) => {
+  context.response.headers.set('Access-Control-Allow-Origin', '*');
+  context.response.headers.set('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type');
+  context.response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  context.response.status = 204;
+});
+
+app.use(router.routes());
+app.use(router.allowedMethods());
+
+const port = 3000;
+console.log(`Server running on port ${port}`);
+
+await app.listen({ port });
