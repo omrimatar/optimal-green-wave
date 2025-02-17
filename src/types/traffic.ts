@@ -40,15 +40,14 @@ export interface RunResult {
   corridorBW_down: number;
   chain_corridorBW_up: number | null;
   chain_corridorBW_down: number | null;
-  // רוחב פס מקומי בין כל זוג צמתים
+  local_up?: Array<number|null>;
+  local_down?: Array<number|null>;
   overlap_up?: Array<number|null>;
   overlap_down?: Array<number|null>;
-  // עיכובים
   avg_delay_up: Array<number|null>;
   avg_delay_down: Array<number|null>;
   max_delay_up: Array<number|null>;
   max_delay_down: Array<number|null>;
-  // ערכי אלכסון
   chain_up_start?: Array<number|null>;
   chain_up_end?: Array<number|null>;
   chain_down_start?: Array<number|null>;
