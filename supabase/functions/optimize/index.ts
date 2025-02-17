@@ -1,10 +1,9 @@
-
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import * as glpk from "https://esm.sh/glpk.js";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 interface GreenPhase {
@@ -24,12 +23,12 @@ interface Intersection {
 interface NetworkData {
   intersections: Intersection[];
   travel: {
-    up: { speed: number };
-    down: { speed: number };
+    speedUp: number;
+    speedDown: number;
   };
 }
 
-interface OptimizationWeights {
+interface Weights {
   corridor_up: number;
   corridor_down: number;
   overlap_up: number;
@@ -38,6 +37,32 @@ interface OptimizationWeights {
   avg_delay_down: number;
   max_delay_up: number;
   max_delay_down: number;
+}
+
+interface RunResult {
+  status: string;
+  offsets: number[];
+  objective_value: number | null;
+  corridorBW_up: number;
+  corridorBW_down: number;
+  chain_corridorBW_up: number | null;
+  chain_corridorBW_down: number | null;
+  overlap_up?: Array<number|null>;
+  overlap_down?: Array<number|null>;
+  avg_delay_up: Array<number|null>;
+  avg_delay_down: Array<number|null>;
+  max_delay_up: Array<number|null>;
+  max_delay_down: Array<number|null>;
+  chain_up_start?: Array<number|null>;
+  chain_up_end?: Array<number|null>;
+  chain_down_start?: Array<number|null>;
+  chain_down_end?: Array<number|null>;
+}
+
+interface OverDelayVars {
+  overlapName: string;
+  avgDelayName: string;
+  maxDelayName: string;
 }
 
 function calculateOffsets(data: NetworkData): number[] {
@@ -305,134 +330,187 @@ function computeChainCorridorDownAll(data: NetworkData, offsets: number[]): {
   return { chain_down_start, chain_down_end };
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: corsHeaders,
-      status: 204
-    });
+function chainBWUp(offsets: number[], data: NetworkData, travelTime: number[]): number {
+  let minBandwidthUp = Infinity;
+  let hasUp = false;
+
+  for (let i = 0; i < data.intersections.length - 1; i++) {
+    const curr = data.intersections[i];
+    const next = data.intersections[i + 1];
+    if (!curr.green_up?.length || !next.green_up?.length || !curr.cycle_up || !next.cycle_up) {
+      continue;
+    }
+    hasUp = true;
+
+    const distance = next.distance - curr.distance;
+    const travelTimeUp = travelTime[i];
+    const currGreen = curr.green_up[0];
+    const nextGreen = next.green_up[0];
+    const currStart = (offsets[i] + currGreen.start) % curr.cycle_up;
+    const nextStart = (offsets[i + 1] + nextGreen.start) % next.cycle_up;
+    
+    const arrivalTime = (currStart + currGreen.duration/2 + travelTimeUp) % next.cycle_up;
+    const overlap = Math.min(
+      nextGreen.duration,
+      Math.max(0, nextGreen.duration - Math.abs(arrivalTime - (nextStart + nextGreen.duration/2)))
+    );
+    minBandwidthUp = Math.min(minBandwidthUp, overlap);
   }
 
+  return hasUp ? (minBandwidthUp === Infinity ? 0 : minBandwidthUp) : null;
+}
+
+function chainBWDown(offsets: number[], data: NetworkData, travelTime: number[]): number {
+  let minBandwidthDown = Infinity;
+  let hasDown = false;
+
+  for (let i = data.intersections.length - 1; i > 0; i--) {
+    const curr = data.intersections[i];
+    const prev = data.intersections[i - 1];
+    if (!curr.green_down?.length || !prev.green_down?.length || !curr.cycle_down || !prev.cycle_down) {
+      continue;
+    }
+    hasDown = true;
+
+    const distance = curr.distance - prev.distance;
+    const travelTimeDown = travelTime[i - 1];
+    const currGreen = curr.green_down[0];
+    const prevGreen = prev.green_down[0];
+    const currStart = (offsets[i] + currGreen.start) % curr.cycle_down;
+    const prevStart = (offsets[i - 1] + prevGreen.start) % prev.cycle_down;
+    
+    const arrivalTime = (currStart + currGreen.duration/2 + travelTimeDown) % prev.cycle_down;
+    const overlap = Math.min(
+      prevGreen.duration,
+      Math.max(0, prevGreen.duration - Math.abs(arrivalTime - (prevStart + prevGreen.duration/2)))
+    );
+    minBandwidthDown = Math.min(minBandwidthDown, overlap);
+  }
+
+  return hasDown ? (minBandwidthDown === Infinity ? 0 : minBandwidthDown) : null;
+}
+
+function computeBaseline(data: NetworkData, weights: Weights, iterations: number): RunResult {
+  const offsets = calculateOffsets(data);
+  const bandwidth = calculateCorridorBandwidth(data, offsets);
+  const delays = calculateDelays(data, offsets);
+  const chainAllUpBase = computeChainCorridorUpAll(data, offsets);
+  const chainAllDownBase = computeChainCorridorDownAll(data, offsets);
+
+  const baselineResults = {
+    status: "Success",
+    offsets: offsets,
+    objective_value: null,
+    corridorBW_up: bandwidth.up,
+    corridorBW_down: bandwidth.down,
+    avg_delay_up: delays.avg_up,
+    avg_delay_down: delays.avg_down,
+    max_delay_up: delays.max_up,
+    max_delay_down: delays.max_down,
+    chain_up_start: chainAllUpBase.chain_up_start,
+    chain_up_end: chainAllUpBase.chain_up_end,
+    chain_down_start: chainAllDownBase.chain_down_start,
+    chain_down_end: chainAllDownBase.chain_down_end
+  };
+
+  return baselineResults;
+}
+
+function greenWaveOptimization(data: NetworkData, weights: Weights, iterations: number): { baseline_results: RunResult, optimized_results: RunResult } {
+  const offsets = calculateOffsets(data);
+  const bandwidth = calculateCorridorBandwidth(data, offsets);
+  const delays = calculateDelays(data, offsets);
+  const chainAllUpOpt = computeChainCorridorUpAll(data, offsets);
+  const chainAllDownOpt = computeChainCorridorDownAll(data, offsets);
+
+  const optimizedResults = {
+    status: "Success",
+    offsets: offsets,
+    objective_value: null,
+    corridorBW_up: bandwidth.up,
+    corridorBW_down: bandwidth.down,
+    avg_delay_up: delays.avg_up,
+    avg_delay_down: delays.avg_down,
+    max_delay_up: delays.max_up,
+    max_delay_down: delays.max_down,
+    chain_up_start: chainAllUpOpt.chain_up_start,
+    chain_up_end: chainAllUpOpt.chain_up_end,
+    chain_down_start: chainAllDownOpt.chain_down_start,
+    chain_down_end: chainAllDownOpt.chain_down_end
+  };
+
+  return { baseline_results: computeBaseline(data, weights, iterations), optimized_results: optimizedResults };
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders, status: 204 });
+  }
   try {
     const bodyText = await req.text();
-    if (!bodyText) {
-      throw new Error("Request body is empty");
-    }
-
-    let parsedBody;
+    if (!bodyText) throw new Error("Request body is empty");
+    let parsedBody: any;
     try {
       parsedBody = JSON.parse(bodyText);
     } catch (e) {
       throw new Error("Invalid JSON in request body");
     }
-
     const { data, weights, manualOffsets } = parsedBody;
-    if (!data || !weights) {
-      throw new Error("Missing required fields: data or weights");
-    }
-
-    // baseline=0
-    const baselineOffsets = new Array(data.intersections.length).fill(0);
-    const baselineBandwidth = calculateCorridorBandwidth(data, baselineOffsets);
-    const baselineDelays = calculateDelays(data, baselineOffsets);
-    const chainAllUpBase = computeChainCorridorUpAll(data, baselineOffsets);
-    const chainAllDownBase = computeChainCorridorDownAll(data, baselineOffsets);
-
-    const baselineResults = {
-      status: "Success",
-      offsets: baselineOffsets,
-      objective_value: null,
-      corridorBW_up: baselineBandwidth.up,
-      corridorBW_down: baselineBandwidth.down,
-      avg_delay_up: baselineDelays.avg_up,
-      avg_delay_down: baselineDelays.avg_down,
-      max_delay_up: baselineDelays.max_up,
-      max_delay_down: baselineDelays.max_down,
-      chain_up_start: chainAllUpBase.chain_up_start,
-      chain_up_end: chainAllUpBase.chain_up_end,
-      chain_down_start: chainAllDownBase.chain_down_start,
-      chain_down_end: chainAllDownBase.chain_down_end
-    };
-
-    // optimized
-    const optimizedOffsets = calculateOffsets(data);
-    const optimizedBandwidth = calculateCorridorBandwidth(data, optimizedOffsets);
-    const optimizedDelays = calculateDelays(data, optimizedOffsets);
-    const chainAllUpOpt = computeChainCorridorUpAll(data, optimizedOffsets);
-    const chainAllDownOpt = computeChainCorridorDownAll(data, optimizedOffsets);
-
-    const optimizedResults = {
-      status: "Success",
-      offsets: optimizedOffsets,
-      objective_value: null,
-      corridorBW_up: optimizedBandwidth.up,
-      corridorBW_down: optimizedBandwidth.down,
-      avg_delay_up: optimizedDelays.avg_up,
-      avg_delay_down: optimizedDelays.avg_down,
-      max_delay_up: optimizedDelays.max_up,
-      max_delay_down: optimizedDelays.max_down,
-      chain_up_start: chainAllUpOpt.chain_up_start,
-      chain_up_end: chainAllUpOpt.chain_up_end,
-      chain_down_start: chainAllDownOpt.chain_down_start,
-      chain_down_end: chainAllDownOpt.chain_down_end
-    };
-
-    // manual (if manualOffsets provided)
+    if (!data || !weights) throw new Error("Missing required fields: data or weights");
+    
+    const { baseline_results, optimized_results } = greenWaveOptimization(data, weights, 3);
+    
     let manual_results = null;
     if (manualOffsets && manualOffsets.length === data.intersections.length) {
-      // Force first intersection offset=0
       const normalizedOffsets = [...manualOffsets];
       normalizedOffsets[0] = 0;
       
-      const manualBandwidth = calculateCorridorBandwidth(data, normalizedOffsets);
-      const manualDelays = calculateDelays(data, normalizedOffsets);
-      const chainAllUpMan = computeChainCorridorUpAll(data, normalizedOffsets);
-      const chainAllDownMan = computeChainCorridorDownAll(data, normalizedOffsets);
-
+      const chainUp = chainBWUp(normalizedOffsets, data, data.intersections.map((_, i) => {
+        if (i < data.intersections.length - 1) {
+          const dist = data.intersections[i + 1].distance - data.intersections[i].distance;
+          return Math.round((dist * 3.6) / data.travel.speedUp);
+        }
+        return 0;
+      }));
+      
+      const chainDown = chainBWDown(normalizedOffsets, data, data.intersections.map((_, i) => {
+        if (i < data.intersections.length - 1) {
+          const dist = data.intersections[i + 1].distance - data.intersections[i].distance;
+          return Math.round((dist * 3.6) / data.travel.speedDown);
+        }
+        return 0;
+      }));
+      
       manual_results = {
         status: "Success",
         offsets: normalizedOffsets,
         objective_value: null,
-        corridorBW_up: manualBandwidth.up,
-        corridorBW_down: manualBandwidth.down,
-        avg_delay_up: manualDelays.avg_up,
-        avg_delay_down: manualDelays.avg_down,
-        max_delay_up: manualDelays.max_up,
-        max_delay_down: manualDelays.max_down,
-        chain_up_start: chainAllUpMan.chain_up_start,
-        chain_up_end: chainAllUpMan.chain_up_end,
-        chain_down_start: chainAllDownMan.chain_down_start,
-        chain_down_end: chainAllDownMan.chain_down_end
+        corridorBW_up: chainUp,
+        corridorBW_down: chainDown,
+        avg_delay_up: [],
+        avg_delay_down: [],
+        max_delay_up: [],
+        max_delay_down: [],
+        chain_corridorBW_up: chainUp,
+        chain_corridorBW_down: chainDown
       };
     }
-
+    
     const response = {
-      baseline_results: baselineResults,
-      optimized_results: optimizedResults,
-      manual_results: manual_results
+      baseline_results,
+      optimized_results,
+      manual_results,
     };
-
+    
+    return new Response(JSON.stringify(response), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+  } catch (error: any) {
+    console.error("Function error:", error);
     return new Response(
-      JSON.stringify(response),
-      {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json"
-        },
-        status: 200
-      }
-    );
-  } catch (error) {
-    console.error('Function error:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        type: error.constructor.name
-      }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400
-      }
+      JSON.stringify({ error: error.message, type: error.constructor.name }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
     );
   }
 });
