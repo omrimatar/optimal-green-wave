@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import glpk from 'npm:glpk.js@4.0.0';
 
@@ -86,11 +87,11 @@ function defineOverlapAndDelay(
     : data.intersections[j].green_down[0];
 
   const overlapName = `overlap_${direction}_${i}_${j}`;
-  const delayName = `delay_${direction}_${i}_${j}`;
+  const avgDelayName = `delay_${direction}_${i}_${j}`;
   const maxDelayName = `max_delay_${direction}_${i}_${j}`;
 
   model.vars[overlapName] = { obj: isUpstream ? weights.overlap_up : weights.overlap_down };
-  model.vars[delayName] = { obj: isUpstream ? weights.avg_delay_up : weights.avg_delay_down };
+  model.vars[avgDelayName] = { obj: isUpstream ? weights.avg_delay_up : weights.avg_delay_down };
   model.vars[maxDelayName] = { obj: isUpstream ? weights.max_delay_up : weights.max_delay_down };
 
   const offI = `off_${i}`;
@@ -123,7 +124,7 @@ function defineOverlapAndDelay(
 
   model.constraints[`delay_constr1_${direction}_${i}_${j}`] = {
     vars: {
-      [delayName]: 1,
+      [avgDelayName]: 1,
       [offI]: 1,
       [offJ]: -1,
     },
@@ -132,7 +133,7 @@ function defineOverlapAndDelay(
 
   model.constraints[`delay_constr2_${direction}_${i}_${j}`] = {
     vars: {
-      [delayName]: 1,
+      [avgDelayName]: 1,
       [offI]: 1,
       [offJ]: -1,
     },
@@ -141,7 +142,7 @@ function defineOverlapAndDelay(
 
   model.constraints[`delay_non_neg_${direction}_${i}_${j}`] = {
     vars: {
-      [delayName]: 1,
+      [avgDelayName]: 1,
     },
     bnds: { type: "lb", ub: Infinity, lb: 0 },
   };
