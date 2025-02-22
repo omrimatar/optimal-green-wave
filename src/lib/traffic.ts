@@ -1,5 +1,9 @@
 import { NetworkData, Weights, RunResult, DiagonalPoint } from '../types/traffic';
 
+// Constants
+const BIG_NEG = -9999999;
+const BIG_POS = 9999999;
+
 export async function greenWaveOptimization(
   networkData: NetworkData, 
   weights: Weights,
@@ -19,7 +23,7 @@ export async function greenWaveOptimization(
         distance: intersection.distance,
         green_up: intersection.green_up,
         green_down: intersection.green_down,
-        cycle: intersection.cycle_up || 90
+        cycle: intersection.cycle
       }))
     },
     weights: {
@@ -36,7 +40,7 @@ export async function greenWaveOptimization(
   };
 
   const results = solveGreenWave(inputData);
-
+  
   const convertToRunResult = (result: ResultStructure): RunResult => ({
     status: result.status,
     offsets: result.offsets,
@@ -137,9 +141,6 @@ interface SolveGreenWaveOutput {
   baseline_results: ResultStructure;
   optimization_results: ResultStructure;
 }
-
-const BIG_NEG = -9999999;
-const BIG_POS = 9999999;
 
 /**
  * computePairMetrics

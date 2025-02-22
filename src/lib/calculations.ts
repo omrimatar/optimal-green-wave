@@ -33,8 +33,7 @@ export async function calculateGreenWave(
           duration: phase.duration,
           speed: speed // Use the provided speed for all phases
         })),
-      cycle_up: intersection.cycleTime,
-      cycle_down: intersection.cycleTime
+      cycle: intersection.cycleTime
     })),
     travel: {
       up: { speed },

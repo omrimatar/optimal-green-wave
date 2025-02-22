@@ -10,8 +10,7 @@ export interface Intersection {
     distance: number;
     green_up: GreenPhase[];    // Changed to array for multiple phases
     green_down: GreenPhase[];  // Changed to array for multiple phases
-    cycle_up?: number;
-    cycle_down?: number;
+    cycle: number;
 }
 
 export interface NetworkData {
@@ -35,13 +34,13 @@ export interface Weights {
 
 export interface DiagonalPoint {
     pairIndex: number;
-    corridor: boolean;  // Made required to match DiagPoint
+    corridor: boolean;     // Whether this is a "corridor" point or pair
     direction: "up" | "down";
-    phaseIndex: number;
-    targetLow: number;
-    targetHigh: number;
-    sourceLow: number;
-    sourceHigh: number;
+    phaseIndex: number;    // Phase index at source
+    targetLow: number;     // start at target
+    targetHigh: number;    // end at target
+    sourceLow: number;     // start at source
+    sourceHigh: number;    // end at source
 }
 
 export interface RunResult {
