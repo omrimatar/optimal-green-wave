@@ -75,7 +75,11 @@ export async function greenWaveOptimization(
     };
   };
 
-  const output = {
+  const output: {
+    baseline_results: RunResult;
+    optimized_results: RunResult;
+    manual_results?: RunResult;
+  } = {
     baseline_results: convertToRunResult(results.baseline_results),
     optimized_results: convertToRunResult(results.optimization_results)
   };
@@ -473,10 +477,7 @@ function computeSolutionMetrics(
     pair_bandwidth_down,
     avg_delay_down,
     max_delay_down,
-    diagonal_points: {
-      up: diag_up,
-      down: diag_down
-    },
+    diagonal_points: [...diag_up, ...diag_down],  // Combine arrays instead of using object
     corridor_bandwidth_up: corridor_bw_up,
     corridor_bandwidth_down: corridor_bw_down
   };
