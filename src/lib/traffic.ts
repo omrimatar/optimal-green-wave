@@ -1,3 +1,4 @@
+
 import { NetworkData, Weights, RunResult, DiagonalPoint } from '../types/traffic';
 
 // Constants
@@ -144,7 +145,7 @@ interface SolveGreenWaveOutput {
 
 /**
  * computePairMetrics
- * מחשב מדדים לזוג צמתים (N, N+1), מחזיר עלות ��מדדים.
+ * מחשב מדדים לזוג צמתים (N, N+1), מחזיר עלות ומדדים.
  */
 function computePairMetrics(
   start_up_N: number, end_up_N: number,
@@ -174,7 +175,14 @@ function computePairMetrics(
   const end_down_next   = start_down_next     + duration_down_next;
 
   const pair_bw_up = Math.max(0, Math.min(end_up_next, end_up_N) - Math.max(start_up_next, start_up_N));
-  const pair_bw_down = Math.max(0, Math.min(end_down_next, end_down_N) - Math.max(start_down_next, start_down_N));
+
+  // חישוב עבור כיוון DOWN
+  const ref_down_start = start_down_next + travel_time_down;
+  const ref_down_end   = end_down_next + travel_time_down;
+  const pair_bw_down = Math.max(
+    0,
+    Math.min(ref_down_end, end_down_N) - Math.max(ref_down_start, start_down_N)
+  );
 
   const t_start_up = Math.ceil(start_up_N);
   const t_end_up   = Math.floor(end_up_N);
@@ -201,8 +209,9 @@ function computePairMetrics(
     avg_delay_up = sum_delay_up / count_up;
   }
 
-  const t_start_down = Math.ceil(start_down_N);
-  const t_end_down   = Math.floor(end_down_N);
+  // חישוב עיכוב עבור כיוון DOWN: הלולאה נעשית על חלון ירוק של צומת N+1 (source)
+  const t_start_down = Math.ceil(start_down_next);
+  const t_end_down   = Math.floor(end_down_next);
   let sum_delay_down = 0.0;
   let max_delay_down = 0.0;
   let count_down = 0;
@@ -210,10 +219,10 @@ function computePairMetrics(
   for (let t = t_start_down; t < t_end_down; t++) {
     const arrival = t + travel_time_down;
     let delay = 0.0;
-    if (arrival < start_down_next) {
-      delay = start_down_next - arrival;
-    } else if (arrival > end_down_next) {
-      delay = arrival - end_down_next;
+    if (arrival < start_down_N) {
+      delay = start_down_N - arrival;
+    } else if (arrival > end_down_N) {
+      delay = arrival - end_down_N;
     }
     sum_delay_down += delay;
     if (delay > max_delay_down) {
@@ -586,46 +595,3 @@ export function solveGreenWave(inputData: InputData): SolveGreenWaveOutput {
   };
 }
 
-/************************************************************
- * Example usage in TS (optional)
- ************************************************************/
-if (typeof require !== 'undefined' && require.main === module) {
-  const inputDataExample: InputData = {
-    mode: "optimization",
-    data: {
-      intersections: [
-        {
-          id: 1, distance: 0,
-          green_up:   [{start: 0, duration: 45, speed: 36}],
-          green_down: [{start: 30, duration: 60, speed: 36}],
-          cycle: 90
-        },
-        {
-          id: 2, distance: 100,
-          green_up:   [{start: 0, duration: 45, speed: 36}],
-          green_down: [{start: 80, duration: 20, speed: 36}],
-          cycle: 90
-        },
-        {
-          id: 3, distance: 200,
-          green_up:   [{start: 0, duration: 45, speed: 36}],
-          green_down: [{start: 70, duration: 40, speed: 36}],
-          cycle: 90
-        }
-      ]
-    },
-    weights: {
-      "pair_bandwidth_up": 5,
-      "pair_bandwidth_down": 5,
-      "avg_delay_up": 5,
-      "max_delay_up": 5,
-      "avg_delay_down": 5,
-      "max_delay_down": 5,
-      "corridor_bandwidth_up": 10,
-      "corridor_bandwidth_down": 10
-    }
-  };
-
-  const results = solveGreenWave(inputDataExample);
-  console.log(JSON.stringify(results, null, 2));
-}
