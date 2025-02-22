@@ -1,207 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
-import type { NetworkData, Weights, RunResult } from "@/types/traffic";
-
-export interface GreenPhase {
-    start: number;
-    duration: number;
-}
-
-export interface Intersection {
-    id: number;
-    distance: number;
-    green_up: GreenPhase[];
-    green_down: GreenPhase[];
-    cycle_up: number;
-    cycle_down: number;
-}
-
-function calculateCorridorBandwidth(data: NetworkData, offsets: number[]): { 
-  up: number|null; 
-  down: number|null;
-  local_up: Array<number|null>;
-  local_down: Array<number|null>;
-} {
-  const { intersections, travel } = data;
-
-  let minBandwidthUp = Infinity;
-  let minBandwidthDown = Infinity;
-  let hasUp = false;
-  let hasDown = false;
-  const local_up: Array<number|null> = [];
-  const local_down: Array<number|null> = [];
-
-  for (let i = 0; i < intersections.length - 1; i++) {
-    const curr = intersections[i];
-    const next = intersections[i + 1];
-    if (!curr.green_up?.length || !next.green_up?.length || !curr.cycle_up || !next.cycle_up) {
-      local_up.push(null);
-      continue;
-    }
-    hasUp = true;
-
-    const distance = next.distance - curr.distance;
-    const travelTime = (distance / travel.up.speed) * 3.6;
-
-    const currGreen = curr.green_up[0];
-    const nextGreen = next.green_up[0];
-    const currStart = (offsets[i] + currGreen.start) % curr.cycle_up;
-    const nextStart = (offsets[i + 1] + nextGreen.start) % next.cycle_up;
-    
-    const arrivalTime = (currStart + currGreen.duration/2 + travelTime) % next.cycle_up;
-    const overlap = Math.min(
-      nextGreen.duration,
-      Math.max(0, nextGreen.duration - Math.abs(arrivalTime - (nextStart + nextGreen.duration/2)))
-    );
-    local_up.push(overlap);
-    minBandwidthUp = Math.min(minBandwidthUp, overlap);
-  }
-
-  for (let i = intersections.length - 1; i > 0; i--) {
-    const curr = intersections[i];
-    const prev = intersections[i - 1];
-    if (!curr.green_down?.length || !prev.green_down?.length || !curr.cycle_down || !prev.cycle_down) {
-      local_down.push(null);
-      continue;
-    }
-    hasDown = true;
-
-    const distance = curr.distance - prev.distance;
-    const travelTime = (distance / travel.down.speed) * 3.6;
-
-    const currGreen = curr.green_down[0];
-    const prevGreen = prev.green_down[0];
-    const currStart = (offsets[i] + currGreen.start) % curr.cycle_down;
-    const prevStart = (offsets[i - 1] + prevGreen.start) % prev.cycle_down;
-    
-    const arrivalTime = (currStart + currGreen.duration/2 + travelTime) % prev.cycle_down;
-    const overlap = Math.min(
-      prevGreen.duration,
-      Math.max(0, prevGreen.duration - Math.abs(arrivalTime - (prevStart + prevGreen.duration/2)))
-    );
-    local_down.unshift(overlap);
-    minBandwidthDown = Math.min(minBandwidthDown, overlap);
-  }
-
-  const upVal = hasUp ? (minBandwidthUp === Infinity ? 0 : minBandwidthUp) : null;
-  const downVal = hasDown ? (minBandwidthDown === Infinity ? 0 : minBandwidthDown) : null;
-
-  return { 
-    up: upVal, 
-    down: downVal,
-    local_up,
-    local_down
-  };
-}
-
-function chainPostProc(run: RunResult, data: NetworkData) {
-    const n = data.intersections.length;
-    const travelUp: number[] = [];
-    const travelDown: number[] = [];
-    
-    for(let i = 0; i < n-1; i++) {
-        const dist = data.intersections[i+1].distance - data.intersections[i].distance;
-        travelUp[i] = Math.round(dist * 3.6 / data.travel.up.speed);
-        travelDown[i] = Math.round(dist * 3.6 / data.travel.down.speed);
-    }
-
-    const diagonalUp = chainBWUp(run.offsets, data, travelUp);
-    const diagonalDown = chainBWDown(run.offsets, data, travelDown);
-
-    run.diagonal_up_start = diagonalUp.diagonal_up_start;
-    run.diagonal_up_end = diagonalUp.diagonal_up_end;
-    run.diagonal_down_start = diagonalDown.diagonal_down_start;
-    run.diagonal_down_end = diagonalDown.diagonal_down_end;
-}
-
-function chainBWUp(offsets: number[], data: NetworkData, travelUp: number[]): {
-    diagonal_up_start: Array<number|null>;
-    diagonal_up_end: Array<number|null>;
-} {
-    const n = data.intersections.length;
-    if(n < 2) return {diagonal_up_start: [], diagonal_up_end: []};
-    
-    let Lc: number, Uc: number;
-    {
-        const off_dep = offsets[0];
-        const off_dest = offsets[1];
-        const phDep = data.intersections[0].green_up[0];
-        const phDest = data.intersections[1].green_up[0];
-        const a = off_dep + phDep.start + travelUp[0];
-        const c = a + phDep.duration;
-        const b = off_dest + phDest.start;
-        const d = b + phDest.duration;
-        Lc = Math.max(a, b);
-        Uc = Math.min(c, d);
-        if(Lc > Uc) return {diagonal_up_start: [], diagonal_up_end: []};
-    }
-
-    for(let i = 1; i < n-1; i++) {
-        const t = travelUp[i];
-        Lc += t;
-        Uc += t;
-        const off_dep = offsets[i];
-        const off_dest = offsets[i+1];
-        const phDep = data.intersections[i].green_up[0];
-        const phDest = data.intersections[i+1].green_up[0];
-        const a = off_dep + phDep.start;
-        const c = a + phDep.duration;
-        const b = off_dest + phDest.start;
-        const d = b + phDest.duration;
-        const newL = Math.max(Lc, Math.max(a, b));
-        const newU = Math.min(Uc, Math.min(c, d));
-        if(newL > newU) return {diagonal_up_start: [], diagonal_up_end: []};
-        Lc = newL;
-        Uc = newU;
-    }
-    return {diagonal_up_start: [Math.max(0, Uc-Lc)], diagonal_up_end: [Math.max(0, Uc-Lc)]};
-}
-
-function chainBWDown(offsets: number[], data: NetworkData, travelDown: number[]): {
-    diagonal_down_start: Array<number|null>;
-    diagonal_down_end: Array<number|null>;
-} {
-    const n = data.intersections.length;
-    if(n < 2) return {diagonal_down_start: [], diagonal_down_end: []};
-    
-    let Lc: number, Uc: number;
-    {
-        const off_dep = offsets[n-1];
-        const off_dest = offsets[n-2];
-        const ph_dep = data.intersections[n-1].green_down[0];
-        const ph_dest = data.intersections[n-2].green_down[0];
-        const t = travelDown[n-2];
-        const a = off_dep + ph_dep.start + t;
-        const c = a + ph_dep.duration;
-        const b = off_dest + ph_dest.start;
-        const d = b + ph_dest.duration;
-        Lc = Math.max(a, b);
-        Uc = Math.min(c, d);
-        if(Lc > Uc) return {diagonal_down_start: [], diagonal_down_end: []};
-    }
-
-    for(let i = n-2; i > 0; i--) {
-        const t = travelDown[i-1];
-        Lc += t;
-        Uc += t;
-        const off_dep = offsets[i];
-        const off_dest = offsets[i-1];
-        const ph_dep = data.intersections[i].green_down[0];
-        const ph_dest = data.intersections[i-1].green_down[0];
-        const a = off_dep + ph_dep.start;
-        const c = a + ph_dep.duration;
-        const b = off_dest + ph_dest.start;
-        const d = b + ph_dest.duration;
-        const newL = Math.max(Lc, Math.max(a, b));
-        const newU = Math.min(Uc, Math.min(c, d));
-        if(newL > newU) return {diagonal_down_start: [], diagonal_down_end: []};
-        Lc = newL;
-        Uc = newU;
-    }
-    return {diagonal_down_start: [Math.max(0, Uc-Lc)], diagonal_down_end: [Math.max(0, Uc-Lc)]};
-}
-
 export async function greenWaveOptimization(
-  data: NetworkData, 
+  networkData: NetworkData, 
   weights: Weights,
   manualOffsets?: number[]
 ): Promise<{
@@ -209,78 +7,649 @@ export async function greenWaveOptimization(
   optimized_results: RunResult;
   manual_results?: RunResult;
 }> {
-  try {
-    console.log('Starting optimization with data:', { 
-      intersections: data.intersections,
-      travel: data.travel,
-      manualOffsets
-    });
-    console.log('Using weights:', weights);
+  // המרת נתוני הרשת לפורמט הדרוש לאופטימיזציה
+  const mode = manualOffsets ? "manual" : "optimization";
+  
+  const inputData = {
+    mode,
+    data: {
+      intersections: networkData.intersections.map((intersection, idx) => ({
+        id: intersection.id,
+        distance: intersection.distance,
+        green_up: intersection.green_up?.map(phase => ({
+          start: phase.start,
+          duration: phase.duration,
+          speed: networkData.travel.up.speed
+        })) || [],
+        green_down: intersection.green_down?.map(phase => ({
+          start: phase.start,
+          duration: phase.duration,
+          speed: networkData.travel.down.speed
+        })) || [],
+        cycle: intersection.cycle_up || 90
+      }))
+    },
+    weights: {
+      pair_bandwidth_up: weights.overlap_up,
+      pair_bandwidth_down: weights.overlap_down,
+      avg_delay_up: weights.avg_delay_up,
+      max_delay_up: weights.max_delay_up,
+      avg_delay_down: weights.avg_delay_down,
+      max_delay_down: weights.max_delay_down,
+      corridor_bandwidth_up: weights.corridor_up,
+      corridor_bandwidth_down: weights.corridor_down
+    },
+    manual_offsets: manualOffsets
+  };
 
-    if (!data.intersections || !data.travel || !weights) {
-      throw new Error('Missing required data for optimization');
-    }
+  // קריאה לפונקציית האופטימיזציה
+  const results = solveGreenWave(inputData);
 
-    console.log('Preparing request body...');
-    const requestBody = {
-      data: {
-        intersections: data.intersections,
-        travel: data.travel
-      },
-      weights,
-      manualOffsets
-    };
-    console.log('Request body:', requestBody);
-    
-    const functionUrl = `https://xfdqxyxvjzbvxewbzrpe.supabase.co/functions/v1/optimize?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZHF4eXh2anpidnhld2J6cnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NzE5MTIsImV4cCI6MjA1NTE0NzkxMn0.uhp87GwzK6g04w3ZTBE1vVe8dtDkXALlzrBsSjAuUtg`;
-    console.log('Function URL:', functionUrl);
-        
-    const response = await fetch(functionUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(requestBody)
-    });
+  // המרת התוצאות לפורמט הנדרש
+  const convertToRunResult = (result: ResultStructure): RunResult => ({
+    status: result.status,
+    offsets: result.offsets,
+    objective_value: result.objective_value,
+    corridorBW_up: result.corridor_bandwidth_up,
+    corridorBW_down: result.corridor_bandwidth_down,
+    local_up: result.pair_bandwidth_up,
+    local_down: result.pair_bandwidth_down,
+    avg_delay_up: result.avg_delay_up,
+    avg_delay_down: result.avg_delay_down,
+    max_delay_up: result.max_delay_up,
+    max_delay_down: result.max_delay_down,
+    diagonal_up_start: result.diagonal_points.up.map(p => p.low),
+    diagonal_up_end: result.diagonal_points.up.map(p => p.top),
+    diagonal_down_start: result.diagonal_points.down.map(p => p.low),
+    diagonal_down_end: result.diagonal_points.down.map(p => p.top)
+  });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+  const output = {
+    baseline_results: convertToRunResult(results.baseline_results),
+    optimized_results: convertToRunResult(results.optimization_results)
+  };
 
-    const results = await response.json();
-    
-    if (!results) {
-      throw new Error('No results returned from optimization');
-    }
-
-    console.log('Received results:', results);
-
-    if (results.baseline_results) {
-      const baselineBandwidth = calculateCorridorBandwidth(data, results.baseline_results.offsets);
-      results.baseline_results.corridorBW_up = baselineBandwidth.up || 0;
-      results.baseline_results.corridorBW_down = baselineBandwidth.down || 0;
-      results.baseline_results.local_up = baselineBandwidth.local_up;
-      results.baseline_results.local_down = baselineBandwidth.local_down;
-    }
-    if (results.optimized_results) {
-      const optimizedBandwidth = calculateCorridorBandwidth(data, results.optimized_results.offsets);
-      results.optimized_results.corridorBW_up = optimizedBandwidth.up || 0;
-      results.optimized_results.corridorBW_down = optimizedBandwidth.down || 0;
-      results.optimized_results.local_up = optimizedBandwidth.local_up;
-      results.optimized_results.local_down = optimizedBandwidth.local_down;
-    }
-    if (results.manual_results) {
-      const manualBandwidth = calculateCorridorBandwidth(data, results.manual_results.offsets);
-      results.manual_results.corridorBW_up = manualBandwidth.up || 0;
-      results.manual_results.corridorBW_down = manualBandwidth.down || 0;
-      results.manual_results.local_up = manualBandwidth.local_up;
-      results.manual_results.local_down = manualBandwidth.local_down;
-    }
-
-    console.log('Final results:', results);
-    return results;
-  } catch (error) {
-    console.error('Error in greenWaveOptimization:', error);
-    throw error;
+  if (mode === "manual") {
+    output.manual_results = output.optimized_results;
   }
+
+  return output;
+}
+
+interface GreenPhase {
+  start: number;
+  duration: number;
+  speed: number;
+}
+
+interface IntersectionDef {
+  id: number;
+  distance: number;
+  green_up: GreenPhase[];
+  green_down: GreenPhase[];
+  cycle: number;
+}
+
+interface InputData {
+  mode: string;
+  data: {
+    intersections: IntersectionDef[];
+  };
+  weights: Record<string, number>;
+  manual_offsets?: number[];
+}
+
+interface IntersectionItem {
+  id: number;
+  distance: number;
+  cycle: number;
+  start_up_raw: number;
+  duration_up: number;
+  speed_up: number;
+  start_down_raw: number;
+  duration_down: number;
+  speed_down: number;
+  start_up_actual?: number;
+  end_up_actual?: number;
+  start_down_actual?: number;
+  end_down_actual?: number;
+}
+
+interface DiagPoint {
+  junction: number;
+  low: number;
+  top: number;
+}
+
+interface ResultStructure {
+  status: string;
+  offsets: number[];
+  objective_value: number;
+  pair_bandwidth_up: number[];
+  avg_delay_up: number[];
+  max_delay_up: number[];
+  pair_bandwidth_down: number[];
+  avg_delay_down: number[];
+  max_delay_down: number[];
+  diagonal_points: {
+    up: DiagPoint[];
+    down: DiagPoint[];
+  };
+  corridor_bandwidth_up: number;
+  corridor_bandwidth_down: number;
+}
+
+interface SolveGreenWaveOutput {
+  baseline_results: ResultStructure;
+  optimization_results: ResultStructure;
+}
+
+const BIG_NEG = -9999999;
+const BIG_POS = 9999999;
+
+/**
+ * computePairMetrics
+ * מחשב מדדים לזוג צמתים (N, N+1), מחזיר עלות ומדדים.
+ */
+function computePairMetrics(
+  start_up_N: number, end_up_N: number,
+  start_down_N: number, end_down_N: number,
+  start_up_next_raw: number, duration_up_next: number,
+  start_down_next_raw: number, duration_down_next: number,
+  offset_next: number,
+  travel_time_up: number,
+  travel_time_down: number,
+  corridor_up_prev: [number, number],
+  corridor_down_prev: [number, number],
+  weights: Record<string, number>
+): [number, Record<string, number>, [number, number], [number, number]] {
+
+  const w_pair_bw_up   = weights["pair_bandwidth_up"]   ?? 0;
+  const w_pair_bw_down = weights["pair_bandwidth_down"] ?? 0;
+  const w_avg_up       = weights["avg_delay_up"]        ?? 0;
+  const w_max_up       = weights["max_delay_up"]        ?? 0;
+  const w_avg_down     = weights["avg_delay_down"]      ?? 0;
+  const w_max_down     = weights["max_delay_down"]      ?? 0;
+  const w_corr_up      = weights["corridor_bandwidth_up"]   ?? 0;
+  const w_corr_down    = weights["corridor_bandwidth_down"] ?? 0;
+
+  // חלונות ירוק בצומת N+1 (raw + offset)
+  const start_up_next   = start_up_next_raw   + offset_next;
+  const end_up_next     = start_up_next       + duration_up_next;
+  const start_down_next = start_down_next_raw + offset_next;
+  const end_down_next   = start_down_next     + duration_down_next;
+
+  // "השתקפות" בכיוון up
+  const ref_up_start = start_up_N + travel_time_up;
+  const ref_up_end   = end_up_N   + travel_time_up;
+
+  const pair_bw_up = Math.max(0, Math.min(ref_up_end, end_up_next) - Math.max(ref_up_start, start_up_next));
+
+  // "השתקפות" בכיוון down
+  const ref_down_start = start_down_N + travel_time_down;
+  const ref_down_end   = end_down_N   + travel_time_down;
+  const pair_bw_down = Math.max(0, Math.min(ref_down_end, end_down_next) - Math.max(ref_down_start, start_down_next));
+
+  // עיכוב ממוצע ומרבי בכיוון up
+  const t_start_up = Math.ceil(start_up_N);
+  const t_end_up   = Math.floor(end_up_N);
+  let sum_delay_up = 0.0;
+  let max_delay_up = 0.0;
+  let count_up = 0;
+
+  for (let t = t_start_up; t < t_end_up; t++) {
+    const arrival = t + travel_time_up;
+    let delay = 0.0;
+    if (arrival < start_up_next) {
+      delay = start_up_next - arrival;
+    } else if (arrival > end_up_next) {
+      delay = arrival - end_up_next;
+    }
+    sum_delay_up += delay;
+    if (delay > max_delay_up) {
+      max_delay_up = delay;
+    }
+    count_up++;
+  }
+  let avg_delay_up = 0.0;
+  if (count_up > 0) {
+    avg_delay_up = sum_delay_up / count_up;
+  }
+
+  // עיכוב ממוצע ומרבי בכיוון down
+  const t_start_down = Math.ceil(start_down_N);
+  const t_end_down   = Math.floor(end_down_N);
+  let sum_delay_down = 0.0;
+  let max_delay_down = 0.0;
+  let count_down = 0;
+
+  for (let t = t_start_down; t < t_end_down; t++) {
+    const arrival = t + travel_time_down;
+    let delay = 0.0;
+    if (arrival < start_down_next) {
+      delay = start_down_next - arrival;
+    } else if (arrival > end_down_next) {
+      delay = arrival - end_down_next;
+    }
+    sum_delay_down += delay;
+    if (delay > max_delay_down) {
+      max_delay_down = delay;
+    }
+    count_down++;
+  }
+  let avg_delay_down = 0.0;
+  if (count_down > 0) {
+    avg_delay_down = sum_delay_down / count_down;
+  }
+
+  // עדכון corridor בכיוון up
+  const local_up_low  = Math.max(ref_up_start, start_up_next);
+  const local_up_high = Math.min(ref_up_end,   end_up_next);
+  const corridor_up_low_new  = Math.max(corridor_up_prev[0], local_up_low);
+  const corridor_up_high_new = Math.min(corridor_up_prev[1], local_up_high);
+  const corridor_up_val_new  = Math.max(0, corridor_up_high_new - corridor_up_low_new);
+
+  // עדכון corridor בכיוון down
+  const local_down_low  = Math.max(ref_down_start, start_down_next);
+  const local_down_high = Math.min(ref_down_end,   end_down_next);
+  const corridor_down_low_new  = Math.max(corridor_down_prev[0], local_down_low);
+  const corridor_down_high_new = Math.min(corridor_down_prev[1], local_down_high);
+  const corridor_down_val_new  = Math.max(0, corridor_down_high_new - corridor_down_low_new);
+
+  // פונקציית מטרה
+  let cost = 0;
+  // מקסום pair_bw => -(משקל*bw)
+  cost -= w_pair_bw_up * pair_bw_up;
+  cost -= w_pair_bw_down * pair_bw_down;
+  // מזעור delay => +(משקל*delay)
+  cost += w_avg_up   * avg_delay_up;
+  cost += w_max_up   * max_delay_up;
+  cost += w_avg_down * avg_delay_down;
+  cost += w_max_down * max_delay_down;
+  // מקסום corridor => -(משקל*corridor_val)
+  cost -= w_corr_up   * corridor_up_val_new;
+  cost -= w_corr_down * corridor_down_val_new;
+
+  const metrics: Record<string, number> = {
+    "pair_overlap_up": pair_bw_up,
+    "pair_overlap_down": pair_bw_down,
+    "avg_delay_up": avg_delay_up,
+    "max_delay_up": max_delay_up,
+    "avg_delay_down": avg_delay_down,
+    "max_delay_down": max_delay_down
+  };
+
+  return [
+    cost,
+    metrics,
+    [corridor_up_low_new,   corridor_up_high_new],
+    [corridor_down_low_new, corridor_down_high_new]
+  ];
+}
+
+/**
+ * diagonal_points בכיוון up
+ */
+function computeDiagonalPointsUp(
+  intersectionsList: IntersectionItem[],
+  offsets: number[],
+  travelTimes: [number, number][]
+): DiagPoint[] {
+  const n = intersectionsList.length;
+  const diag_up: DiagPoint[] = [];
+  if (n === 0) return diag_up;
+
+  // צומת ראשון
+  const start_up_0 = intersectionsList[0].start_up_raw + offsets[0];
+  const end_up_0   = start_up_0 + intersectionsList[0].duration_up;
+  let wave_low  = start_up_0;
+  let wave_high = end_up_0;
+
+  diag_up.push({
+    junction: intersectionsList[0].id,
+    low: wave_low,
+    top: wave_high
+  });
+
+  for (let i = 1; i < n; i++) {
+    const t_up = travelTimes[i-1][0];
+    wave_low  += t_up;
+    wave_high += t_up;
+
+    const su_i = intersectionsList[i].start_up_raw + offsets[i];
+    const eu_i = su_i + intersectionsList[i].duration_up;
+
+    wave_low  = Math.max(wave_low, su_i);
+    wave_high = Math.min(wave_high, eu_i);
+
+    diag_up.push({
+      junction: intersectionsList[i].id,
+      low: wave_low,
+      top: wave_high
+    });
+  }
+
+  return diag_up;
+}
+
+/**
+ * diagonal_points בכיוון down
+ */
+function computeDiagonalPointsDown(
+  intersectionsList: IntersectionItem[],
+  offsets: number[],
+  travelTimes: [number, number][]
+): DiagPoint[] {
+  const n = intersectionsList.length;
+  const diag_down: DiagPoint[] = [];
+  if (n === 0) return diag_down;
+
+  const start_down_0 = intersectionsList[0].start_down_raw + offsets[0];
+  const end_down_0   = start_down_0 + intersectionsList[0].duration_down;
+  let wave_low  = start_down_0;
+  let wave_high = end_down_0;
+
+  diag_down.push({
+    junction: intersectionsList[0].id,
+    low: wave_low,
+    top: wave_high
+  });
+
+  for (let i = 1; i < n; i++) {
+    const t_down = travelTimes[i-1][1];
+    wave_low  += t_down;
+    wave_high += t_down;
+
+    const sd_i = intersectionsList[i].start_down_raw + offsets[i];
+    const ed_i = sd_i + intersectionsList[i].duration_down;
+
+    wave_low  = Math.max(wave_low, sd_i);
+    wave_high = Math.min(wave_high, ed_i);
+
+    diag_down.push({
+      junction: intersectionsList[i].id,
+      low: wave_low,
+      top: wave_high
+    });
+  }
+  return diag_down;
+}
+
+/**
+ * computeSolutionMetrics
+ * מחשב את כל המדדים עבור רשימת צמתים ואופסטים נתונים
+ */
+function computeSolutionMetrics(
+  intersectionsList: IntersectionItem[],
+  offsets: number[],
+  travelTimes: [number, number][],
+  weights: Record<string, number>
+): ResultStructure {
+  const n = intersectionsList.length;
+
+  // עדכון ערכי start_up_actual וכו'
+  for (let i = 0; i < n; i++) {
+    const su_raw = intersectionsList[i].start_up_raw;
+    const du     = intersectionsList[i].duration_up;
+    const sd_raw = intersectionsList[i].start_down_raw;
+    const dd     = intersectionsList[i].duration_down;
+    const off    = offsets[i];
+
+    intersectionsList[i].start_up_actual   = su_raw + off;
+    intersectionsList[i].end_up_actual     = su_raw + off + du;
+    intersectionsList[i].start_down_actual = sd_raw + off;
+    intersectionsList[i].end_down_actual   = sd_raw + off + dd;
+  }
+
+  const pair_bandwidth_up: number[] = [];
+  const pair_bandwidth_down: number[] = [];
+  const avg_delay_up: number[] = [];
+  const max_delay_up: number[] = [];
+  const avg_delay_down: number[] = [];
+  const max_delay_down: number[] = [];
+  let objective_value = 0.0;
+
+  let corridor_up_range: [number, number]   = [BIG_NEG, BIG_POS];
+  let corridor_down_range: [number, number] = [BIG_NEG, BIG_POS];
+
+  for (let i = 0; i < n-1; i++) {
+    const suN = intersectionsList[i].start_up_actual!;
+    const euN = intersectionsList[i].end_up_actual!;
+    const sdN = intersectionsList[i].start_down_actual!;
+    const edN = intersectionsList[i].end_down_actual!;
+
+    const su_next_raw = intersectionsList[i+1].start_up_raw;
+    const du_next     = intersectionsList[i+1].duration_up;
+    const sd_next_raw = intersectionsList[i+1].start_down_raw;
+    const dd_next     = intersectionsList[i+1].duration_down;
+    const off_next    = offsets[i+1];
+
+    const [t_up, t_down] = travelTimes[i];
+
+    const [cost_pair, metrics_pair, corr_up_new, corr_down_new] = computePairMetrics(
+      suN, euN, sdN, edN,
+      su_next_raw, du_next,
+      sd_next_raw, dd_next,
+      off_next, t_up, t_down,
+      corridor_up_range, corridor_down_range,
+      weights
+    );
+
+    objective_value += cost_pair;
+
+    pair_bandwidth_up.push( metrics_pair["pair_overlap_up"] );
+    pair_bandwidth_down.push( metrics_pair["pair_overlap_down"] );
+    avg_delay_up.push( metrics_pair["avg_delay_up"] );
+    max_delay_up.push( metrics_pair["max_delay_up"] );
+    avg_delay_down.push( metrics_pair["avg_delay_down"] );
+    max_delay_down.push( metrics_pair["max_delay_down"] );
+
+    corridor_up_range   = corr_up_new;
+    corridor_down_range = corr_down_new;
+  }
+
+  const corridor_bw_up = Math.max(0, corridor_up_range[1]   - corridor_up_range[0]);
+  const corridor_bw_down = Math.max(0, corridor_down_range[1] - corridor_down_range[0]);
+
+  // diagonal_points
+  const diag_up   = computeDiagonalPointsUp(intersectionsList, offsets, travelTimes);
+  const diag_down = computeDiagonalPointsDown(intersectionsList, offsets, travelTimes);
+
+  return {
+    status: "Optimal",  // יתעדכן מחוץ אם צריך
+    offsets,
+    objective_value,
+    pair_bandwidth_up,
+    avg_delay_up,
+    max_delay_up,
+    pair_bandwidth_down,
+    avg_delay_down,
+    max_delay_down,
+    diagonal_points: {
+      up: diag_up,
+      down: diag_down
+    },
+    corridor_bandwidth_up: corridor_bw_up,
+    corridor_bandwidth_down: corridor_bw_down
+  };
+}
+
+/**
+ * פונקציה לעשיית mod cycle
+ */
+function applyOffsetModulo(off: number, cycle: number): number {
+  // מחזיר לטווח [0, cycle)
+  return ((off % cycle) + cycle) % cycle;
+}
+
+/**
+ * bruteForceOptimize
+ * חיפוש גס (Brute Force) על offsets של כל צומת חוץ מהראשון (שהוא 0)
+ */
+function bruteForceOptimize(
+  intersectionsList: IntersectionItem[],
+  travelTimes: [number, number][],
+  weights: Record<string, number>
+): number[] {
+  const n = intersectionsList.length;
+  let bestOffsets = new Array(n).fill(0);
+  let bestCost = Number.POSITIVE_INFINITY;
+
+  // נכין DFS עם משתני סגירה
+  function dfs(i: number, currentOffsets: number[]) {
+    if (i === n) {
+      // הגענו לסוף - מחשבים עלות
+      const sol = computeSolutionMetrics(intersectionsList, currentOffsets, travelTimes, weights);
+      const cst = sol.objective_value;
+      if (cst < bestCost) {
+        bestCost = cst;
+        bestOffsets = [...currentOffsets];
+      }
+      return;
+    }
+
+    if (i === 0) {
+      // צומת ראשון offset=0
+      dfs(i+1, currentOffsets);
+    } else {
+      const cyc = intersectionsList[i].cycle;
+      for (let offCandidate = -cyc; offCandidate <= 2*cyc; offCandidate++) {
+        currentOffsets[i] = offCandidate;
+        dfs(i+1, currentOffsets);
+      }
+      currentOffsets[i] = 0;
+    }
+  }
+
+  const currentOffsets = new Array(n).fill(0);
+  dfs(0, currentOffsets);
+
+  // מחזירים offsets אחרי modulo
+  const finalOffsets: number[] = [];
+  for (let i=0; i<n; i++) {
+    const cyc = intersectionsList[i].cycle;
+    finalOffsets.push(applyOffsetModulo(bestOffsets[i], cyc));
+  }
+  return finalOffsets;
+}
+
+
+/**
+ * solveGreenWave - פונקציה ראשית
+ */
+export function solveGreenWave(inputData: InputData): SolveGreenWaveOutput {
+  const mode = inputData.mode ?? "optimization";
+  const data = inputData.data;
+  const weights = inputData.weights;
+  const interDef = data.intersections;
+
+  // בונים רשימת צמתים פנימית
+  const intersectionsList: IntersectionItem[] = interDef.map(c => {
+    const gup = c.green_up[0];
+    const gdn = c.green_down[0];
+    return {
+      id: c.id,
+      distance: c.distance,
+      cycle: c.cycle,
+      start_up_raw:   gup.start,
+      duration_up:    gup.duration,
+      speed_up:       gup.speed,
+      start_down_raw: gdn.start,
+      duration_down:  gdn.duration,
+      speed_down:     gdn.speed
+    };
+  });
+
+  // מחשבים travel_times בין צמתים סמוכים
+  const travelTimes: [number, number][] = [];
+  for (let i=0; i<intersectionsList.length-1; i++) {
+    const dist = Math.abs(intersectionsList[i+1].distance - intersectionsList[i].distance);
+
+    let sp_up_m_s = intersectionsList[i].speed_up / 3.6;
+    if (sp_up_m_s <= 0) { sp_up_m_s = 1; }
+
+    let sp_down_m_s = intersectionsList[i].speed_down / 3.6;
+    if (sp_down_m_s <= 0) { sp_down_m_s = 1; }
+
+    const t_up   = dist / sp_up_m_s;
+    const t_down = dist / sp_down_m_s;
+    travelTimes.push([t_up, t_down]);
+  }
+
+  // baseline (0 לכולם)
+  const baselineOffsets = new Array(intersectionsList.length).fill(0);
+  const baselineSol = computeSolutionMetrics(intersectionsList, baselineOffsets, travelTimes, weights);
+  baselineSol.status = "Optimal";  // כנדרש
+
+  // manual/optimization
+  let optSol: ResultStructure;
+  if (mode === "manual") {
+    const manualOffsetsIn = inputData.manual_offsets ?? new Array(intersectionsList.length).fill(0);
+    const finalManual: number[] = [];
+    for (let i=0; i<intersectionsList.length; i++) {
+      const cyc = intersectionsList[i].cycle;
+      finalManual.push(applyOffsetModulo(manualOffsetsIn[i], cyc));
+    }
+    optSol = computeSolutionMetrics(intersectionsList, finalManual, travelTimes, weights);
+    optSol.status = "Optimal"; // or "Manual"
+  } else {
+    // mode === "optimization"
+    const bestOffs = bruteForceOptimize(intersectionsList, travelTimes, weights);
+    optSol = computeSolutionMetrics(intersectionsList, bestOffs, travelTimes, weights);
+    optSol.status = "Optimal";
+  }
+
+  return {
+    baseline_results: baselineSol,
+    optimization_results: optSol
+  };
+}
+
+/************************************************************
+ * Example usage in TS (optional)
+ ************************************************************/
+// (רק אם רוצים להריץ דוגמה כ־"main" – בקוד Production כנראה לוקחים מה שאוהבים)
+if (typeof require !== 'undefined' && require.main === module) {
+  const inputDataExample: InputData = {
+    mode: "optimization",
+    data: {
+      intersections: [
+        {
+          id: 1, distance: 0,
+          green_up:   [{start: 0, duration: 45, speed: 36}],
+          green_down: [{start: 30, duration: 60, speed: 36}],
+          cycle: 90
+        },
+        {
+          id: 2, distance: 100,
+          green_up:   [{start: 0, duration: 45, speed: 36}],
+          green_down: [{start: 80, duration: 20, speed: 36}],
+          cycle: 90
+        },
+        {
+          id: 3, distance: 200,
+          green_up:   [{start: 0, duration: 45, speed: 36}],
+          green_down: [{start: 70, duration: 40, speed: 36}],
+          cycle: 90
+        }
+      ]
+    },
+    weights: {
+      "pair_bandwidth_up": 5,
+      "pair_bandwidth_down": 5,
+      "avg_delay_up": 5,
+      "max_delay_up": 5,
+      "avg_delay_down": 5,
+      "max_delay_down": 5,
+      "corridor_bandwidth_up": 10,
+      "corridor_bandwidth_down": 10
+    }
+    // אם נרצה "manual":
+    // mode: "manual",
+    // manual_offsets: [0, 0, 10]
+  };
+
+  const results = solveGreenWave(inputDataExample);
+  // במקום print(json.dumps(...)), ב-TS/JS פשוט:
+  console.log(JSON.stringify(results, null, 2));
 }
