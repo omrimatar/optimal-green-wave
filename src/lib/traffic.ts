@@ -1,4 +1,4 @@
-import { NetworkData, Weights, RunResult } from '../types/traffic';
+import { NetworkData, Weights, RunResult, DiagonalPoint } from '../types/traffic';
 
 export async function greenWaveOptimization(
   networkData: NetworkData, 
@@ -15,19 +15,19 @@ export async function greenWaveOptimization(
   const inputData = {
     mode,
     data: {
-      intersections: networkData.intersections.map((intersection, idx) => ({
+      intersections: networkData.intersections.map(intersection => ({
         id: intersection.id,
         distance: intersection.distance,
-        green_up: intersection.green_up?.map(phase => ({
+        green_up: intersection.green_up.map(phase => ({
           start: phase.start,
           duration: phase.duration,
           speed: networkData.travel.up.speed
-        })) || [],
-        green_down: intersection.green_down?.map(phase => ({
+        })),
+        green_down: intersection.green_down.map(phase => ({
           start: phase.start,
           duration: phase.duration,
           speed: networkData.travel.down.speed
-        })) || [],
+        })),
         cycle: intersection.cycle_up || 90
       }))
     },
@@ -60,10 +60,7 @@ export async function greenWaveOptimization(
     avg_delay_down: result.avg_delay_down,
     max_delay_up: result.max_delay_up,
     max_delay_down: result.max_delay_down,
-    diagonal_up_start: result.diagonal_points.up.map(p => p.low),
-    diagonal_up_end: result.diagonal_points.up.map(p => p.top),
-    diagonal_down_start: result.diagonal_points.down.map(p => p.low),
-    diagonal_down_end: result.diagonal_points.down.map(p => p.top)
+    diagonal_points: result.diagonal_points
   });
 
   const output = {
@@ -133,10 +130,7 @@ interface ResultStructure {
   pair_bandwidth_down: number[];
   avg_delay_down: number[];
   max_delay_down: number[];
-  diagonal_points: {
-    up: DiagPoint[];
-    down: DiagPoint[];
-  };
+  diagonal_points: DiagPoint[];
   corridor_bandwidth_up: number;
   corridor_bandwidth_down: number;
 }
@@ -151,7 +145,7 @@ const BIG_POS = 9999999;
 
 /**
  * computePairMetrics
- * מחשב מדדים לזוג צמתים (N, N+1), מחזיר עלות ומדדים.
+ * מחשב מדדים לזוג צמתים (N, N+1), מחזיר עלות ��מדדים.
  */
 function computePairMetrics(
   start_up_N: number, end_up_N: number,
@@ -511,7 +505,7 @@ function bruteForceOptimize(
     }
 
     if (i === 0) {
-      // צומת ראשון offset=0
+      // צומת ראשו�� offset=0
       dfs(i+1, currentOffsets);
     } else {
       const cyc = intersectionsList[i].cycle;
@@ -534,7 +528,6 @@ function bruteForceOptimize(
   }
   return finalOffsets;
 }
-
 
 /**
  * solveGreenWave - פונקציה ראשית

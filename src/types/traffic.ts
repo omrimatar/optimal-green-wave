@@ -2,13 +2,14 @@
 export interface GreenPhase {
     start: number;
     duration: number;
+    speed?: number;  // Added for multi-phase support
 }
 
 export interface Intersection {
     id: number;
     distance: number;
-    green_up?: GreenPhase[];
-    green_down?: GreenPhase[];
+    green_up: GreenPhase[];    // Changed to array for multiple phases
+    green_down: GreenPhase[];  // Changed to array for multiple phases
     cycle_up?: number;
     cycle_down?: number;
 }
@@ -32,6 +33,17 @@ export interface Weights {
     max_delay_down: number;
 }
 
+export interface DiagonalPoint {
+    pairIndex: number;
+    corridor?: boolean;
+    direction: "up" | "down";
+    phaseIndex: number;
+    targetLow: number;
+    targetHigh: number;
+    sourceLow: number;
+    sourceHigh: number;
+}
+
 export interface RunResult {
     status: string;
     offsets: number[];
@@ -44,9 +56,5 @@ export interface RunResult {
     avg_delay_down: Array<number|null>;
     max_delay_up: Array<number|null>;
     max_delay_down: Array<number|null>;
-    diagonal_up_start: Array<number|null>;
-    diagonal_up_end: Array<number|null>;
-    diagonal_down_start: Array<number|null>;
-    diagonal_down_end: Array<number|null>;
+    diagonal_points: DiagonalPoint[];  // Updated to use new DiagonalPoint interface
 }
-
