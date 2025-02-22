@@ -14,7 +14,7 @@ export async function calculateGreenWave(
   optimized_results: RunResult;
   manual_results?: RunResult;
 }> {
-  // המרת הנתונים לפורמט הנדרש
+  // Convert the data to the required format
   const networkData: NetworkData = {
     intersections: intersections.map(intersection => ({
       id: intersection.id,
@@ -23,13 +23,15 @@ export async function calculateGreenWave(
         .filter(phase => phase.direction === 'upstream')
         .map(phase => ({
           start: phase.startTime,
-          duration: phase.duration
+          duration: phase.duration,
+          speed: speed // Use the provided speed for all phases
         })),
       green_down: intersection.greenPhases
         .filter(phase => phase.direction === 'downstream')
         .map(phase => ({
           start: phase.startTime,
-          duration: phase.duration
+          duration: phase.duration,
+          speed: speed // Use the provided speed for all phases
         })),
       cycle_up: intersection.cycleTime,
       cycle_down: intersection.cycleTime
@@ -42,9 +44,10 @@ export async function calculateGreenWave(
 
   console.log("Sending to optimization with manualOffsets:", manualOffsets);
   
-  // קריאה לפונקציית האופטימיזציה
+  // Call the optimization function
   const results = await greenWaveOptimization(networkData, weights || DEFAULT_WEIGHTS, manualOffsets);
   console.log("Received results from optimization:", results);
   
   return results;
 }
+

@@ -108,9 +108,14 @@ interface IntersectionItem {
 }
 
 interface DiagPoint {
-  junction: number;
-  low: number;
-  top: number;
+  pairIndex: number;
+  direction: string;
+  phaseIndex: number;
+  targetLow: number;
+  targetHigh: number;
+  sourceLow: number;
+  sourceHigh: number;
+  corridor: boolean;
 }
 
 interface ResultStructure {
@@ -266,9 +271,9 @@ function computeDiagonalPointsUp(
   intersectionsList: IntersectionItem[],
   offsets: number[],
   travelTimes: [number, number][]
-): DiagPoint[] {
+): DiagonalPoint[] {
   const n = intersectionsList.length;
-  const diag_up: DiagPoint[] = [];
+  const diag_up: DiagonalPoint[] = [];
   if (n === 0) return diag_up;
 
   const start_up_0 = intersectionsList[0].start_up_raw + offsets[0];
@@ -277,9 +282,14 @@ function computeDiagonalPointsUp(
   let wave_high = end_up_0;
 
   diag_up.push({
-    junction: intersectionsList[0].id,
-    low: wave_low,
-    top: wave_high
+    pairIndex: 0,
+    direction: "up",
+    phaseIndex: 0,
+    targetLow: wave_low,
+    targetHigh: wave_high,
+    sourceLow: wave_low,
+    sourceHigh: wave_high,
+    corridor: true
   });
 
   for (let i = 1; i < n; i++) {
@@ -294,9 +304,14 @@ function computeDiagonalPointsUp(
     wave_high = Math.min(wave_high, eu_i);
 
     diag_up.push({
-      junction: intersectionsList[i].id,
-      low: wave_low,
-      top: wave_high
+      pairIndex: i,
+      direction: "up",
+      phaseIndex: 0,
+      targetLow: wave_low,
+      targetHigh: wave_high,
+      sourceLow: su_i,
+      sourceHigh: eu_i,
+      corridor: true
     });
   }
 
@@ -310,9 +325,9 @@ function computeDiagonalPointsDown(
   intersectionsList: IntersectionItem[],
   offsets: number[],
   travelTimes: [number, number][]
-): DiagPoint[] {
+): DiagonalPoint[] {
   const n = intersectionsList.length;
-  const diag_down: DiagPoint[] = [];
+  const diag_down: DiagonalPoint[] = [];
   if (n === 0) return diag_down;
 
   const start_down_0 = intersectionsList[0].start_down_raw + offsets[0];
@@ -321,9 +336,14 @@ function computeDiagonalPointsDown(
   let wave_high = end_down_0;
 
   diag_down.push({
-    junction: intersectionsList[0].id,
-    low: wave_low,
-    top: wave_high
+    pairIndex: 0,
+    direction: "down",
+    phaseIndex: 0,
+    targetLow: wave_low,
+    targetHigh: wave_high,
+    sourceLow: wave_low,
+    sourceHigh: wave_high,
+    corridor: true
   });
 
   for (let i = 1; i < n; i++) {
@@ -338,9 +358,14 @@ function computeDiagonalPointsDown(
     wave_high = Math.min(wave_high, ed_i);
 
     diag_down.push({
-      junction: intersectionsList[i].id,
-      low: wave_low,
-      top: wave_high
+      pairIndex: i,
+      direction: "down",
+      phaseIndex: 0,
+      targetLow: wave_low,
+      targetHigh: wave_high,
+      sourceLow: sd_i,
+      sourceHigh: ed_i,
+      corridor: true
     });
   }
   return diag_down;
