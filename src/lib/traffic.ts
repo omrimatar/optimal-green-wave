@@ -109,7 +109,7 @@ interface IntersectionItem {
 
 interface DiagPoint {
   pairIndex: number;
-  direction: string;
+  direction: "up" | "down";
   phaseIndex: number;
   targetLow: number;
   targetHigh: number;

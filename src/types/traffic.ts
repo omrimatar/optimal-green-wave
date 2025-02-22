@@ -35,7 +35,7 @@ export interface Weights {
 
 export interface DiagonalPoint {
     pairIndex: number;
-    corridor?: boolean;
+    corridor: boolean;  // Made required to match DiagPoint
     direction: "up" | "down";
     phaseIndex: number;
     targetLow: number;
@@ -58,3 +58,4 @@ export interface RunResult {
     max_delay_down: Array<number|null>;
     diagonal_points: DiagonalPoint[];
 }
+
