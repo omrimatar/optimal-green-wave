@@ -48,20 +48,32 @@ export async function greenWaveOptimization(
   const results = solveGreenWave(inputData);
 
   // המרת התוצאות לפורמט הנדרש
-  const convertToRunResult = (result: ResultStructure): RunResult => ({
-    status: result.status,
-    offsets: result.offsets,
-    objective_value: result.objective_value,
-    corridorBW_up: result.corridor_bandwidth_up,
-    corridorBW_down: result.corridor_bandwidth_down,
-    local_up: result.pair_bandwidth_up,
-    local_down: result.pair_bandwidth_down,
-    avg_delay_up: result.avg_delay_up,
-    avg_delay_down: result.avg_delay_down,
-    max_delay_up: result.max_delay_up,
-    max_delay_down: result.max_delay_down,
-    diagonal_points: result.diagonal_points
-  });
+  const convertToRunResult = (result: ResultStructure): RunResult => {
+    const diagonal_points: DiagonalPoint[] = result.diagonal_points.map((point, idx) => ({
+      pairIndex: idx,
+      direction: "up",
+      phaseIndex: 0,
+      targetLow: point.low,
+      targetHigh: point.top,
+      sourceLow: point.low,
+      sourceHigh: point.top
+    }));
+
+    return {
+      status: result.status,
+      offsets: result.offsets,
+      objective_value: result.objective_value,
+      corridorBW_up: result.corridor_bandwidth_up,
+      corridorBW_down: result.corridor_bandwidth_down,
+      local_up: result.pair_bandwidth_up,
+      local_down: result.pair_bandwidth_down,
+      avg_delay_up: result.avg_delay_up,
+      avg_delay_down: result.avg_delay_down,
+      max_delay_up: result.max_delay_up,
+      max_delay_down: result.max_delay_down,
+      diagonal_points
+    };
+  };
 
   const output = {
     baseline_results: convertToRunResult(results.baseline_results),
@@ -69,7 +81,7 @@ export async function greenWaveOptimization(
   };
 
   if (mode === "manual") {
-    output.manual_results = output.optimized_results;
+    output.manual_results = convertToRunResult(results.optimization_results);
   }
 
   return output;
