@@ -2,7 +2,7 @@
 export interface GreenPhase {
     start: number;
     duration: number;
-    speed?: number;  // Added for multi-phase support
+    speed: number;  // km/h
 }
 
 export interface Intersection {
@@ -56,5 +56,5 @@ export interface RunResult {
     avg_delay_down: Array<number|null>;
     max_delay_up: Array<number|null>;
     max_delay_down: Array<number|null>;
-    diagonal_points: DiagonalPoint[];  // Updated to use new DiagonalPoint interface
+    diagonal_points: DiagonalPoint[];
 }
