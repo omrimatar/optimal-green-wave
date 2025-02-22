@@ -48,16 +48,16 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
   const avgDelayDown = Array.isArray(baseline.avg_delay_down) ? baseline.avg_delay_down : [];
   const maxDelayUp = Array.isArray(baseline.max_delay_up) ? baseline.max_delay_up : [];
   const maxDelayDown = Array.isArray(baseline.max_delay_down) ? baseline.max_delay_down : [];
-  const overlapUp = Array.isArray(baseline.overlap_up) ? baseline.overlap_up : [];
-  const overlapDown = Array.isArray(baseline.overlap_down) ? baseline.overlap_down : [];
+  const localUp = Array.isArray(baseline.local_up) ? baseline.local_up : [];
+  const localDown = Array.isArray(baseline.local_down) ? baseline.local_down : [];
 
   const optimizedOffsets = Array.isArray(optimized.offsets) ? optimized.offsets : [];
   const optimizedAvgDelayUp = Array.isArray(optimized.avg_delay_up) ? optimized.avg_delay_up : [];
   const optimizedAvgDelayDown = Array.isArray(optimized.avg_delay_down) ? optimized.avg_delay_down : [];
   const optimizedMaxDelayUp = Array.isArray(optimized.max_delay_up) ? optimized.max_delay_up : [];
   const optimizedMaxDelayDown = Array.isArray(optimized.max_delay_down) ? optimized.max_delay_down : [];
-  const optimizedOverlapUp = Array.isArray(optimized.overlap_up) ? optimized.overlap_up : [];
-  const optimizedOverlapDown = Array.isArray(optimized.overlap_down) ? optimized.overlap_down : [];
+  const optimizedLocalUp = Array.isArray(optimized.local_up) ? optimized.local_up : [];
+  const optimizedLocalDown = Array.isArray(optimized.local_down) ? optimized.local_down : [];
 
   return (
     <Card className="w-full table-fade-in">
@@ -89,28 +89,28 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
               </TableRow>
             ))}
 
-            {overlapUp.map((value, index) => (
-              <TableRow key={`overlap-up-${index}`}>
-                <TableCell>חפיפה למעלה {index + 1}-{index + 2}</TableCell>
+            {localUp.map((value, index) => (
+              <TableRow key={`local-up-${index}`}>
+                <TableCell>רוחב פס מקומי למעלה {index + 1}-{index + 2}</TableCell>
                 <TableCell>{value === null ? "N/A" : value.toFixed(2)}</TableCell>
                 <TableCell>
-                  {optimizedOverlapUp[index] === null ? "N/A" : optimizedOverlapUp[index].toFixed(2)}
+                  {optimizedLocalUp[index] === null ? "N/A" : optimizedLocalUp[index].toFixed(2)}
                 </TableCell>
                 <TableCell>
-                  {compareValues(value, optimizedOverlapUp[index])}
+                  {compareValues(value, optimizedLocalUp[index])}
                 </TableCell>
               </TableRow>
             ))}
 
-            {overlapDown.map((value, index) => (
-              <TableRow key={`overlap-down-${index}`}>
-                <TableCell>חפיפה למטה {index + 2}-{index + 1}</TableCell>
+            {localDown.map((value, index) => (
+              <TableRow key={`local-down-${index}`}>
+                <TableCell>רוחב פס מקומי למטה {index + 2}-{index + 1}</TableCell>
                 <TableCell>{value === null ? "N/A" : value.toFixed(2)}</TableCell>
                 <TableCell>
-                  {optimizedOverlapDown[index] === null ? "N/A" : optimizedOverlapDown[index].toFixed(2)}
+                  {optimizedLocalDown[index] === null ? "N/A" : optimizedLocalDown[index].toFixed(2)}
                 </TableCell>
                 <TableCell>
-                  {compareValues(value, optimizedOverlapDown[index])}
+                  {compareValues(value, optimizedLocalDown[index])}
                 </TableCell>
               </TableRow>
             ))}
