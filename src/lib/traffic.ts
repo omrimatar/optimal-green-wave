@@ -1,3 +1,5 @@
+import { NetworkData, Weights, RunResult } from '../types/traffic';
+
 export async function greenWaveOptimization(
   networkData: NetworkData, 
   weights: Weights,
