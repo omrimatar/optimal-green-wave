@@ -6,8 +6,3 @@ port = 54321
 
 [db]
 port = 54322
-
-[functions]
-[functions.optimize]
-verify_jwt = false
-

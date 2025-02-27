@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import type { NetworkData, Weights, RunResult } from "@/types/traffic";
 
@@ -221,21 +222,49 @@ export async function greenWaveOptimization(
       throw new Error('Missing required data for optimization');
     }
 
-    console.log('Preparing request body...');
+    // Prepare data for AWS Lambda function
     const requestBody = {
+      mode: manualOffsets ? "manual" : "optimization",
       data: {
-        intersections: data.intersections,
-        travel: data.travel
+        intersections: data.intersections.map(intersection => ({
+          id: intersection.id,
+          distance: intersection.distance,
+          green_up: intersection.green_up.map(phase => ({
+            start: phase.start,
+            duration: phase.duration,
+            speed: data.travel.up.speed
+          })),
+          green_down: intersection.green_down.map(phase => ({
+            start: phase.start,
+            duration: phase.duration,
+            speed: data.travel.down.speed
+          })),
+          cycle: intersection.cycle_up || intersection.cycle_down
+        }))
       },
-      weights,
-      manualOffsets
+      weights: {
+        pair_bandwidth_up: weights.overlap_up,
+        pair_bandwidth_down: weights.overlap_down,
+        avg_delay_up: weights.avg_delay_up,
+        max_delay_up: weights.max_delay_up,
+        avg_delay_down: weights.avg_delay_down,
+        max_delay_down: weights.max_delay_down,
+        corridor_bandwidth_up: weights.corridor_up,
+        corridor_bandwidth_down: weights.corridor_down
+      }
     };
-    console.log('Request body:', requestBody);
+
+    // Add manualOffsets if provided
+    if (manualOffsets) {
+      requestBody.manualOffsets = manualOffsets;
+    }
+
+    console.log('Request body for AWS Lambda:', requestBody);
     
-    const functionUrl = `https://xfdqxyxvjzbvxewbzrpe.supabase.co/functions/v1/optimize?apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZHF4eXh2anpidnhld2J6cnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NzE5MTIsImV4cCI6MjA1NTE0NzkxMn0.uhp87GwzK6g04w3ZTBE1vVe8dtDkXALlzrBsSjAuUtg`;
-    console.log('Function URL:', functionUrl);
+    const lambdaUrl = "https://xphhfrlnpiikldzbmfkboitshq0dkdnt.lambda-url.eu-north-1.on.aws/";
+    console.log('Lambda URL:', lambdaUrl);
         
-    const response = await fetch(functionUrl, {
+    const response = await fetch(lambdaUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -244,40 +273,44 @@ export async function greenWaveOptimization(
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Lambda response error:', response.status, errorText);
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
 
-    const results = await response.json();
+    const lambdaResults = await response.json();
     
-    if (!results) {
+    if (!lambdaResults) {
       throw new Error('No results returned from optimization');
     }
 
-    console.log('Received results:', results);
+    console.log('Received results from Lambda:', lambdaResults);
 
+    // Process the results
+    const results = {
+      baseline_results: lambdaResults.baseline_results,
+      optimized_results: lambdaResults.optimization_results,
+      manual_results: manualOffsets ? lambdaResults.optimization_results : undefined
+    };
+
+    // Add local bandwidth calculations for each result
     if (results.baseline_results) {
       const baselineBandwidth = calculateCorridorBandwidth(data, results.baseline_results.offsets);
-      results.baseline_results.corridorBW_up = baselineBandwidth.up || 0;
-      results.baseline_results.corridorBW_down = baselineBandwidth.down || 0;
-      results.baseline_results.local_up = baselineBandwidth.local_up;
-      results.baseline_results.local_down = baselineBandwidth.local_down;
+      results.baseline_results.corridorBW_up = results.baseline_results.corridor_bandwidth_up || 0;
+      results.baseline_results.corridorBW_down = results.baseline_results.corridor_bandwidth_down || 0;
+      results.baseline_results.local_up = results.baseline_results.pair_bandwidth_up || baselineBandwidth.local_up;
+      results.baseline_results.local_down = results.baseline_results.pair_bandwidth_down || baselineBandwidth.local_down;
     }
+    
     if (results.optimized_results) {
       const optimizedBandwidth = calculateCorridorBandwidth(data, results.optimized_results.offsets);
-      results.optimized_results.corridorBW_up = optimizedBandwidth.up || 0;
-      results.optimized_results.corridorBW_down = optimizedBandwidth.down || 0;
-      results.optimized_results.local_up = optimizedBandwidth.local_up;
-      results.optimized_results.local_down = optimizedBandwidth.local_down;
-    }
-    if (results.manual_results) {
-      const manualBandwidth = calculateCorridorBandwidth(data, results.manual_results.offsets);
-      results.manual_results.corridorBW_up = manualBandwidth.up || 0;
-      results.manual_results.corridorBW_down = manualBandwidth.down || 0;
-      results.manual_results.local_up = manualBandwidth.local_up;
-      results.manual_results.local_down = manualBandwidth.local_down;
+      results.optimized_results.corridorBW_up = results.optimized_results.corridor_bandwidth_up || 0;
+      results.optimized_results.corridorBW_down = results.optimized_results.corridor_bandwidth_down || 0;
+      results.optimized_results.local_up = results.optimized_results.pair_bandwidth_up || optimizedBandwidth.local_up;
+      results.optimized_results.local_down = results.optimized_results.pair_bandwidth_down || optimizedBandwidth.local_down;
     }
 
-    console.log('Final results:', results);
+    console.log('Final processed results:', results);
     return results;
   } catch (error) {
     console.error('Error in greenWaveOptimization:', error);

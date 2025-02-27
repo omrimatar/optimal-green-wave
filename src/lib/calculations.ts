@@ -16,24 +16,31 @@ export async function calculateGreenWave(
 }> {
   // המרת הנתונים לפורמט הנדרש
   const networkData: NetworkData = {
-    intersections: intersections.map(intersection => ({
-      id: intersection.id,
-      distance: intersection.distance,
-      green_up: intersection.greenPhases
+    intersections: intersections.map(intersection => {
+      // Extract and combine green phases
+      const upPhases = intersection.greenPhases
         .filter(phase => phase.direction === 'upstream')
         .map(phase => ({
           start: phase.startTime,
           duration: phase.duration
-        })),
-      green_down: intersection.greenPhases
+        }));
+      
+      const downPhases = intersection.greenPhases
         .filter(phase => phase.direction === 'downstream')
         .map(phase => ({
           start: phase.startTime,
           duration: phase.duration
-        })),
-      cycle_up: intersection.cycleTime,
-      cycle_down: intersection.cycleTime
-    })),
+        }));
+
+      return {
+        id: intersection.id,
+        distance: intersection.distance,
+        green_up: upPhases,
+        green_down: downPhases,
+        cycle_up: intersection.cycleTime,
+        cycle_down: intersection.cycleTime
+      };
+    }),
     travel: {
       up: { speed },
       down: { speed }
