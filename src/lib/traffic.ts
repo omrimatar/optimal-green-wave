@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { NetworkData, Weights, RunResult, LambdaRequest } from "@/types/traffic";
-import { mockBaselineResults, mockOptimizedResults, mockManualResults } from "./mockData";
 
 export interface GreenPhase {
     start: number;
@@ -264,59 +263,7 @@ export async function greenWaveOptimization(
     
     const lambdaUrl = "https://xphhfrlnpiikldzbmfkboitshq0dkdnt.lambda-url.eu-north-1.on.aws/";
     console.log('Lambda URL:', lambdaUrl);
-    
-    // נגדיר דגל עבור מצב פיתוח
-    const useMockData = true; // שנה ל-false כדי להשתמש ב-Lambda אמיתי
-    
-    if (useMockData) {
-      // להשתמש בנתוני מוק במקום לקרוא ל-Lambda
-      console.log('Using mock data instead of calling Lambda');
-      
-      // עידכון האופסטים בנתוני המוק הידניים אם נדרש
-      if (manualOffsets) {
-        mockManualResults.offsets = [...manualOffsets];
-      }
-      
-      const mockResults = {
-        baseline_results: {...mockBaselineResults},
-        optimization_results: manualOffsets ? {...mockManualResults} : {...mockOptimizedResults}
-      };
-      
-      if (manualOffsets) {
-        // לוודא שהאופסטים מתאימים למה שהוזן ידנית
-        mockResults.optimization_results.offsets = [...manualOffsets];
-      }
-      
-      console.log('Returning mock results:', mockResults);
-      
-      // עיבוד הנתונים כמו שהיינו עושים עם תוצאות אמיתיות
-      let results = {
-        baseline_results: mockResults.baseline_results,
-        optimized_results: mockResults.optimization_results,
-        manual_results: manualOffsets ? mockResults.optimization_results : undefined
-      };
-      
-      // חישובי רוחב פס מקומיים לכל תוצאה
-      if (results.baseline_results) {
-        const baselineBandwidth = calculateCorridorBandwidth(data, results.baseline_results.offsets);
-        results.baseline_results.corridorBW_up = results.baseline_results.corridor_bandwidth_up || 0;
-        results.baseline_results.corridorBW_down = results.baseline_results.corridor_bandwidth_down || 0;
-        results.baseline_results.local_up = results.baseline_results.pair_bandwidth_up || baselineBandwidth.local_up;
-        results.baseline_results.local_down = results.baseline_results.pair_bandwidth_down || baselineBandwidth.local_down;
-      }
-      
-      if (results.optimized_results) {
-        const optimizedBandwidth = calculateCorridorBandwidth(data, results.optimized_results.offsets);
-        results.optimized_results.corridorBW_up = results.optimized_results.corridor_bandwidth_up || 0;
-        results.optimized_results.corridorBW_down = results.optimized_results.corridor_bandwidth_down || 0;
-        results.optimized_results.local_up = results.optimized_results.pair_bandwidth_up || optimizedBandwidth.local_up;
-        results.optimized_results.local_down = results.optimized_results.pair_bandwidth_down || optimizedBandwidth.local_down;
-      }
-      
-      return results;
-    }
-    
-    // הקוד הקיים לקריאת ה-Lambda האמיתי  
+        
     const response = await fetch(lambdaUrl, {
       method: "POST",
       headers: {
