@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import type { NetworkData, Weights, RunResult } from "@/types/traffic";
+import type { NetworkData, Weights, RunResult, LambdaRequest } from "@/types/traffic";
 
 export interface GreenPhase {
     start: number;
@@ -223,7 +223,7 @@ export async function greenWaveOptimization(
     }
 
     // Prepare data for AWS Lambda function
-    const requestBody = {
+    const requestBody: LambdaRequest = {
       mode: manualOffsets ? "manual" : "optimization",
       data: {
         intersections: data.intersections.map(intersection => ({

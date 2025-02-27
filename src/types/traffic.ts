@@ -43,6 +43,38 @@ export interface DiagonalPoints {
     down: DiagonalPoint[];
 }
 
+export interface LambdaRequest {
+    mode: string;
+    data: {
+        intersections: {
+            id: number;
+            distance: number;
+            green_up: {
+                start: number;
+                duration: number;
+                speed: number;
+            }[];
+            green_down: {
+                start: number;
+                duration: number;
+                speed: number;
+            }[];
+            cycle: number;
+        }[];
+    };
+    weights: {
+        pair_bandwidth_up: number;
+        pair_bandwidth_down: number;
+        avg_delay_up: number;
+        max_delay_up: number;
+        avg_delay_down: number;
+        max_delay_down: number;
+        corridor_bandwidth_up: number;
+        corridor_bandwidth_down: number;
+    };
+    manualOffsets?: number[];
+}
+
 export interface RunResult {
     status: string;
     offsets: number[];
