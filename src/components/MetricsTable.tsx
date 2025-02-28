@@ -44,20 +44,20 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
   }
 
   const offsets = Array.isArray(baseline.offsets) ? baseline.offsets : [];
+  const pairBandwidthUp = Array.isArray(baseline.pair_bandwidth_up) ? baseline.pair_bandwidth_up : [];
+  const pairBandwidthDown = Array.isArray(baseline.pair_bandwidth_down) ? baseline.pair_bandwidth_down : [];
   const avgDelayUp = Array.isArray(baseline.avg_delay_up) ? baseline.avg_delay_up : [];
   const avgDelayDown = Array.isArray(baseline.avg_delay_down) ? baseline.avg_delay_down : [];
   const maxDelayUp = Array.isArray(baseline.max_delay_up) ? baseline.max_delay_up : [];
   const maxDelayDown = Array.isArray(baseline.max_delay_down) ? baseline.max_delay_down : [];
-  const localUp = Array.isArray(baseline.local_up) ? baseline.local_up : [];
-  const localDown = Array.isArray(baseline.local_down) ? baseline.local_down : [];
 
   const optimizedOffsets = Array.isArray(optimized.offsets) ? optimized.offsets : [];
+  const optimizedPairBandwidthUp = Array.isArray(optimized.pair_bandwidth_up) ? optimized.pair_bandwidth_up : [];
+  const optimizedPairBandwidthDown = Array.isArray(optimized.pair_bandwidth_down) ? optimized.pair_bandwidth_down : [];
   const optimizedAvgDelayUp = Array.isArray(optimized.avg_delay_up) ? optimized.avg_delay_up : [];
   const optimizedAvgDelayDown = Array.isArray(optimized.avg_delay_down) ? optimized.avg_delay_down : [];
   const optimizedMaxDelayUp = Array.isArray(optimized.max_delay_up) ? optimized.max_delay_up : [];
   const optimizedMaxDelayDown = Array.isArray(optimized.max_delay_down) ? optimized.max_delay_down : [];
-  const optimizedLocalUp = Array.isArray(optimized.local_up) ? optimized.local_up : [];
-  const optimizedLocalDown = Array.isArray(optimized.local_down) ? optimized.local_down : [];
 
   return (
     <Card className="w-full table-fade-in">
@@ -89,47 +89,47 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
               </TableRow>
             ))}
 
-            {localUp.map((value, index) => (
-              <TableRow key={`local-up-${index}`}>
+            {pairBandwidthUp.map((value, index) => (
+              <TableRow key={`pair-bw-up-${index}`}>
                 <TableCell>רוחב פס מקומי למעלה {index + 1}-{index + 2}</TableCell>
                 <TableCell>{value === null ? "N/A" : value.toFixed(2)}</TableCell>
                 <TableCell>
-                  {optimizedLocalUp[index] === null ? "N/A" : optimizedLocalUp[index].toFixed(2)}
+                  {optimizedPairBandwidthUp[index] === null ? "N/A" : optimizedPairBandwidthUp[index].toFixed(2)}
                 </TableCell>
                 <TableCell>
-                  {compareValues(value, optimizedLocalUp[index])}
+                  {compareValues(value, optimizedPairBandwidthUp[index])}
                 </TableCell>
               </TableRow>
             ))}
 
-            {localDown.map((value, index) => (
-              <TableRow key={`local-down-${index}`}>
+            {pairBandwidthDown.map((value, index) => (
+              <TableRow key={`pair-bw-down-${index}`}>
                 <TableCell>רוחב פס מקומי למטה {index + 2}-{index + 1}</TableCell>
                 <TableCell>{value === null ? "N/A" : value.toFixed(2)}</TableCell>
                 <TableCell>
-                  {optimizedLocalDown[index] === null ? "N/A" : optimizedLocalDown[index].toFixed(2)}
+                  {optimizedPairBandwidthDown[index] === null ? "N/A" : optimizedPairBandwidthDown[index].toFixed(2)}
                 </TableCell>
                 <TableCell>
-                  {compareValues(value, optimizedLocalDown[index])}
+                  {compareValues(value, optimizedPairBandwidthDown[index])}
                 </TableCell>
               </TableRow>
             ))}
 
             <TableRow>
               <TableCell>רוחב פס בציר למעלה</TableCell>
-              <TableCell>{baseline.corridorBW_up === null ? "N/A" : baseline.corridorBW_up.toFixed(2)}</TableCell>
-              <TableCell>{optimized.corridorBW_up === null ? "N/A" : optimized.corridorBW_up.toFixed(2)}</TableCell>
+              <TableCell>{baseline.corridor_bandwidth_up === null ? "N/A" : baseline.corridor_bandwidth_up.toFixed(2)}</TableCell>
+              <TableCell>{optimized.corridor_bandwidth_up === null ? "N/A" : optimized.corridor_bandwidth_up.toFixed(2)}</TableCell>
               <TableCell>
-                {compareValues(baseline.corridorBW_up, optimized.corridorBW_up)}
+                {compareValues(baseline.corridor_bandwidth_up, optimized.corridor_bandwidth_up)}
               </TableCell>
             </TableRow>
 
             <TableRow>
               <TableCell>רוחב פס בציר למטה</TableCell>
-              <TableCell>{baseline.corridorBW_down === null ? "N/A" : baseline.corridorBW_down.toFixed(2)}</TableCell>
-              <TableCell>{optimized.corridorBW_down === null ? "N/A" : optimized.corridorBW_down.toFixed(2)}</TableCell>
+              <TableCell>{baseline.corridor_bandwidth_down === null ? "N/A" : baseline.corridor_bandwidth_down.toFixed(2)}</TableCell>
+              <TableCell>{optimized.corridor_bandwidth_down === null ? "N/A" : optimized.corridor_bandwidth_down.toFixed(2)}</TableCell>
               <TableCell>
-                {compareValues(baseline.corridorBW_down, optimized.corridorBW_down)}
+                {compareValues(baseline.corridor_bandwidth_down, optimized.corridor_bandwidth_down)}
               </TableCell>
             </TableRow>
 

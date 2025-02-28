@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -40,13 +41,13 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
   const optimizationData = [
     {
       metric: 'רוחב מסדרון למעלה',
-      [labels.baseline]: Number(baseline.corridorBW_up.toFixed(1)),
-      [labels.optimized]: Number(optimized.corridorBW_up.toFixed(1))
+      [labels.baseline]: Number((baseline.corridor_bandwidth_up || 0).toFixed(1)),
+      [labels.optimized]: Number((optimized.corridor_bandwidth_up || 0).toFixed(1))
     },
     {
       metric: 'רוחב מסדרון למטה',
-      [labels.baseline]: Number(baseline.corridorBW_down.toFixed(1)),
-      [labels.optimized]: Number(optimized.corridorBW_down.toFixed(1))
+      [labels.baseline]: Number((baseline.corridor_bandwidth_down || 0).toFixed(1)),
+      [labels.optimized]: Number((optimized.corridor_bandwidth_down || 0).toFixed(1))
     },
     ...(baseline.avg_delay_up?.map((_, index) => ({
       metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
@@ -63,10 +64,10 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
   const directionData = [
     {
       metric: 'רוחב מסדרון',
-      'מעלה הזרם - בסיס': Number(baseline.corridorBW_up.toFixed(1)),
-      'מעלה הזרם - אופטימיזציה': Number(optimized.corridorBW_up.toFixed(1)),
-      'מורד הזרם - בסיס': Number(baseline.corridorBW_down.toFixed(1)),
-      'מורד הזרם - אופטימיזציה': Number(optimized.corridorBW_down.toFixed(1))
+      'מעלה הזרם - בסיס': Number((baseline.corridor_bandwidth_up || 0).toFixed(1)),
+      'מעלה הזרם - אופטימיזציה': Number((optimized.corridor_bandwidth_up || 0).toFixed(1)),
+      'מורד הזרם - בסיס': Number((baseline.corridor_bandwidth_down || 0).toFixed(1)),
+      'מורד הזרם - אופטימיזציה': Number((optimized.corridor_bandwidth_down || 0).toFixed(1))
     },
     ...(baseline.avg_delay_up?.map((_, index) => ({
       metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
@@ -85,13 +86,13 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
   const radarData = [
     {
       metric: 'רוחב מסדרון למעלה',
-      לפני: Number(baseline.corridorBW_up.toFixed(1)),
-      אחרי: Number(optimized.corridorBW_up.toFixed(1)),
+      לפני: Number((baseline.corridor_bandwidth_up || 0).toFixed(1)),
+      אחרי: Number((optimized.corridor_bandwidth_up || 0).toFixed(1)),
     },
     {
       metric: 'רוחב מסדרון למטה',
-      לפני: Number(baseline.corridorBW_down.toFixed(1)),
-      אחרי: Number(optimized.corridorBW_down.toFixed(1)),
+      לפני: Number((baseline.corridor_bandwidth_down || 0).toFixed(1)),
+      אחרי: Number((optimized.corridor_bandwidth_down || 0).toFixed(1)),
     },
     {
       metric: 'עיכוב ממוצע למעלה',
