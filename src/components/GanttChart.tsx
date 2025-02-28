@@ -13,15 +13,20 @@ import {
 import { calculateBandwidthLines } from '../utils/bandwidthCalculations';
 import { GreenPhaseBar } from './chart/GreenPhaseBar';
 import { ChartTooltip } from './chart/ChartTooltip';
-import { type Intersection } from '@/types/optimization';
+import { type Intersection, type DiagonalPoint } from '@/types/optimization';
+import { useMemo } from 'react';
 
 interface Props {
   data: Intersection[];
   mode: 'display' | 'calculate' | 'manual';
   speed: number;
+  diagonalPoints?: {
+    up: DiagonalPoint[];
+    down: DiagonalPoint[];
+  };
 }
 
-export const GanttChart = ({ data, mode, speed }: Props) => {
+export const GanttChart = ({ data, mode, speed, diagonalPoints }: Props) => {
   if (!data || data.length === 0) return null;
   
   // נוסיף בדיקות תקינות לנתונים
@@ -63,6 +68,118 @@ export const GanttChart = ({ data, mode, speed }: Props) => {
     cycleTime
   }, 'downstream');
 
+  // יצירת קווים אלכסוניים מהנקודות הדיאגונליות
+  const createDiagonalLines = (points: DiagonalPoint[], intersections: Intersection[], cycleTime: number) => {
+    if (!points || !Array.isArray(points) || points.length <= 1) {
+      console.log("Not enough diagonal points to create lines:", points);
+      return [];
+    }
+
+    const lines: any[] = [];
+    
+    // מיפוי צמתים לפי מזהה עבור גישה מהירה
+    const intersectionMap = new Map(
+      intersections.map(intersection => [intersection.id, intersection])
+    );
+
+    // יצירת קווים בין כל זוג נקודות עוקבות
+    for (let i = 0; i < points.length - 1; i++) {
+      const current = points[i];
+      const next = points[i + 1];
+      
+      const currentIntersection = intersectionMap.get(current.junction);
+      const nextIntersection = intersectionMap.get(next.junction);
+      
+      if (!currentIntersection || !nextIntersection) {
+        console.log("Cannot find intersection for junctions:", current.junction, next.junction);
+        continue;
+      }
+      
+      const startDistance = currentIntersection.distance;
+      const endDistance = nextIntersection.distance;
+      
+      // בדיקה אם הקו יחצה את סוף המחזור
+      if (current.low < current.top && next.low < next.top) {
+        // קו רגיל ללא חציית מחזור
+        lines.push({
+          start: { distance: startDistance, time: current.low },
+          end: { distance: endDistance, time: next.low },
+          color: '#22c55e',
+          opacity: 0.7
+        });
+        
+        lines.push({
+          start: { distance: startDistance, time: current.top },
+          end: { distance: endDistance, time: next.top },
+          color: '#22c55e',
+          opacity: 0.7
+        });
+      } else {
+        // קו שחוצה את סוף המחזור
+        // חלק ראשון - עד סוף המחזור
+        const intersectionX = startDistance + 
+          ((endDistance - startDistance) * (cycleTime - current.low)) / 
+          ((next.low + cycleTime) - current.low);
+
+        if (intersectionX > startDistance && intersectionX < endDistance) {
+          lines.push({
+            start: { distance: startDistance, time: current.low },
+            end: { distance: intersectionX, time: cycleTime },
+            color: '#22c55e',
+            opacity: 0.7
+          });
+          
+          // חלק שני - המשך מתחילת המחזור
+          lines.push({
+            start: { distance: intersectionX, time: 0 },
+            end: { distance: endDistance, time: next.low },
+            color: '#22c55e',
+            opacity: 0.7
+          });
+        }
+
+        // טיפול דומה עבור הקו העליון
+        const topIntersectionX = startDistance +
+          ((endDistance - startDistance) * (cycleTime - current.top)) /
+          ((next.top + cycleTime) - current.top);
+
+        if (topIntersectionX > startDistance && topIntersectionX < endDistance) {
+          lines.push({
+            start: { distance: startDistance, time: current.top },
+            end: { distance: topIntersectionX, time: cycleTime },
+            color: '#22c55e',
+            opacity: 0.7
+          });
+          
+          lines.push({
+            start: { distance: topIntersectionX, time: 0 },
+            end: { distance: endDistance, time: next.top },
+            color: '#22c55e',
+            opacity: 0.7
+          });
+        }
+      }
+    }
+
+    console.log("Created diagonal lines:", lines);
+    return lines;
+  };
+
+  // יצירת קווים אלכסוניים מהנקודות הדיאגונליות
+  const diagonalLinesUp = useMemo(() => {
+    if (diagonalPoints?.up) {
+      return createDiagonalLines(diagonalPoints.up, data, cycleTime);
+    }
+    return [];
+  }, [diagonalPoints?.up, data, cycleTime]);
+
+  const diagonalLinesDown = useMemo(() => {
+    if (diagonalPoints?.down) {
+      return createDiagonalLines(diagonalPoints.down, data, cycleTime);
+    }
+    return [];
+  }, [diagonalPoints?.down, data, cycleTime]);
+
   const legendPayload = [
     { value: 'מופע במעלה הזרם', type: 'rect' as const, color: '#22c55e', id: 'phase-1' },
     { value: 'מופע במורד הזרם', type: 'rect' as const, color: '#3b82f6', id: 'phase-2' },
@@ -76,6 +193,8 @@ export const GanttChart = ({ data, mode, speed }: Props) => {
 
   // נסדר את הנתונים לפי מרחק
   const sortedChartData = [...chartData].sort((a, b) => a.distance - b.distance);
+
+  console.log("Rendering Gantt chart with diagonal points:", diagonalPoints);
 
   return (
     <div className="h-[400px] w-full">
@@ -120,6 +239,7 @@ export const GanttChart = ({ data, mode, speed }: Props) => {
             isAnimationActive={false}
           />
 
+          {/* הוספת קווי רוחב פס */}
           {[...bandwidthLinesUpstream, ...bandwidthLinesDownstream]
             .filter(line => 
               line?.start?.distance !== undefined && 
@@ -145,6 +265,44 @@ export const GanttChart = ({ data, mode, speed }: Props) => {
                 isAnimationActive={false}
               />
             ))}
+
+          {/* הוספת קווים אלכסוניים מלמעלה למטה */}
+          {diagonalLinesUp.map((line, index) => (
+            <Line
+              key={`diagonal-up-${index}`}
+              data={[
+                { distance: line.start.distance, time: line.start.time },
+                { distance: line.end.distance, time: line.end.time }
+              ]}
+              type="linear"
+              dataKey="time"
+              stroke={line.color}
+              strokeOpacity={line.opacity}
+              strokeWidth={2}
+              dot={false}
+              activeDot={false}
+              isAnimationActive={false}
+            />
+          ))}
+
+          {/* הוספת קווים אלכסוניים ממטה למעלה */}
+          {diagonalLinesDown.map((line, index) => (
+            <Line
+              key={`diagonal-down-${index}`}
+              data={[
+                { distance: line.start.distance, time: line.start.time },
+                { distance: line.end.distance, time: line.end.time }
+              ]}
+              type="linear"
+              dataKey="time"
+              stroke="#3b82f6"  // כחול עבור קווי מורד הזרם
+              strokeOpacity={0.7}
+              strokeWidth={2}
+              dot={false}
+              activeDot={false}
+              isAnimationActive={false}
+            />
+          ))}
         </ComposedChart>
       </ResponsiveContainer>
     </div>

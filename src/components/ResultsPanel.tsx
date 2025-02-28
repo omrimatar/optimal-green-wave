@@ -57,6 +57,10 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
   }));
 
   console.log("Current intersections for Gantt chart:", currentIntersections);
+  
+  // Extract diagonal points from the results if available
+  const diagonalPoints = comparisonResults.diagonal_points;
+  console.log("Diagonal points for Gantt chart:", diagonalPoints);
 
   // Default speed if not provided
   const speed = 50;
@@ -71,6 +75,7 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
             data={currentIntersections}
             mode={mode}
             speed={speed}
+            diagonalPoints={diagonalPoints}
           />
         </div>
         
