@@ -4,7 +4,7 @@ import { MetricsTable } from "./MetricsTable";
 import { OptimizationCharts } from "./OptimizationCharts";
 import { GanttChart } from "./GanttChart";
 import type { RunResult } from "@/types/traffic";
-import { type Intersection } from "@/types/optimization";
+import { type Intersection, type GreenPhase } from "@/types/optimization";
 
 interface ResultsPanelProps {
   results: {
@@ -24,7 +24,6 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
   }
 
   console.log("Rendering ResultsPanel with mode:", mode);
-  console.log("Results data:", results);
 
   // Select the appropriate results based on mode
   const comparisonResults = mode === 'manual' 
@@ -33,24 +32,31 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
       ? results.optimized_results 
       : results.baseline_results;  // In display mode, show baseline
   
+  // Create sample green phases for demonstration
+  const createGreenPhases = (): GreenPhase[] => [
+    {
+      direction: 'upstream',
+      startTime: 0,
+      duration: 45
+    },
+    {
+      direction: 'downstream',
+      startTime: 45,
+      duration: 45
+    }
+  ];
+
   // Extract the current configuration for the Gantt chart
-  // Since 'intersections' doesn't exist on RunResult, we need to map the offsets to create
-  // the intersection data structure needed by GanttChart
-  const baseIntersections = results.baseline_results.offsets.map((offset, idx) => ({
+  // Create intersection data structure needed by GanttChart
+  const currentIntersections: Intersection[] = comparisonResults.offsets.map((offset, idx) => ({
     id: idx + 1,
     distance: idx * 500, // Default distance if not provided
     cycleTime: 90, // Default cycle time
     offset: mode === 'display' ? 0 : offset, // Use 0 offsets for baseline in display mode
-    greenPhases: []  // This will be populated if available
+    greenPhases: createGreenPhases()  // Add sample green phases
   }));
 
-  // Use optimized offsets for calculate mode or manual offsets for manual mode
-  const currentIntersections = baseIntersections.map((intersection, idx) => ({
-    ...intersection,
-    offset: mode === 'display' 
-      ? 0  // Baseline always has 0 offset in display mode
-      : comparisonResults.offsets[idx] || 0
-  }));
+  console.log("Current intersections for Gantt chart:", currentIntersections);
 
   // Default speed if not provided
   const speed = 50;
@@ -58,7 +64,7 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
   return (
     <Card className="p-6 h-full">
       <div className="space-y-4">
-        {/* הצגת תרשים גל ירוק ראשון - לפני ההשוואה הגרפית */}
+        {/* Display green wave diagram first - before graphical comparison */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">תרשים גל ירוק</h3>
           <GanttChart 
@@ -68,7 +74,7 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
           />
         </div>
         
-        {/* הצגת ההשוואה הגרפית אחרי תרשים הגל */}
+        {/* Display graphical comparison after the wave diagram */}
         <OptimizationCharts
           baseline={results.baseline_results}
           optimized={comparisonResults}

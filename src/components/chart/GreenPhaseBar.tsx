@@ -16,8 +16,12 @@ export const GreenPhaseBar = (props: GreenPhaseBarProps) => {
   const { x, y, width, height, payload, maxTime, mode } = props;
   
   if (!payload.greenPhases || !Array.isArray(payload.greenPhases)) {
+    console.log("No green phases found in payload:", payload);
     return null;
   }
+
+  console.log("Rendering green phases for:", payload.name, "Mode:", mode, "Offset:", payload.offset);
+  console.log("Green phases:", payload.greenPhases);
 
   const normalizeTime = (time: number): number => {
     return ((time % maxTime) + maxTime) % maxTime;
@@ -25,27 +29,32 @@ export const GreenPhaseBar = (props: GreenPhaseBarProps) => {
   
   return payload.greenPhases.map((phase: GreenPhase, phaseIndex: number) => {
     const scaleFactor = height / maxTime;
-    // חישוב זמן התחלה מוכלל (תחילה ראשונית + אופסט)
+    // Calculate adjusted start time with offset
     const adjustedStart = normalizeTime(
       mode === 'display' ? 
-        phase.startTime : // במצב תצוגה, אין אופסט
-        phase.startTime + (payload.offset || 0) // במצבי חישוב או ידני, להוסיף אופסט
+        phase.startTime : // In display mode, no offset
+        phase.startTime + (payload.offset || 0) // In calculate or manual modes, add offset
     );
+    
+    console.log("Phase", phaseIndex, "Direction:", phase.direction, "Start:", phase.startTime, 
+                "Adjusted Start:", adjustedStart, "Duration:", phase.duration);
     
     const adjustedWidth = width * 0.3;
     const startX = x + (phaseIndex * width * 0.35);
     
-    // חישוב זמן הסיום כולל נירמול
+    // Calculate end time with normalization
     const endTime = normalizeTime(adjustedStart + phase.duration);
     const wrapsAround = endTime < adjustedStart;
 
+    console.log("End time:", endTime, "Wraps around:", wrapsAround);
+
     if (!wrapsAround) {
-      // מקרה רגיל - אין חריגה מזמן המחזור
+      // Normal case - no cycle time overflow
       return (
         <Rectangle 
           key={`phase-${phaseIndex}`}
           x={startX} 
-          y={y + height - adjustedStart * scaleFactor - phase.duration * scaleFactor} 
+          y={y + (maxTime - adjustedStart - phase.duration) * scaleFactor} 
           width={adjustedWidth} 
           height={phase.duration * scaleFactor} 
           fill={phase.direction === 'upstream' ? '#22c55e' : '#3b82f6'} 
@@ -55,12 +64,12 @@ export const GreenPhaseBar = (props: GreenPhaseBarProps) => {
         />
       );
     } else {
-      // פיצול לשני מלבנים במקרה של חריגה מזמן המחזור
+      // Split into two rectangles when cycle time overflow occurs
       const firstPartDuration = maxTime - adjustedStart;
       const secondPartDuration = phase.duration - firstPartDuration;
 
       return [
-        // החלק הראשון - מזמן ההתחלה ועד סוף המחזור
+        // First part - from start time to end of cycle
         <Rectangle 
           key={`phase-${phaseIndex}-1`}
           x={startX} 
@@ -72,11 +81,11 @@ export const GreenPhaseBar = (props: GreenPhaseBarProps) => {
           rx={4}
           ry={4}
         />,
-        // החלק השני - מתחילת המחזור
+        // Second part - from beginning of cycle
         <Rectangle 
           key={`phase-${phaseIndex}-2`}
           x={startX} 
-          y={y + height - secondPartDuration * scaleFactor} 
+          y={y + (maxTime - secondPartDuration) * scaleFactor} 
           width={adjustedWidth} 
           height={secondPartDuration * scaleFactor} 
           fill={phase.direction === 'upstream' ? '#22c55e' : '#3b82f6'} 
