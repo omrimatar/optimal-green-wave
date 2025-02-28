@@ -45,7 +45,7 @@ export const GreenPhaseBar = (props: GreenPhaseBarProps) => {
         <Rectangle 
           key={`phase-${phaseIndex}`}
           x={startX} 
-          y={y + height - (adjustedStart + phase.duration) * scaleFactor} 
+          y={y + height - adjustedStart * scaleFactor - phase.duration * scaleFactor} 
           width={adjustedWidth} 
           height={phase.duration * scaleFactor} 
           fill={phase.direction === 'upstream' ? '#22c55e' : '#3b82f6'} 
