@@ -1,7 +1,8 @@
 
 import type { LambdaRequest, LambdaResponse } from "@/types/traffic";
 
-const LAMBDA_URL = "https://xphhfrlnpiikldzbmfkboitshq0dkdnt.lambda-url.eu-north-1.on.aws/";
+// Updated Lambda URL with correct region and endpoint
+const LAMBDA_URL = "https://i7txrmmzkmylymjlnaxvbojbri0xluqn.lambda-url.eu-west-1.on.aws/";
 
 /**
  * Sends optimization request to AWS Lambda function
