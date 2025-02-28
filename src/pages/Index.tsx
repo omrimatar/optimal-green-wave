@@ -58,6 +58,15 @@ const Index = () => {
   const [manualOffsets, setManualOffsets] = useState<number[]>([0, 0]); // אתחול עם שני אפסים עבור שני הצמתים ההתחלתיים
   const [showManualDialog, setShowManualDialog] = useState(false);
 
+  const handleSpeedChange = (value: string) => {
+    const numValue = parseInt(value);
+    if (isNaN(numValue) || numValue < 0 || numValue > 120 || !Number.isInteger(numValue)) {
+      toast.error("מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
+      return;
+    }
+    setSpeed(numValue);
+  };
+
   const handleAddIntersection = () => {
     const newId = Math.max(...intersections.map(i => i.id)) + 1;
     const lastIntersection = intersections[intersections.length - 1];
@@ -121,6 +130,38 @@ const Index = () => {
 
   const handleCalculate = async () => {
     try {
+      // וידוא שכל הקלטים תקינים לפני החישוב
+      if (speed < 0 || speed > 120 || !Number.isInteger(speed)) {
+        toast.error("מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
+        return;
+      }
+
+      // בדיקה שכל הצמתים תקינים
+      for (const intersection of intersections) {
+        if (intersection.distance < 0 || intersection.distance > 10000 || !Number.isInteger(intersection.distance)) {
+          toast.error(`צומת ${intersection.id}: מרחק חייב להיות מספר שלם בין 0 ל-10000 מטר`);
+          return;
+        }
+        
+        if (intersection.cycleTime < 0 || intersection.cycleTime > 300 || !Number.isInteger(intersection.cycleTime)) {
+          toast.error(`צומת ${intersection.id}: זמן מחזור חייב להיות מספר שלם בין 0 ל-300 שניות`);
+          return;
+        }
+
+        // בדיקה של הפאזות הירוקות
+        for (const phase of intersection.greenPhases) {
+          if (phase.startTime < 0 || phase.startTime > intersection.cycleTime || !Number.isInteger(phase.startTime)) {
+            toast.error(`צומת ${intersection.id}: זמן התחלה חייב להיות מספר שלם בין 0 ל-${intersection.cycleTime}`);
+            return;
+          }
+          
+          if (phase.duration < 1 || phase.duration > intersection.cycleTime || !Number.isInteger(phase.duration)) {
+            toast.error(`צומת ${intersection.id}: משך חייב להיות מספר שלם בין 1 ל-${intersection.cycleTime}`);
+            return;
+          }
+        }
+      }
+      
       const baseIntersections = intersections.map(intersection => ({
         ...intersection,
         offset: 0
@@ -139,6 +180,25 @@ const Index = () => {
 
   const handleShowExisting = async () => {
     try {
+      // וידוא שכל הקלטים תקינים לפני ההצגה
+      if (speed < 0 || speed > 120 || !Number.isInteger(speed)) {
+        toast.error("מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
+        return;
+      }
+
+      // בדיקה שכל הצמתים תקינים
+      for (const intersection of intersections) {
+        if (intersection.distance < 0 || intersection.distance > 10000 || !Number.isInteger(intersection.distance)) {
+          toast.error(`צומת ${intersection.id}: מרחק חייב להיות מספר שלם בין 0 ל-10000 מטר`);
+          return;
+        }
+        
+        if (intersection.cycleTime < 0 || intersection.cycleTime > 300 || !Number.isInteger(intersection.cycleTime)) {
+          toast.error(`צומת ${intersection.id}: זמן מחזור חייב להיות מספר שלם בין 0 ל-300 שניות`);
+          return;
+        }
+      }
+      
       const currentIntersections = intersections.map(intersection => ({
         ...intersection,
         offset: 0
@@ -165,10 +225,43 @@ const Index = () => {
     speed: number;
     intersections: Intersection[];
   }) => {
+    // Validate loaded data
+    if (data.speed < 0 || data.speed > 120 || !Number.isInteger(data.speed)) {
+      toast.error("הקובץ שנטען מכיל מהירות תכן שאינה חוקית. מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
+      return;
+    }
+    
+    // Validate intersections
+    for (const intersection of data.intersections) {
+      if (intersection.distance < 0 || intersection.distance > 10000 || !Number.isInteger(intersection.distance)) {
+        toast.error(`הקובץ שנטען מכיל צומת עם מרחק לא חוקי. מרחק חייב להיות מספר שלם בין 0 ל-10000 מטר`);
+        return;
+      }
+      
+      if (intersection.cycleTime < 0 || intersection.cycleTime > 300 || !Number.isInteger(intersection.cycleTime)) {
+        toast.error(`הקובץ שנטען מכיל צומת עם זמן מחזור לא חוקי. זמן מחזור חייב להיות מספר שלם בין 0 ל-300 שניות`);
+        return;
+      }
+
+      // Validate green phases
+      for (const phase of intersection.greenPhases) {
+        if (phase.startTime < 0 || phase.startTime > intersection.cycleTime || !Number.isInteger(phase.startTime)) {
+          toast.error(`הקובץ שנטען מכיל צומת עם זמן התחלת פאזה לא חוקי. זמן התחלה חייב להיות מספר שלם בין 0 ל-${intersection.cycleTime}`);
+          return;
+        }
+        
+        if (phase.duration < 1 || phase.duration > intersection.cycleTime || !Number.isInteger(phase.duration)) {
+          toast.error(`הקובץ שנטען מכיל צומת עם משך פאזה לא חוקי. משך חייב להיות מספר שלם בין 1 ל-${intersection.cycleTime}`);
+          return;
+        }
+      }
+    }
+    
     setSpeed(data.speed);
     setIntersections(data.intersections);
     // איפוס מערך האופסטים הידניים למערך של אפסים באורך המתאים
     setManualOffsets(new Array(data.intersections.length).fill(0));
+    toast.success("הקובץ נטען בהצלחה");
   };
 
   const handleResetWeights = () => {
@@ -195,7 +288,15 @@ const Index = () => {
 
               <div>
                 <Label htmlFor="speed">מהירות תכן (קמ"ש)</Label>
-                <Input id="speed" type="number" value={speed} onChange={e => setSpeed(Number(e.target.value))} className="w-full" />
+                <Input 
+                  id="speed" 
+                  type="number" 
+                  value={speed} 
+                  min={0}
+                  max={120}
+                  onChange={e => handleSpeedChange(e.target.value)} 
+                  className="w-full" 
+                />
               </div>
 
               <WeightsPanel 

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowUp, ArrowDown, Trash2 } from "lucide-react";
 import { type Intersection } from "@/types/optimization";
+import { toast } from "sonner";
 
 interface IntersectionInputProps {
   intersection: Intersection;
@@ -14,6 +15,21 @@ interface IntersectionInputProps {
 
 export const IntersectionInput = ({ intersection, onChange, onDelete }: IntersectionInputProps) => {
   const handleGreenPhaseChange = (phaseIndex: number, field: 'startTime' | 'duration', value: number) => {
+    // Check for valid start time and duration based on cycle time
+    const cycleTime = intersection.cycleTime;
+    
+    if (field === 'startTime') {
+      if (value < 0 || value > cycleTime || !Number.isInteger(value)) {
+        toast.error(`זמן התחלה חייב להיות מספר שלם בין 0 ל-${cycleTime}`);
+        return;
+      }
+    } else if (field === 'duration') {
+      if (value < 1 || value > cycleTime || !Number.isInteger(value)) {
+        toast.error(`משך חייב להיות מספר שלם בין 1 ל-${cycleTime}`);
+        return;
+      }
+    }
+
     const updatedGreenPhases = [...intersection.greenPhases];
     updatedGreenPhases[phaseIndex] = {
       ...updatedGreenPhases[phaseIndex],
@@ -36,7 +52,7 @@ export const IntersectionInput = ({ intersection, onChange, onDelete }: Intersec
         {
           direction,
           startTime: newStartTime,
-          duration: 45
+          duration: Math.min(45, intersection.cycleTime)
         }
       ]
     });
@@ -49,6 +65,32 @@ export const IntersectionInput = ({ intersection, onChange, onDelete }: Intersec
         greenPhases: intersection.greenPhases.filter((_, index) => index !== phaseIndex)
       });
     }
+  };
+
+  const handleDistanceChange = (value: string) => {
+    const numValue = parseInt(value);
+    if (isNaN(numValue) || numValue < 0 || numValue > 10000 || !Number.isInteger(numValue)) {
+      toast.error("מרחק חייב להיות מספר שלם בין 0 ל-10000 מטר");
+      return;
+    }
+    
+    onChange({
+      ...intersection,
+      distance: numValue
+    });
+  };
+
+  const handleCycleTimeChange = (value: string) => {
+    const numValue = parseInt(value);
+    if (isNaN(numValue) || numValue < 0 || numValue > 300 || !Number.isInteger(numValue)) {
+      toast.error("זמן מחזור חייב להיות מספר שלם בין 0 ל-300 שניות");
+      return;
+    }
+    
+    onChange({
+      ...intersection,
+      cycleTime: numValue
+    });
   };
 
   return (
@@ -71,10 +113,7 @@ export const IntersectionInput = ({ intersection, onChange, onDelete }: Intersec
           <Input
             type="number"
             value={intersection.distance}
-            onChange={e => onChange({
-              ...intersection,
-              distance: Number(e.target.value)
-            })}
+            onChange={e => handleDistanceChange(e.target.value)}
           />
         </div>
 
@@ -83,10 +122,7 @@ export const IntersectionInput = ({ intersection, onChange, onDelete }: Intersec
           <Input
             type="number"
             value={intersection.cycleTime}
-            onChange={e => onChange({
-              ...intersection,
-              cycleTime: Number(e.target.value)
-            })}
+            onChange={e => handleCycleTimeChange(e.target.value)}
           />
         </div>
       </div>
@@ -137,6 +173,8 @@ export const IntersectionInput = ({ intersection, onChange, onDelete }: Intersec
                 <Input
                   type="number"
                   value={phase.startTime}
+                  min={0}
+                  max={intersection.cycleTime}
                   onChange={e => handleGreenPhaseChange(index, 'startTime', Number(e.target.value))}
                 />
               </div>
@@ -145,6 +183,8 @@ export const IntersectionInput = ({ intersection, onChange, onDelete }: Intersec
                 <Input
                   type="number"
                   value={phase.duration}
+                  min={1}
+                  max={intersection.cycleTime}
                   onChange={e => handleGreenPhaseChange(index, 'duration', Number(e.target.value))}
                 />
               </div>
