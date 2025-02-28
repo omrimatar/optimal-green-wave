@@ -58,12 +58,8 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
   return (
     <Card className="p-6 h-full">
       <div className="space-y-4">
-        <OptimizationCharts
-          baseline={results.baseline_results}
-          optimized={comparisonResults}
-          mode={mode}
-        />
-        <div className="mt-6 space-y-4">
+        {/* הצגת תרשים גל ירוק ראשון - לפני ההשוואה הגרפית */}
+        <div className="space-y-4">
           <h3 className="text-lg font-medium">תרשים גל ירוק</h3>
           <GanttChart 
             data={currentIntersections}
@@ -71,6 +67,14 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
             speed={speed}
           />
         </div>
+        
+        {/* הצגת ההשוואה הגרפית אחרי תרשים הגל */}
+        <OptimizationCharts
+          baseline={results.baseline_results}
+          optimized={comparisonResults}
+          mode={mode}
+        />
+        
         <MetricsTable 
           baseline={results.baseline_results}
           optimized={comparisonResults}

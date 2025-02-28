@@ -25,10 +25,11 @@ export const GreenPhaseBar = (props: GreenPhaseBarProps) => {
   
   return payload.greenPhases.map((phase: GreenPhase, phaseIndex: number) => {
     const scaleFactor = height / maxTime;
+    // חישוב זמן התחלה מוכלל (תחילה ראשונית + אופסט)
     const adjustedStart = normalizeTime(
       mode === 'display' ? 
-        phase.startTime : // In display mode, don't apply offset
-        phase.startTime + (payload.offset || 0) // In calculate or manual mode, apply offset
+        phase.startTime : // במצב תצוגה, אין אופסט
+        phase.startTime + (payload.offset || 0) // במצבי חישוב או ידני, להוסיף אופסט
     );
     
     const adjustedWidth = width * 0.3;
