@@ -26,9 +26,9 @@ export const GreenPhaseBar = (props: GreenPhaseBarProps) => {
   return payload.greenPhases.map((phase: GreenPhase, phaseIndex: number) => {
     const scaleFactor = height / maxTime;
     const adjustedStart = normalizeTime(
-      mode === 'calculate' || mode === 'manual' ? 
-      phase.startTime + (payload.offset || 0) : 
-      phase.startTime
+      mode === 'display' ? 
+        phase.startTime : // In display mode, don't apply offset
+        phase.startTime + (payload.offset || 0) // In calculate or manual mode, apply offset
     );
     
     const adjustedWidth = width * 0.3;
