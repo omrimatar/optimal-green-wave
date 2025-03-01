@@ -81,12 +81,12 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
   const speed = 50;
 
   return (
-    <Card className="p-3 md:p-6 h-full w-full overflow-x-auto overflow-y-auto">
-      <div className="space-y-4 min-w-[300px]">
+    <Card className="p-3 md:p-6 h-full w-full">
+      <div className="space-y-4 min-w-[300px] mobile-scroll-container">
         {/* Display green wave diagram first - before graphical comparison */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">תרשים גל ירוק</h3>
-          <div className="overflow-x-auto">
+          <div className="scroll-container pb-4">
             <GanttChart 
               data={currentIntersections}
               mode={mode}
@@ -97,7 +97,7 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
         </div>
         
         {/* Display graphical comparison after the wave diagram */}
-        <div className="overflow-x-auto">
+        <div className="scroll-container pb-4">
           <OptimizationCharts
             baseline={results.baseline_results}
             optimized={comparisonResults}
@@ -105,7 +105,7 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
           />
         </div>
         
-        <div className="overflow-x-auto">
+        <div className="scroll-container pb-4">
           <MetricsTable 
             baseline={results.baseline_results}
             optimized={comparisonResults}

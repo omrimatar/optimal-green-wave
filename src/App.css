@@ -2,7 +2,7 @@
 #root {
   max-width: 100%;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 0.5rem;
   text-align: center;
 }
 
@@ -42,7 +42,7 @@
 }
 
 .card {
-  padding: 1em;
+  padding: 0.75em;
 }
 
 @media (min-width: 768px) {
@@ -67,5 +67,26 @@
   /* Adjust spacing for mobile */
   .space-y-6 > * + * {
     margin-top: 0.75rem;
+  }
+  
+  /* Ensure charts are visible on mobile */
+  .recharts-wrapper {
+    max-width: calc(100vw - 2rem);
+    margin: 0 auto;
+  }
+  
+  /* Fix mobile layout */
+  #root {
+    padding: 0.25rem;
+    overflow-x: hidden;
+  }
+}
+
+/* Global mobile fixes */
+@media (max-width: 480px) {
+  body, html {
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
   }
 }
