@@ -48,10 +48,28 @@ export async function calculateGreenWave(
   };
 
   console.log("Sending to optimization with manualOffsets:", manualOffsets);
+  console.log("Sending intersections with distances:", intersections.map(i => `${i.id}: ${i.distance}`));
   
   // קריאה לפונקציית האופטימיזציה
   const results = await greenWaveOptimization(networkData, weights || DEFAULT_WEIGHTS, manualOffsets);
-  console.log("Received results from optimization:", results);
+  
+  // Ensure distances are properly preserved in the results
+  const actualDistances = intersections.map(i => i.distance);
+  
+  // Add the actual distances to all result objects
+  if (results.baseline_results) {
+    results.baseline_results.distances = actualDistances;
+  }
+  
+  if (results.optimized_results) {
+    results.optimized_results.distances = actualDistances;
+  }
+  
+  if (results.manual_results) {
+    results.manual_results.distances = actualDistances;
+  }
+  
+  console.log("Received results from optimization with distances:", actualDistances);
   
   return results;
 }

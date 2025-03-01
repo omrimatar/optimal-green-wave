@@ -32,6 +32,9 @@ export async function greenWaveOptimization(
       throw new Error('Missing required data for optimization');
     }
 
+    // Extract actual distances from input data for later reference
+    const actualDistances = data.intersections.map(intersection => intersection.distance);
+
     // Prepare data for AWS Lambda function
     const requestBody: LambdaRequest = {
       mode: manualOffsets ? "manual" : "optimization",
@@ -80,14 +83,14 @@ export async function greenWaveOptimization(
 
     console.log('Received results from Lambda:', lambdaResults);
 
-    // Process the results
+    // Process the results and add the actual distances to each result object
     const results = {
-      baseline_results: enhanceResults(lambdaResults.baseline_results),
-      optimized_results: enhanceResults(lambdaResults.optimization_results),
-      manual_results: manualOffsets ? enhanceResults(lambdaResults.optimization_results) : undefined
+      baseline_results: enhanceResults(lambdaResults.baseline_results, actualDistances),
+      optimized_results: enhanceResults(lambdaResults.optimization_results, actualDistances),
+      manual_results: manualOffsets ? enhanceResults(lambdaResults.optimization_results, actualDistances) : undefined
     };
 
-    console.log('Final processed results:', results);
+    console.log('Final processed results with distances:', results);
     return results;
   } catch (error) {
     console.error('Error in greenWaveOptimization:', error);
@@ -98,7 +101,7 @@ export async function greenWaveOptimization(
 /**
  * Enhances results with additional properties needed by UI components
  */
-function enhanceResults(result: RunResult): RunResult {
+function enhanceResults(result: RunResult, actualDistances?: number[]): RunResult {
   return {
     ...result,
     // Ensure properties needed by UI components are present
@@ -106,5 +109,7 @@ function enhanceResults(result: RunResult): RunResult {
     corridorBW_down: result.corridor_bandwidth_down || 0,
     local_up: result.pair_bandwidth_up || [],
     local_down: result.pair_bandwidth_down || [],
+    // Add the actual distances to the result
+    distances: actualDistances || result.distances
   };
 }

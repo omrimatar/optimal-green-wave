@@ -46,12 +46,17 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
     }
   ];
 
-  // Get actual distances from the input or offsets based on distances property
+  // Ensure we have the correct distances array
+  if (!comparisonResults.distances || comparisonResults.distances.length < comparisonResults.offsets.length) {
+    console.warn("Distances array is missing or incomplete, using default distances");
+    comparisonResults.distances = comparisonResults.offsets.map((_, idx) => idx * 300);
+  }
+
   // Extract the current configuration for the Gantt chart
   // Create intersection data structure needed by GanttChart
   const currentIntersections: Intersection[] = comparisonResults.offsets.map((offset, idx) => {
-    // Get the actual distance from the distances field if it exists
-    const actualDistance = comparisonResults.distances?.[idx] || idx * 300;
+    // Get the actual distance from the distances field
+    const actualDistance = comparisonResults.distances![idx];
     
     // Log to debug the actual distances being used
     console.log(`Intersection ${idx + 1} distance: ${actualDistance}`);
