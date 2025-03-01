@@ -93,87 +93,90 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints 
 
     const lines: any[] = [];
     
-    // מיפוי צמתים לפי מזהה עבור גישה מהירה
+    // הכנת מיפוי צמתים לגישה מהירה
     const intersectionMap = new Map(
       intersections.map(intersection => [intersection.id, intersection])
     );
 
-    // יצירת קווים בין כל זוג נקודות עוקבות
     for (let i = 0; i < points.length - 1; i++) {
       const current = points[i];
       const next = points[i + 1];
-      
       const currentIntersection = intersectionMap.get(current.junction);
       const nextIntersection = intersectionMap.get(next.junction);
-      
+
       if (!currentIntersection || !nextIntersection) {
         console.log("Cannot find intersection for junctions:", current.junction, next.junction);
         continue;
       }
-      
+
       const startDistance = currentIntersection.distance;
       const endDistance = nextIntersection.distance;
-      
-      // בדיקה אם הקו יחצה את סוף המחזור
-      if (current.low < current.top && next.low < next.top) {
-        // קו רגיל ללא חציית מחזור
+      // נקבע min/max עבור בדיקות החיתוך
+      const minDist = Math.min(startDistance, endDistance);
+      const maxDist = Math.max(startDistance, endDistance);
+
+      // אם אין טווח זמן (לא הגיוני) – מדלגים
+      if (current.low >= current.top || next.low >= next.top) {
+        continue;
+      }
+
+      // מקרה א: אין חצייה של סוף מחזור, קווים רגילים
+      // --------
+      // פשוט נחבר low->low ו- top->top
+      lines.push({
+        start: { distance: startDistance, time: current.low },
+        end:   { distance: endDistance,   time: next.low },
+        color: '#22c55e',
+        opacity: 0.7
+      });
+      lines.push({
+        start: { distance: startDistance, time: current.top },
+        end:   { distance: endDistance,   time: next.top },
+        color: '#22c55e',
+        opacity: 0.7
+      });
+
+      // מקרה ב: יש חצייה של סוף מחזור (Wrap-Around)
+      // --------
+      // נחשב intersectionX עבור low ו-top. אם נופל בטווח [minDist,maxDist], מוסיפים שני קטעים.
+      const intersectionXLow = startDistance + 
+        ((endDistance - startDistance) * (cycleTime - current.low)) /
+        ((next.low + cycleTime) - current.low);
+
+      // אם intersectionXLow אכן בתוך תחום המרחק, מוסיפים 2 קטעים (עד cycleTime, ואז מ-0)
+      if (intersectionXLow >= minDist && intersectionXLow <= maxDist) {
         lines.push({
           start: { distance: startDistance, time: current.low },
-          end: { distance: endDistance, time: next.low },
+          end:   { distance: intersectionXLow, time: cycleTime },
           color: '#22c55e',
           opacity: 0.7
         });
-        
+        lines.push({
+          start: { distance: intersectionXLow, time: 0 },
+          end:   { distance: endDistance,      time: next.low },
+          color: '#22c55e',
+          opacity: 0.7
+        });
+      }
+
+      // כנ"ל עבור הגבול העליון
+      const intersectionXTop = startDistance +
+        ((endDistance - startDistance) * (cycleTime - current.top)) /
+        ((next.top + cycleTime) - current.top);
+
+      if (intersectionXTop >= minDist && intersectionXTop <= maxDist) {
         lines.push({
           start: { distance: startDistance, time: current.top },
-          end: { distance: endDistance, time: next.top },
+          end:   { distance: intersectionXTop, time: cycleTime },
           color: '#22c55e',
           opacity: 0.7
         });
-      } else {
-        // קו שחוצה את סוף המחזור
-        // חלק ראשון - עד סוף המחזור
-        const intersectionX = startDistance + 
-          ((endDistance - startDistance) * (cycleTime - current.low)) / 
-          ((next.low + cycleTime) - current.low);
-
-        if (intersectionX > startDistance && intersectionX < endDistance) {
-          lines.push({
-            start: { distance: startDistance, time: current.low },
-            end: { distance: intersectionX, time: cycleTime },
-            color: '#22c55e',
-            opacity: 0.7
-          });
-          
-          // חלק שני - המשך מתחילת המחזור
-          lines.push({
-            start: { distance: intersectionX, time: 0 },
-            end: { distance: endDistance, time: next.low },
-            color: '#22c55e',
-            opacity: 0.7
-          });
-        }
-
-        // טיפול דומה עבור הקו העליון
-        const topIntersectionX = startDistance +
-          ((endDistance - startDistance) * (cycleTime - current.top)) /
-          ((next.top + cycleTime) - current.top);
-
-        if (topIntersectionX > startDistance && topIntersectionX < endDistance) {
-          lines.push({
-            start: { distance: startDistance, time: current.top },
-            end: { distance: topIntersectionX, time: cycleTime },
-            color: '#22c55e',
-            opacity: 0.7
-          });
-          
-          lines.push({
-            start: { distance: topIntersectionX, time: 0 },
-            end: { distance: endDistance, time: next.top },
-            color: '#22c55e',
-            opacity: 0.7
-          });
-        }
+        lines.push({
+          start: { distance: intersectionXTop, time: 0 },
+          end:   { distance: endDistance,      time: next.top },
+          color: '#22c55e',
+          opacity: 0.7
+        });
       }
     }
 
@@ -442,4 +445,3 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints 
     </div>
   );
 };
-
