@@ -78,6 +78,8 @@ export interface RunResult {
   
   // Optimization results
   offsets: number[];
+  // Added distances property to store actual intersection distances
+  distances?: number[];
   status: string;
   objective_value: number;
 }

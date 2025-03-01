@@ -46,14 +46,17 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
     }
   ];
 
+  // Get actual distances from the input or offsets based on distances property
   // Extract the current configuration for the Gantt chart
   // Create intersection data structure needed by GanttChart
   const currentIntersections: Intersection[] = comparisonResults.offsets.map((offset, idx) => {
+    // Get the actual distance from the distances field if it exists
+    const actualDistance = comparisonResults.distances?.[idx] || idx * 300;
+    
     return {
       id: idx + 1,
-      // Use a default distance calculation since we don't have access to intersections
-      // We can't access results.baseline_results.intersections since it doesn't exist on RunResult
-      distance: idx * 300, 
+      // Use the actual distance that was entered by the user
+      distance: actualDistance, 
       cycleTime: 90, // Default cycle time
       offset: mode === 'display' ? 0 : offset, // Use 0 offsets for baseline in display mode
       greenPhases: createGreenPhases()  // Add sample green phases
