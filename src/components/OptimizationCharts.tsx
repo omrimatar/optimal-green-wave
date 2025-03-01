@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis,
-  PolarRadiusAxis, Radar
+  PolarRadiusAxis, Radar, ReferenceLine
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ChartBar, Radar as RadarIcon } from "lucide-react";
+import { ChartBar, Radar as RadarIcon, SplitSquareVertical } from "lucide-react";
 import type { RunResult } from "@/types/traffic";
 
 interface OptimizationChartsProps {
@@ -16,7 +16,7 @@ interface OptimizationChartsProps {
   mode: 'display' | 'calculate' | 'manual';
 }
 
-type ChartType = 'bar' | 'radar';
+type ChartType = 'bar' | 'radar' | 'butterfly';
 type ComparisonType = 'optimization' | 'direction';
 
 export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationChartsProps) => {
@@ -60,6 +60,13 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
       [labels.optimized]: -Number(optimized.max_delay_up?.[index].toFixed(1))
     })) || [])
   ];
+
+  // Prepare data for butterfly chart
+  const butterflyData = optimizationData.map(item => ({
+    metric: item.metric,
+    [labels.baseline]: -Math.abs(item[labels.baseline]),
+    [labels.optimized]: Math.abs(item[labels.optimized])
+  }));
 
   const directionData = [
     {
@@ -106,8 +113,10 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
     }
   ];
 
-  const currentData = chartType === 'radar' ? radarData : 
-                     comparisonType === 'optimization' ? optimizationData : directionData;
+  const currentData = 
+    chartType === 'radar' ? radarData : 
+    chartType === 'butterfly' ? butterflyData :
+    comparisonType === 'optimization' ? optimizationData : directionData;
 
   const renderChart = () => {
     switch (chartType) {
@@ -162,6 +171,35 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
             </RadarChart>
           </ResponsiveContainer>
         );
+
+      case 'butterfly':
+        return (
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={butterflyData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis type="number" />
+              <YAxis type="category" dataKey="metric" width={150} />
+              <Tooltip 
+                formatter={(value, name) => {
+                  // Show absolute values in tooltip
+                  return [Math.abs(value as number), name];
+                }}
+              />
+              <Legend />
+              <ReferenceLine x={0} stroke="#000" />
+              <Bar 
+                dataKey={labels.baseline} 
+                fill="#8B5CF6" 
+                name={`${labels.baseline} (מצב נוכחי)`}
+              />
+              <Bar 
+                dataKey={labels.optimized} 
+                fill="#F97316" 
+                name={`${labels.optimized} (מצב משופר)`}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        );
     }
   };
 
@@ -178,8 +216,11 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
               <ToggleGroupItem value="radar" aria-label="תרשים רדאר">
                 <RadarIcon className="h-4 w-4" />
               </ToggleGroupItem>
+              <ToggleGroupItem value="butterfly" aria-label="תרשים פרפר">
+                <SplitSquareVertical className="h-4 w-4" />
+              </ToggleGroupItem>
             </ToggleGroup>
-            {chartType !== 'radar' && (
+            {chartType !== 'radar' && chartType !== 'butterfly' && (
               <ToggleGroup type="single" value={comparisonType} onValueChange={(value) => value && setComparisonType(value as ComparisonType)}>
                 <ToggleGroupItem value="optimization" aria-label="השוואת אופטימיזציה">
                   אופטימיזציה
