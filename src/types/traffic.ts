@@ -48,6 +48,23 @@ export interface DiagonalPoints {
   down: DiagonalPoint[];
 }
 
+export interface PairBandPoint {
+  from_junction: number;
+  to_junction: number;
+  up: {
+    origin_low: number;
+    origin_high: number;
+    dest_low: number;
+    dest_high: number;
+  };
+  down: {
+    origin_low: number;
+    origin_high: number;
+    dest_low: number;
+    dest_high: number;
+  };
+}
+
 export interface RunResult {
   // Arrays of results per intersection pair
   pair_bandwidth_up?: number[];
@@ -75,6 +92,9 @@ export interface RunResult {
   diagonal_up_end?: Array<number|null>;
   diagonal_down_start?: Array<number|null>;
   diagonal_down_end?: Array<number|null>;
+  
+  // Band points for each pair of intersections
+  pairs_band_points?: PairBandPoint[];
   
   // Optimization results
   offsets: number[];

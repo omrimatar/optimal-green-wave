@@ -24,9 +24,25 @@ interface Props {
     up: DiagonalPoint[];
     down: DiagonalPoint[];
   };
+  pairsBandPoints?: Array<{
+    from_junction: number;
+    to_junction: number;
+    up: {
+      origin_low: number;
+      origin_high: number;
+      dest_low: number;
+      dest_high: number;
+    };
+    down: {
+      origin_low: number;
+      origin_high: number;
+      dest_low: number;
+      dest_high: number;
+    };
+  }>;
 }
 
-export const GanttChart = ({ data, mode, speed, diagonalPoints }: Props) => {
+export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints }: Props) => {
   if (!data || data.length === 0) return null;
   
   // נוסיף בדיקות תקינות לנתונים ונחלץ את זמן המחזור המקסימלי
@@ -165,6 +181,76 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints }: Props) => {
     return lines;
   };
 
+  // יצירת קווים אלכסוניים מנתוני pairs_band_points
+  const createPairBandLines = () => {
+    if (!pairsBandPoints || !Array.isArray(pairsBandPoints) || pairsBandPoints.length === 0) {
+      console.log("No pair band points data available");
+      return { upLines: [], downLines: [] };
+    }
+
+    const upLines: any[] = [];
+    const downLines: any[] = [];
+    
+    // מיפוי צמתים לפי מזהה עבור גישה מהירה
+    const intersectionMap = new Map(
+      data.map(intersection => [intersection.id, intersection])
+    );
+
+    pairsBandPoints.forEach(pair => {
+      const fromIntersection = intersectionMap.get(pair.from_junction);
+      const toIntersection = intersectionMap.get(pair.to_junction);
+      
+      if (!fromIntersection || !toIntersection) {
+        console.log("Cannot find intersections for pair:", pair);
+        return;
+      }
+      
+      const startDistance = fromIntersection.distance;
+      const endDistance = toIntersection.distance;
+      
+      // קווים במעלה הזרם (upstream)
+      if (pair.up) {
+        // קו תחתון
+        upLines.push({
+          start: { distance: startDistance, time: pair.up.origin_low },
+          end: { distance: endDistance, time: pair.up.dest_low },
+          color: '#22c55e',
+          opacity: 0.7
+        });
+        
+        // קו עליון
+        upLines.push({
+          start: { distance: startDistance, time: pair.up.origin_high },
+          end: { distance: endDistance, time: pair.up.dest_high },
+          color: '#22c55e',
+          opacity: 0.7
+        });
+      }
+      
+      // קווים במורד הזרם (downstream)
+      if (pair.down) {
+        // קו תחתון
+        downLines.push({
+          start: { distance: startDistance, time: pair.down.origin_low },
+          end: { distance: endDistance, time: pair.down.dest_low },
+          color: '#3b82f6',
+          opacity: 0.7
+        });
+        
+        // קו עליון
+        downLines.push({
+          start: { distance: startDistance, time: pair.down.origin_high },
+          end: { distance: endDistance, time: pair.down.dest_high },
+          color: '#3b82f6',
+          opacity: 0.7
+        });
+      }
+    });
+
+    console.log("Created pair band lines - up:", upLines, "down:", downLines);
+    return { upLines, downLines };
+  };
+
   // יצירת קווים אלכסוניים מהנקודות הדיאגונליות
   const diagonalLinesUp = useMemo(() => {
     if (diagonalPoints?.up) {
@@ -179,6 +265,14 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints }: Props) => {
     }
     return [];
   }, [diagonalPoints?.down, data, maxCycleTime]);
+
+  // יצירת קווים מנתוני pairs_band_points
+  const { upLines: pairBandLinesUp, downLines: pairBandLinesDown } = useMemo(() => {
+    if (pairsBandPoints) {
+      return createPairBandLines();
+    }
+    return { upLines: [], downLines: [] };
+  }, [pairsBandPoints, data]);
 
   const legendPayload = [
     { value: 'מופע במעלה הזרם', type: 'rect' as const, color: '#22c55e', id: 'phase-1' },
@@ -195,6 +289,7 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints }: Props) => {
   const sortedChartData = [...chartData].sort((a, b) => a.distance - b.distance);
 
   console.log("Rendering Gantt chart with diagonal points:", diagonalPoints);
+  console.log("Pairs band points:", pairsBandPoints);
   console.log("Using maxCycleTime for Y axis:", maxCycleTime);
 
   return (
@@ -267,7 +362,45 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints }: Props) => {
               />
             ))}
 
-          {/* הוספת קווים אלכסוניים מלמעלה למטה */}
+          {/* הוספת קווים אלכסוניים מלמעלה למטה (pairs_band_points) */}
+          {pairBandLinesUp.map((line, index) => (
+            <Line
+              key={`pair-band-up-${index}`}
+              data={[
+                { distance: line.start.distance, time: line.start.time },
+                { distance: line.end.distance, time: line.end.time }
+              ]}
+              type="linear"
+              dataKey="time"
+              stroke={line.color}
+              strokeOpacity={line.opacity}
+              strokeWidth={2}
+              dot={false}
+              activeDot={false}
+              isAnimationActive={false}
+            />
+          ))}
+
+          {/* הוספת קווים אלכסוניים ממטה למעלה (pairs_band_points) */}
+          {pairBandLinesDown.map((line, index) => (
+            <Line
+              key={`pair-band-down-${index}`}
+              data={[
+                { distance: line.start.distance, time: line.start.time },
+                { distance: line.end.distance, time: line.end.time }
+              ]}
+              type="linear"
+              dataKey="time"
+              stroke="#3b82f6"  // כחול עבור קווי מורד הזרם
+              strokeOpacity={0.7}
+              strokeWidth={2}
+              dot={false}
+              activeDot={false}
+              isAnimationActive={false}
+            />
+          ))}
+
+          {/* הוספת קווים אלכסוניים מלמעלה למטה (diagonal_points) */}
           {diagonalLinesUp.map((line, index) => (
             <Line
               key={`diagonal-up-${index}`}
@@ -286,7 +419,7 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints }: Props) => {
             />
           ))}
 
-          {/* הוספת קווים אלכסוניים ממטה למעלה */}
+          {/* הוספת קווים אלכסוניים ממטה למעלה (diagonal_points) */}
           {diagonalLinesDown.map((line, index) => (
             <Line
               key={`diagonal-down-${index}`}

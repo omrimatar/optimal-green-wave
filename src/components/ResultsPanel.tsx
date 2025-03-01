@@ -77,6 +77,10 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
   const diagonalPoints = comparisonResults.diagonal_points;
   console.log("Diagonal points for Gantt chart:", diagonalPoints);
 
+  // Extract pairs_band_points from the results if available
+  const pairsBandPoints = comparisonResults.pairs_band_points;
+  console.log("Pairs band points for Gantt chart:", pairsBandPoints);
+
   // Default speed if not provided
   const speed = 50;
 
@@ -91,6 +95,7 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
             mode={mode}
             speed={speed}
             diagonalPoints={diagonalPoints}
+            pairsBandPoints={pairsBandPoints}
           />
         </div>
         
