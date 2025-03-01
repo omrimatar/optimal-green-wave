@@ -29,9 +29,9 @@ interface Props {
 export const GanttChart = ({ data, mode, speed, diagonalPoints }: Props) => {
   if (!data || data.length === 0) return null;
   
-  // נוסיף בדיקות תקינות לנתונים
-  const cycleTime = data[0].cycleTime || 90; // ברירת מחדל של 90 שניות אם לא הוגדר
-  const maxTime = cycleTime;
+  // נוסיף בדיקות תקינות לנתונים ונחלץ את זמן המחזור המקסימלי
+  const maxCycleTime = Math.max(...data.map(i => i.cycleTime || 90));
+  const maxTime = maxCycleTime; // משתמשים בזמן המחזור המקסימלי בלבד, ללא תלות באופסטים
   const maxDistance = Math.max(...data.map(i => i.distance));
 
   // נוודא שכל הצמתים מכילים את כל הנתונים הנדרשים
@@ -45,7 +45,7 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints }: Props) => {
       distance: intersection.distance,
       offset: intersection.offset || 0,
       greenPhases: intersection.greenPhases,
-      value: maxTime,
+      value: maxTime, // משתמשים בזמן המחזור המקסימלי עבור כל הצמתים
     };
   }).filter(Boolean);
 
@@ -59,13 +59,13 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints }: Props) => {
   const bandwidthLinesUpstream = calculateBandwidthLines({
     intersections: data,
     speed,
-    cycleTime
+    cycleTime: maxCycleTime
   }, 'upstream');
   
   const bandwidthLinesDownstream = calculateBandwidthLines({
     intersections: data,
     speed,
-    cycleTime
+    cycleTime: maxCycleTime
   }, 'downstream');
 
   // יצירת קווים אלכסוניים מהנקודות הדיאגונליות
@@ -168,17 +168,17 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints }: Props) => {
   // יצירת קווים אלכסוניים מהנקודות הדיאגונליות
   const diagonalLinesUp = useMemo(() => {
     if (diagonalPoints?.up) {
-      return createDiagonalLines(diagonalPoints.up, data, cycleTime);
+      return createDiagonalLines(diagonalPoints.up, data, maxCycleTime);
     }
     return [];
-  }, [diagonalPoints?.up, data, cycleTime]);
+  }, [diagonalPoints?.up, data, maxCycleTime]);
 
   const diagonalLinesDown = useMemo(() => {
     if (diagonalPoints?.down) {
-      return createDiagonalLines(diagonalPoints.down, data, cycleTime);
+      return createDiagonalLines(diagonalPoints.down, data, maxCycleTime);
     }
     return [];
-  }, [diagonalPoints?.down, data, cycleTime]);
+  }, [diagonalPoints?.down, data, maxCycleTime]);
 
   const legendPayload = [
     { value: 'מופע במעלה הזרם', type: 'rect' as const, color: '#22c55e', id: 'phase-1' },
@@ -195,6 +195,7 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints }: Props) => {
   const sortedChartData = [...chartData].sort((a, b) => a.distance - b.distance);
 
   console.log("Rendering Gantt chart with diagonal points:", diagonalPoints);
+  console.log("Using maxCycleTime for Y axis:", maxCycleTime);
 
   return (
     <div className="h-[400px] w-full">
@@ -308,3 +309,4 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints }: Props) => {
     </div>
   );
 };
+
