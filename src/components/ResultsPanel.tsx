@@ -81,31 +81,37 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
   const speed = 50;
 
   return (
-    <Card className="p-6 h-full">
-      <div className="space-y-4">
+    <Card className="p-3 md:p-6 h-full w-full overflow-x-auto overflow-y-auto">
+      <div className="space-y-4 min-w-[300px]">
         {/* Display green wave diagram first - before graphical comparison */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">תרשים גל ירוק</h3>
-          <GanttChart 
-            data={currentIntersections}
-            mode={mode}
-            speed={speed}
-            diagonalPoints={diagonalPoints}
-          />
+          <div className="overflow-x-auto">
+            <GanttChart 
+              data={currentIntersections}
+              mode={mode}
+              speed={speed}
+              diagonalPoints={diagonalPoints}
+            />
+          </div>
         </div>
         
         {/* Display graphical comparison after the wave diagram */}
-        <OptimizationCharts
-          baseline={results.baseline_results}
-          optimized={comparisonResults}
-          mode={mode}
-        />
+        <div className="overflow-x-auto">
+          <OptimizationCharts
+            baseline={results.baseline_results}
+            optimized={comparisonResults}
+            mode={mode}
+          />
+        </div>
         
-        <MetricsTable 
-          baseline={results.baseline_results}
-          optimized={comparisonResults}
-          mode={mode}
-        />
+        <div className="overflow-x-auto">
+          <MetricsTable 
+            baseline={results.baseline_results}
+            optimized={comparisonResults}
+            mode={mode}
+          />
+        </div>
       </div>
     </Card>
   );
