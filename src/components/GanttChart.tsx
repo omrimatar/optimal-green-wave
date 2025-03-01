@@ -1,4 +1,3 @@
-
 import { 
   ComposedChart, 
   Bar, 
@@ -56,12 +55,17 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints 
       console.error('Missing required data for intersection:', intersection);
       return null;
     }
+    
+    const cycle = intersection.cycleTime || 90;
+    // נרמול אופסט לתוך טווח המחזור
+    const normalizedOffset = intersection.offset % cycle;
+    
     return {
       name: `צומת ${intersection.id}`,
       distance: intersection.distance,
-      offset: intersection.offset || 0,
+      offset: normalizedOffset,    // כך לא נחרוג מציר ה-Y
       greenPhases: intersection.greenPhases,
-      value: maxTime, // משתמשים בזמן המחזור המקסימלי עבור כל הצמתים
+      value: maxCycleTime         // נשאר fixed לכל הצמתים
     };
   }).filter(Boolean);
 
@@ -286,7 +290,7 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints 
 
   // נוסיף בדיקה שהדומיין תקין עם ערכי ברירת מחדל
   const xDomain = [0, maxDistance || 100];
-  const yDomain = [0, maxTime || 90];
+  const yDomain = [0, maxCycleTime];
 
   // נסדר את הנתונים לפי מרחק
   const sortedChartData = [...chartData].sort((a, b) => a.distance - b.distance);

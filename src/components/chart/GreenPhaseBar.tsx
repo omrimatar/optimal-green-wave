@@ -30,23 +30,24 @@ export const GreenPhaseBar = (props: GreenPhaseBarProps) => {
   return payload.greenPhases.map((phase: GreenPhase, phaseIndex: number) => {
     const scaleFactor = height / maxTime;
     // Calculate adjusted start time with offset
-    const adjustedStart = normalizeTime(
+    const phaseStart = normalizeTime(
       mode === 'display' ? 
         phase.startTime : // In display mode, no offset
         phase.startTime + (payload.offset || 0) // In calculate or manual modes, add offset
     );
     
+    const phaseEnd = phaseStart + phase.duration;
+    
     console.log("Phase", phaseIndex, "Direction:", phase.direction, "Start:", phase.startTime, 
-                "Adjusted Start:", adjustedStart, "Duration:", phase.duration);
+                "Adjusted Start:", phaseStart, "Duration:", phase.duration);
     
     const adjustedWidth = width * 0.3;
     const startX = x + (phaseIndex * width * 0.35);
     
-    // Calculate end time with normalization
-    const endTime = normalizeTime(adjustedStart + phase.duration);
-    const wrapsAround = endTime < adjustedStart;
+    // Check if phase wraps around the cycle time
+    const wrapsAround = phaseEnd > maxTime;
 
-    console.log("End time:", endTime, "Wraps around:", wrapsAround);
+    console.log("End time:", phaseEnd, "Wraps around:", wrapsAround);
 
     if (!wrapsAround) {
       // Normal case - no cycle time overflow
@@ -54,7 +55,7 @@ export const GreenPhaseBar = (props: GreenPhaseBarProps) => {
         <Rectangle 
           key={`phase-${phaseIndex}`}
           x={startX} 
-          y={y + (maxTime - adjustedStart - phase.duration) * scaleFactor} 
+          y={y + (maxTime - phaseEnd) * scaleFactor} 
           width={adjustedWidth} 
           height={phase.duration * scaleFactor} 
           fill={phase.direction === 'upstream' ? '#22c55e' : '#3b82f6'} 
@@ -65,7 +66,7 @@ export const GreenPhaseBar = (props: GreenPhaseBarProps) => {
       );
     } else {
       // Split into two rectangles when cycle time overflow occurs
-      const firstPartDuration = maxTime - adjustedStart;
+      const firstPartDuration = maxTime - phaseStart;
       const secondPartDuration = phase.duration - firstPartDuration;
 
       return [
