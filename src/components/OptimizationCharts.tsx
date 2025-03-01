@@ -38,34 +38,51 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
 
   const labels = getLabels();
 
+  // Define colors by metric type
+  const colors = {
+    positive: {
+      baseline: '#0EA5E9',  // Ocean Blue for baseline
+      optimized: '#33C3F0'  // Sky Blue for optimized
+    },
+    negative: {
+      baseline: '#ea384c',  // Red for baseline
+      optimized: '#F97316'  // Orange for optimized
+    }
+  };
+
   const optimizationData = [
     {
       metric: 'רוחב מסדרון למעלה',
       [labels.baseline]: Number((baseline.corridor_bandwidth_up || 0).toFixed(1)),
-      [labels.optimized]: Number((optimized.corridor_bandwidth_up || 0).toFixed(1))
+      [labels.optimized]: Number((optimized.corridor_bandwidth_up || 0).toFixed(1)),
+      category: 'positive'
     },
     {
       metric: 'רוחב מסדרון למטה',
       [labels.baseline]: Number((baseline.corridor_bandwidth_down || 0).toFixed(1)),
-      [labels.optimized]: Number((optimized.corridor_bandwidth_down || 0).toFixed(1))
+      [labels.optimized]: Number((optimized.corridor_bandwidth_down || 0).toFixed(1)),
+      category: 'positive'
     },
     ...(baseline.avg_delay_up?.map((_, index) => ({
       metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
       [labels.baseline]: -Number(baseline.avg_delay_up[index].toFixed(1)),
-      [labels.optimized]: -Number(optimized.avg_delay_up?.[index].toFixed(1))
+      [labels.optimized]: -Number(optimized.avg_delay_up?.[index].toFixed(1)),
+      category: 'negative'
     })) || []),
     ...(baseline.max_delay_up?.map((_, index) => ({
       metric: `עיכוב מקסימלי ${index + 1}-${index + 2}`,
       [labels.baseline]: -Number(baseline.max_delay_up[index].toFixed(1)),
-      [labels.optimized]: -Number(optimized.max_delay_up?.[index].toFixed(1))
+      [labels.optimized]: -Number(optimized.max_delay_up?.[index].toFixed(1)),
+      category: 'negative'
     })) || [])
   ];
 
   // Prepare data for butterfly chart
   const butterflyData = optimizationData.map(item => ({
     metric: item.metric,
-    [labels.baseline]: -Math.abs(item[labels.baseline]),
-    [labels.optimized]: Math.abs(item[labels.optimized])
+    [labels.baseline]: typeof item[labels.baseline] === 'number' ? -Math.abs(Number(item[labels.baseline])) : 0,
+    [labels.optimized]: typeof item[labels.optimized] === 'number' ? Math.abs(Number(item[labels.optimized])) : 0,
+    category: item.category
   }));
 
   const directionData = [
@@ -74,14 +91,16 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
       'מעלה הזרם - בסיס': Number((baseline.corridor_bandwidth_up || 0).toFixed(1)),
       'מעלה הזרם - אופטימיזציה': Number((optimized.corridor_bandwidth_up || 0).toFixed(1)),
       'מורד הזרם - בסיס': Number((baseline.corridor_bandwidth_down || 0).toFixed(1)),
-      'מורד הזרם - אופטימיזציה': Number((optimized.corridor_bandwidth_down || 0).toFixed(1))
+      'מורד הזרם - אופטימיזציה': Number((optimized.corridor_bandwidth_down || 0).toFixed(1)),
+      category: 'positive'
     },
     ...(baseline.avg_delay_up?.map((_, index) => ({
       metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
       'מעלה הזרם - בסיס': -Number(baseline.avg_delay_up[index].toFixed(1)),
       'מעלה הזרם - אופטימיזציה': -Number(optimized.avg_delay_up?.[index].toFixed(1)),
       'מורד הזרם - בסיס': -Number(baseline.avg_delay_down?.[index].toFixed(1)),
-      'מורד הזרם - אופטימיזציה': -Number(optimized.avg_delay_down?.[index].toFixed(1))
+      'מורד הזרם - אופטימיזציה': -Number(optimized.avg_delay_down?.[index].toFixed(1)),
+      category: 'negative'
     })) || [])
   ];
 
@@ -95,21 +114,25 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
       metric: 'רוחב מסדרון למעלה',
       לפני: Number((baseline.corridor_bandwidth_up || 0).toFixed(1)),
       אחרי: Number((optimized.corridor_bandwidth_up || 0).toFixed(1)),
+      category: 'positive'
     },
     {
       metric: 'רוחב מסדרון למטה',
       לפני: Number((baseline.corridor_bandwidth_down || 0).toFixed(1)),
       אחרי: Number((optimized.corridor_bandwidth_down || 0).toFixed(1)),
+      category: 'positive'
     },
     {
       metric: 'עיכוב ממוצע למעלה',
       לפני: -Number(calculateAverage(baseline.avg_delay_up).toFixed(1)),
       אחרי: -Number(calculateAverage(optimized.avg_delay_up).toFixed(1)),
+      category: 'negative'
     },
     {
       metric: 'עיכוב ממוצע למטה',
       לפני: -Number(calculateAverage(baseline.avg_delay_down).toFixed(1)),
       אחרי: -Number(calculateAverage(optimized.avg_delay_down).toFixed(1)),
+      category: 'negative'
     }
   ];
 
@@ -131,15 +154,23 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
               <Legend />
               {comparisonType === 'optimization' ? (
                 <>
-                  <Bar dataKey={labels.baseline} fill="#8B5CF6" />
-                  <Bar dataKey={labels.optimized} fill="#F97316" />
+                  <Bar 
+                    dataKey={labels.baseline} 
+                    fill={colors.positive.baseline}
+                    name={`${labels.baseline}`}
+                  />
+                  <Bar 
+                    dataKey={labels.optimized} 
+                    fill={colors.positive.optimized}
+                    name={`${labels.optimized}`}
+                  />
                 </>
               ) : (
                 <>
-                  <Bar dataKey="מעלה הזרם - בסיס" fill="#8B5CF6" />
-                  <Bar dataKey="מעלה הזרם - אופטימיזציה" fill="#C084FC" />
-                  <Bar dataKey="מורד הזרם - בסיס" fill="#F97316" />
-                  <Bar dataKey="מורד הזרם - אופטימיזציה" fill="#FB923C" />
+                  <Bar dataKey="מעלה הזרם - בסיס" fill={colors.positive.baseline} />
+                  <Bar dataKey="מעלה הזרם - אופטימיזציה" fill={colors.positive.optimized} />
+                  <Bar dataKey="מורד הזרם - בסיס" fill={colors.negative.baseline} />
+                  <Bar dataKey="מורד הזרם - אופטימיזציה" fill={colors.negative.optimized} />
                 </>
               )}
             </BarChart>
@@ -156,15 +187,15 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
               <Radar 
                 name={labels.baseline}
                 dataKey="לפני"
-                stroke="#8B5CF6" 
-                fill="#8B5CF6" 
+                stroke={colors.positive.baseline} 
+                fill={colors.positive.baseline} 
                 fillOpacity={0.6} 
               />
               <Radar 
                 name={labels.optimized}
                 dataKey="אחרי"
-                stroke="#F97316" 
-                fill="#F97316" 
+                stroke={colors.positive.optimized} 
+                fill={colors.positive.optimized} 
                 fillOpacity={0.6} 
               />
               <Legend />
@@ -173,28 +204,42 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
         );
 
       case 'butterfly':
+        // Group metrics by their name (without the numbers) to align on the same Y axis
+        const groupedMetrics = butterflyData.reduce((acc, item) => {
+          const baseMetricName = item.metric.replace(/\d+-\d+$/, '').trim();
+          if (!acc[baseMetricName]) {
+            acc[baseMetricName] = [];
+          }
+          acc[baseMetricName].push(item);
+          return acc;
+        }, {} as Record<string, typeof butterflyData>);
+
+        // Flatten the grouped metrics and ensure original order is preserved
+        const organizedData = Object.values(groupedMetrics).flat();
+        
         return (
           <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={butterflyData} layout="vertical">
+            <BarChart data={organizedData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis type="number" />
               <YAxis type="category" dataKey="metric" width={150} />
               <Tooltip 
-                formatter={(value, name) => {
+                formatter={(value, name, props) => {
                   // Show absolute values in tooltip
-                  return [Math.abs(value as number), name];
+                  const displayValue = Math.abs(Number(value));
+                  return [displayValue, name];
                 }}
               />
               <Legend />
               <ReferenceLine x={0} stroke="#000" />
               <Bar 
                 dataKey={labels.baseline} 
-                fill="#8B5CF6" 
+                fill={colors.positive.baseline} 
                 name={`${labels.baseline} (מצב נוכחי)`}
               />
               <Bar 
                 dataKey={labels.optimized} 
-                fill="#F97316" 
+                fill={colors.positive.optimized} 
                 name={`${labels.optimized} (מצב משופר)`}
               />
             </BarChart>
