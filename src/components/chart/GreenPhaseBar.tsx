@@ -33,7 +33,7 @@ export const GreenPhaseBar = (props: GreenPhaseBarProps) => {
     const phaseStart = normalizeTime(
       mode === 'display' ? 
         phase.startTime : // In display mode, no offset
-        phase.startTime + (payload.offset || 0) // In calculate or manual modes, add offset
+        (phase.startTime + (payload.offset || 0)) // In calculate or manual modes, add offset
     );
     
     const phaseEnd = phaseStart + phase.duration;

@@ -1,3 +1,4 @@
+
 import { 
   ComposedChart, 
   Bar, 
@@ -44,7 +45,7 @@ interface Props {
 export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints }: Props) => {
   if (!data || data.length === 0) return null;
   
-  // נוסיף בדיקות תקינות לנתונים ונחלץ את זמן המחזור המקסימלי
+  // מקסימום מחזור מכל הצמתים
   const maxCycleTime = Math.max(...data.map(i => i.cycleTime || 90));
   const maxTime = maxCycleTime; // משתמשים בזמן המחזור המקסימלי בלבד, ללא תלות באופסטים
   const maxDistance = Math.max(...data.map(i => i.distance));
@@ -315,7 +316,7 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints 
           />
           <YAxis 
             type="number"
-            domain={yDomain}
+            domain={[0, maxCycleTime]}
             label={{ value: 'זמן (שניות)', angle: -90, position: 'left' }}
           />
           <Tooltip content={<ChartTooltip />} />
