@@ -1,16 +1,8 @@
-
 #root {
-  max-width: 100%;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 0.5rem;
+  padding: 2rem;
   text-align: center;
-}
-
-@media (min-width: 768px) {
-  #root {
-    max-width: 1280px;
-    padding: 2rem;
-  }
 }
 
 .logo {
@@ -42,51 +34,9 @@
 }
 
 .card {
-  padding: 0.75em;
-}
-
-@media (min-width: 768px) {
-  .card {
-    padding: 2em;
-  }
+  padding: 2em;
 }
 
 .read-the-docs {
   color: #888;
-}
-
-/* Mobile-specific overrides */
-@media (max-width: 767px) {
-  /* Ensure content doesn't overflow */
-  .overflow-container {
-    overflow-x: auto;
-    max-width: 100%;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  /* Adjust spacing for mobile */
-  .space-y-6 > * + * {
-    margin-top: 0.75rem;
-  }
-  
-  /* Ensure charts are visible on mobile */
-  .recharts-wrapper {
-    max-width: calc(100vw - 2rem);
-    margin: 0 auto;
-  }
-  
-  /* Fix mobile layout */
-  #root {
-    padding: 0.25rem;
-    overflow-x: hidden;
-  }
-}
-
-/* Global mobile fixes */
-@media (max-width: 480px) {
-  body, html {
-    overflow-x: hidden;
-    width: 100%;
-    position: relative;
-  }
 }

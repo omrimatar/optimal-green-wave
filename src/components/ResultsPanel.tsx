@@ -81,37 +81,31 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
   const speed = 50;
 
   return (
-    <Card className="p-3 md:p-6 h-full w-full">
-      <div className="space-y-4 min-w-[300px] mobile-scroll-container">
+    <Card className="p-6 h-full">
+      <div className="space-y-4">
         {/* Display green wave diagram first - before graphical comparison */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">תרשים גל ירוק</h3>
-          <div className="scroll-container pb-4">
-            <GanttChart 
-              data={currentIntersections}
-              mode={mode}
-              speed={speed}
-              diagonalPoints={diagonalPoints}
-            />
-          </div>
+          <GanttChart 
+            data={currentIntersections}
+            mode={mode}
+            speed={speed}
+            diagonalPoints={diagonalPoints}
+          />
         </div>
         
         {/* Display graphical comparison after the wave diagram */}
-        <div className="scroll-container pb-4">
-          <OptimizationCharts
-            baseline={results.baseline_results}
-            optimized={comparisonResults}
-            mode={mode}
-          />
-        </div>
+        <OptimizationCharts
+          baseline={results.baseline_results}
+          optimized={comparisonResults}
+          mode={mode}
+        />
         
-        <div className="scroll-container pb-4">
-          <MetricsTable 
-            baseline={results.baseline_results}
-            optimized={comparisonResults}
-            mode={mode}
-          />
-        </div>
+        <MetricsTable 
+          baseline={results.baseline_results}
+          optimized={comparisonResults}
+          mode={mode}
+        />
       </div>
     </Card>
   );

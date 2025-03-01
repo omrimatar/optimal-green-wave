@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -54,7 +55,7 @@ const Index = () => {
   const [mode, setMode] = useState<'display' | 'calculate' | 'manual'>('calculate');
   const [weights, setWeights] = useState<OptimizationWeights>(DEFAULT_WEIGHTS);
   const [showWeights, setShowWeights] = useState(false);
-  const [manualOffsets, setManualOffsets] = useState<number[]>([0, 0]);
+  const [manualOffsets, setManualOffsets] = useState<number[]>([0, 0]); // אתחול עם שני אפסים עבור שני הצמתים ההתחלתיים
   const [showManualDialog, setShowManualDialog] = useState(false);
 
   const handleSpeedChange = (value: string) => {
@@ -84,18 +85,23 @@ const Index = () => {
         duration: 45
       }]
     }]);
+    // עדכון מערך האופסטים הידניים - הוספת 0 לצומת החדש
     setManualOffsets(prev => [...prev, 0]);
   };
 
   const handleManualCalculate = async () => {
     try {
+      // וידוא שיש מספיק אופסטים
       const currentOffsets = [...manualOffsets];
+      // השלמת אופסטים חסרים עם 0 אם צריך
       while (currentOffsets.length < intersections.length) {
         currentOffsets.push(0);
       }
+      // קיצוץ אופסטים עודפים אם יש
       while (currentOffsets.length > intersections.length) {
         currentOffsets.pop();
       }
+      // וידוא שהאופסט הראשון הוא 0
       currentOffsets[0] = 0;
 
       const calculationResults = await calculateGreenWave(
@@ -107,6 +113,7 @@ const Index = () => {
       
       console.log("Manual calculation results received:", calculationResults);
       
+      // וידוא שהתקבלו תוצאות ידניות
       if (!calculationResults.manual_results) {
         throw new Error("No manual results received from calculation");
       }
@@ -123,11 +130,13 @@ const Index = () => {
 
   const handleCalculate = async () => {
     try {
+      // וידוא שכל הקלטים תקינים לפני החישוב
       if (speed < 0 || speed > 120 || !Number.isInteger(speed)) {
         toast.error("מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
         return;
       }
 
+      // בדיקה שכל הצמתים תקינים
       for (const intersection of intersections) {
         if (intersection.distance < 0 || intersection.distance > 10000 || !Number.isInteger(intersection.distance)) {
           toast.error(`צומת ${intersection.id}: מרחק חייב להיות מספר שלם בין 0 ל-10000 מטר`);
@@ -139,6 +148,7 @@ const Index = () => {
           return;
         }
 
+        // בדיקה של הפאזות הירוקות
         for (const phase of intersection.greenPhases) {
           if (phase.startTime < 0 || phase.startTime > intersection.cycleTime || !Number.isInteger(phase.startTime)) {
             toast.error(`צומת ${intersection.id}: זמן התחלה חייב להיות מספר שלם בין 0 ל-${intersection.cycleTime}`);
@@ -170,11 +180,13 @@ const Index = () => {
 
   const handleShowExisting = async () => {
     try {
+      // וידוא שכל הקלטים תקינים לפני ההצגה
       if (speed < 0 || speed > 120 || !Number.isInteger(speed)) {
         toast.error("מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
         return;
       }
 
+      // בדיקה שכל הצמתים תקינים
       for (const intersection of intersections) {
         if (intersection.distance < 0 || intersection.distance > 10000 || !Number.isInteger(intersection.distance)) {
           toast.error(`צומת ${intersection.id}: מרחק חייב להיות מספר שלם בין 0 ל-10000 מטר`);
@@ -213,11 +225,13 @@ const Index = () => {
     speed: number;
     intersections: Intersection[];
   }) => {
+    // Validate loaded data
     if (data.speed < 0 || data.speed > 120 || !Number.isInteger(data.speed)) {
       toast.error("הקובץ שנטען מכיל מהירות תכן שאינה חוקית. מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
       return;
     }
     
+    // Validate intersections
     for (const intersection of data.intersections) {
       if (intersection.distance < 0 || intersection.distance > 10000 || !Number.isInteger(intersection.distance)) {
         toast.error(`הקובץ שנטען מכיל צומת עם מרחק לא חוקי. מרחק חייב להיות מספר שלם בין 0 ל-10000 מטר`);
@@ -229,6 +243,7 @@ const Index = () => {
         return;
       }
 
+      // Validate green phases
       for (const phase of intersection.greenPhases) {
         if (phase.startTime < 0 || phase.startTime > intersection.cycleTime || !Number.isInteger(phase.startTime)) {
           toast.error(`הקובץ שנטען מכיל צומת עם זמן התחלת פאזה לא חוקי. זמן התחלה חייב להיות מספר שלם בין 0 ל-${intersection.cycleTime}`);
@@ -244,6 +259,7 @@ const Index = () => {
     
     setSpeed(data.speed);
     setIntersections(data.intersections);
+    // איפוס מערך האופסטים הידניים למערך של אפסים באורך המתאים
     setManualOffsets(new Array(data.intersections.length).fill(0));
     toast.success("הקובץ נטען בהצלחה");
   };
@@ -258,16 +274,16 @@ const Index = () => {
   console.log("Current results state:", results);
 
   return (
-    <div className="min-h-screen p-4 sm:p-8 bg-gradient-to-br from-green-50 to-blue-50">
-      <div className="max-w-6xl mx-auto space-y-4 sm:space-y-8 animate-fade-up">
+    <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
+      <div className="max-w-6xl mx-auto space-y-8 animate-fade-up">
         <div className="text-center space-y-2">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">מחשבון גל ירוק</h1>
-          <p className="text-base sm:text-lg text-gray-600">כלי לתכנון אופטימלי של תזמוני רמזורים</p>
+          <h1 className="text-4xl font-bold text-gray-900">מחשבון גל ירוק</h1>
+          <p className="text-lg text-gray-600">כלי לתכנון אופטימלי של תזמוני רמזורים</p>
         </div>
 
-        <div className="grid gap-4 sm:gap-8 md:grid-cols-2">
-          <Card className="p-4 sm:p-6 glassmorphism">
-            <div className="space-y-4 sm:space-y-6">
+        <div className="grid gap-8 md:grid-cols-2">
+          <Card className="p-6 glassmorphism">
+            <div className="space-y-6">
               <FileActions speed={speed} intersections={intersections} onLoadInput={handleLoadInput} />
 
               <div>
@@ -312,6 +328,7 @@ const Index = () => {
                     onDelete={() => {
                       if (intersections.length > 2) {
                         setIntersections(intersections.filter(i => i.id !== intersection.id));
+                        // עדכון מערך האופסטים הידניים - מחיקת האופסט המתאים
                         setManualOffsets(prev => {
                           const newOffsets = [...prev];
                           newOffsets.splice(index, 1);
@@ -380,12 +397,10 @@ const Index = () => {
           </Card>
 
           {results && (
-            <div className="overflow-x-auto w-full max-w-full">
-              <ResultsPanel 
-                results={results} 
-                mode={mode} 
-              />
-            </div>
+            <ResultsPanel 
+              results={results} 
+              mode={mode} 
+            />
           )}
         </div>
       </div>
