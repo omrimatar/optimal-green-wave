@@ -53,6 +53,9 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
     // Get the actual distance from the distances field if it exists
     const actualDistance = comparisonResults.distances?.[idx] || idx * 300;
     
+    // Log to debug the actual distances being used
+    console.log(`Intersection ${idx + 1} distance: ${actualDistance}`);
+    
     return {
       id: idx + 1,
       // Use the actual distance that was entered by the user
