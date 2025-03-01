@@ -233,13 +233,21 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
               <Legend />
               <ReferenceLine x={0} stroke="#000" />
               <Bar 
-                dataKey={labels.baseline} 
-                fill={colors.positive.baseline} 
+                dataKey={labels.baseline}
+                fill={props => {
+                  // Use the correct color based on the metric category
+                  const item = organizedData.find(d => d.metric === props.metric);
+                  return item?.category === 'negative' ? colors.negative.baseline : colors.positive.baseline;
+                }}
                 name={`${labels.baseline} (מצב נוכחי)`}
               />
               <Bar 
-                dataKey={labels.optimized} 
-                fill={colors.positive.optimized} 
+                dataKey={labels.optimized}
+                fill={props => {
+                  // Use the correct color based on the metric category
+                  const item = organizedData.find(d => d.metric === props.metric);
+                  return item?.category === 'negative' ? colors.negative.optimized : colors.positive.optimized;
+                }}
                 name={`${labels.optimized} (מצב משופר)`}
               />
             </BarChart>
