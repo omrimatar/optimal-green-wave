@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -212,43 +213,76 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
 
         const organizedData = Object.values(groupedMetrics).flat();
         
+        // Create custom legend items for the butterfly chart
+        const customLegendItems = [
+          { value: `${labels.baseline} - מדדים חיוביים`, color: colors.positive.baseline },
+          { value: `${labels.baseline} - מדדים שליליים`, color: colors.negative.baseline },
+          { value: `${labels.optimized} - מדדים חיוביים`, color: colors.positive.optimized },
+          { value: `${labels.optimized} - מדדים שליליים`, color: colors.negative.optimized },
+        ];
+
+        // Custom legend renderer
+        const renderCustomLegend = () => (
+          <div className="flex flex-wrap justify-center gap-4 mt-2">
+            {customLegendItems.map((item, index) => (
+              <div key={index} className="flex items-center">
+                <div 
+                  className="w-3 h-3 mr-1 rounded-full" 
+                  style={{ backgroundColor: item.color }}
+                />
+                <span className="text-xs">{item.value}</span>
+              </div>
+            ))}
+          </div>
+        );
+        
         return (
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={organizedData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" domain={['auto', 'auto']} />
-              <YAxis type="category" dataKey="metric" width={150} />
-              <Tooltip 
-                formatter={(value, name) => [Math.abs(Number(value)), name]}
-              />
-              <Legend />
-              <ReferenceLine x={0} stroke="#000" />
-              <Bar dataKey={labels.baseline} name={`${labels.baseline} (מצב נוכחי)`}>
-                {organizedData.map((entry, index) => (
-                  <Cell
-                    key={`cell-baseline-${index}`}
-                    fill={
-                      entry.category === 'negative'
-                        ? colors.negative.baseline
-                        : colors.positive.baseline
-                    }
-                  />
-                ))}
-              </Bar>
-              <Bar dataKey={labels.optimized} name={`${labels.optimized} (מצב משופר)`}>
-                {organizedData.map((entry, index) => (
-                  <Cell
-                    key={`cell-optimized-${index}`}
-                    fill={
-                      entry.category === 'negative'
-                        ? colors.negative.optimized
-                        : colors.positive.optimized
-                    }
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div>
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={organizedData} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" domain={['auto', 'auto']} />
+                <YAxis type="category" dataKey="metric" width={150} />
+                <Tooltip formatter={(value, name) => [Math.abs(Number(value)), name]} />
+                <ReferenceLine x={0} stroke="#000" />
+                <Bar 
+                  dataKey={labels.baseline} 
+                  name={labels.baseline}
+                  // Hide the default legend for these bars
+                  legendType="none"
+                >
+                  {organizedData.map((entry, index) => (
+                    <Cell
+                      key={`cell-baseline-${index}`}
+                      fill={
+                        entry.category === 'negative'
+                          ? colors.negative.baseline
+                          : colors.positive.baseline
+                      }
+                    />
+                  ))}
+                </Bar>
+                <Bar 
+                  dataKey={labels.optimized} 
+                  name={labels.optimized}
+                  // Hide the default legend for these bars
+                  legendType="none"
+                >
+                  {organizedData.map((entry, index) => (
+                    <Cell
+                      key={`cell-optimized-${index}`}
+                      fill={
+                        entry.category === 'negative'
+                          ? colors.negative.optimized
+                          : colors.positive.optimized
+                      }
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            {renderCustomLegend()}
+          </div>
         );
     }
   };
