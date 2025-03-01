@@ -45,38 +45,36 @@ interface Props {
 export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints }: Props) => {
   if (!data || data.length === 0) return null;
   
-  // מקסימום מחזור מכל הצמתים
+  // 1) חישוב זמן המחזור המקסימלי מכל הצמתים
   const maxCycleTime = Math.max(...data.map(i => i.cycleTime || 90));
-  const maxTime = maxCycleTime; // משתמשים בזמן המחזור המקסימלי בלבד, ללא תלות באופסטים
+  const maxTime = maxCycleTime; // משתמשים בזמן המחזור המקסימלי בלבד
   const maxDistance = Math.max(...data.map(i => i.distance));
 
-  // נוודא שכל הצמתים מכילים את כל הנתונים הנדרשים
+  // 2) הרכבת המידע הבסיסי לציור - נרמול אופסטים וכד'
   const chartData = data.map((intersection: Intersection) => {
     if (!intersection.id || intersection.distance === undefined || !intersection.greenPhases) {
       console.error('Missing required data for intersection:', intersection);
       return null;
     }
-    
+
     const cycle = intersection.cycleTime || 90;
-    // נרמול אופסט לתוך טווח המחזור
     const normalizedOffset = intersection.offset % cycle;
-    
+
     return {
       name: `צומת ${intersection.id}`,
       distance: intersection.distance,
-      offset: normalizedOffset,    // כך לא נחרוג מציר ה-Y
+      offset: normalizedOffset,
       greenPhases: intersection.greenPhases,
-      value: maxCycleTime         // נשאר fixed לכל הצמתים
+      value: maxCycleTime // ישתמשו בו בתוך ה-Bar כגובה מלא
     };
   }).filter(Boolean);
 
-  // אם אין מספיק נתונים תקינים, לא נציג את הגרף
   if (chartData.length === 0) {
     console.error('No valid data to display');
     return null;
   }
 
-  // חישוב קווי רוחב הפס
+  // 3) קווי רוחב הפס (אופציונלי אם קיימת פונקציה כזו)
   const bandwidthLinesUpstream = calculateBandwidthLines({
     intersections: data,
     speed,
@@ -89,7 +87,7 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints 
     cycleTime: maxCycleTime
   }, 'downstream');
 
-  // יצירת קווים אלכסוניים מהנקודות הדיאגונליות
+  // 4) פונקציה ליצירת קווים אלכסוניים מנקודות דיאגנליות
   const createDiagonalLines = (points: DiagonalPoint[], intersections: Intersection[], cycleTime: number) => {
     if (!points || !Array.isArray(points) || points.length <= 1) {
       console.log("Not enough diagonal points to create lines:", points);
@@ -97,8 +95,6 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints 
     }
 
     const lines: any[] = [];
-    
-    // הכנת מיפוי צמתים לגישה מהירה
     const intersectionMap = new Map(
       intersections.map(intersection => [intersection.id, intersection])
     );
@@ -108,7 +104,6 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints 
       const next = points[i + 1];
       const currentIntersection = intersectionMap.get(current.junction);
       const nextIntersection = intersectionMap.get(next.junction);
-
       if (!currentIntersection || !nextIntersection) {
         console.log("Cannot find intersection for junctions:", current.junction, next.junction);
         continue;
@@ -116,18 +111,13 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints 
 
       const startDistance = currentIntersection.distance;
       const endDistance = nextIntersection.distance;
-      // נקבע min/max עבור בדיקות החיתוך
-      const minDist = Math.min(startDistance, endDistance);
-      const maxDist = Math.max(startDistance, endDistance);
 
-      // אם אין טווח זמן (לא הגיוני) – מדלגים
+      // אם אין טווח זמן הגיוני, דולגים
       if (current.low >= current.top || next.low >= next.top) {
         continue;
       }
 
-      // מקרה א: אין חצייה של סוף מחזור, קווים רגילים
-      // --------
-      // פשוט נחבר low->low ו- top->top
+      // קווים רגילים (low->low, top->top)
       lines.push({
         start: { distance: startDistance, time: current.low },
         end:   { distance: endDistance,   time: next.low },
@@ -141,15 +131,10 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints 
         opacity: 0.7
       });
 
-      // מקרה ב: יש חצייה של סוף מחזור (Wrap-Around)
-      // --------
-      // נחשב intersectionX עבור low ו-top. אם נופל בטווח [minDist,maxDist], מוסיפים שני קטעים.
-      const intersectionXLow = startDistance + 
-        ((endDistance - startDistance) * (cycleTime - current.low)) /
-        ((next.low + cycleTime) - current.low);
-
-      // אם intersectionXLow אכן בתוך תחום המרחק, מוסיפים 2 קטעים (עד cycleTime, ואז מ-0)
-      if (intersectionXLow >= minDist && intersectionXLow <= maxDist) {
+      // מקרה wrap-around (בדוגמה זו מצויר בנוסף; ייתכן שתרצה תנאי שימנע כפילויות)
+      const intersectionXLow =
+        startDistance + ((endDistance - startDistance) * (cycleTime - current.low)) / ((next.low + cycleTime) - current.low);
+      if (intersectionXLow >= Math.min(startDistance, endDistance) && intersectionXLow <= Math.max(startDistance, endDistance)) {
         lines.push({
           start: { distance: startDistance, time: current.low },
           end:   { distance: intersectionXLow, time: cycleTime },
@@ -164,12 +149,9 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints 
         });
       }
 
-      // כנ"ל עבור הגבול העליון
-      const intersectionXTop = startDistance +
-        ((endDistance - startDistance) * (cycleTime - current.top)) /
-        ((next.top + cycleTime) - current.top);
-
-      if (intersectionXTop >= minDist && intersectionXTop <= maxDist) {
+      const intersectionXTop =
+        startDistance + ((endDistance - startDistance) * (cycleTime - current.top)) / ((next.top + cycleTime) - current.top);
+      if (intersectionXTop >= Math.min(startDistance, endDistance) && intersectionXTop <= Math.max(startDistance, endDistance)) {
         lines.push({
           start: { distance: startDistance, time: current.top },
           end:   { distance: intersectionXTop, time: cycleTime },
@@ -189,7 +171,7 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints 
     return lines;
   };
 
-  // יצירת קווים אלכסוניים מנתוני pairs_band_points
+  // 5) פונקציה ליצירת קווים מנתוני pairsBandPoints
   const createPairBandLines = () => {
     if (!pairsBandPoints || !Array.isArray(pairsBandPoints) || pairsBandPoints.length === 0) {
       console.log("No pair band points data available");
@@ -259,7 +241,7 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints 
     return { upLines, downLines };
   };
 
-  // יצירת קווים אלכסוניים מהנקודות הדיאגונליות
+  // 6) שימוש ב-useMemo לייצר קווים / lines
   const diagonalLinesUp = useMemo(() => {
     if (diagonalPoints?.up) {
       return createDiagonalLines(diagonalPoints.up, data, maxCycleTime);
@@ -282,19 +264,20 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints 
     return { upLines: [], downLines: [] };
   }, [pairsBandPoints, data]);
 
+  // 7) הגדרת domain ל־Y כך שיהיה [0, maxCycleTime]
+  const xDomain = [0, maxDistance || 100];
+  const yDomain = [0, maxCycleTime];
+
+  // מיון לפי מרחק
+  const sortedChartData = [...chartData].sort((a, b) => a.distance - b.distance);
+
+  // דוגמת הגדרת legendPayload
   const legendPayload = [
     { value: 'מופע במעלה הזרם', type: 'rect' as const, color: '#22c55e', id: 'phase-1' },
     { value: 'מופע במורד הזרם', type: 'rect' as const, color: '#3b82f6', id: 'phase-2' },
     { value: 'גל ירוק במעלה הזרם', type: 'line' as const, color: '#22c55e', id: 'wave-1', strokeDasharray: '5 5' },
     { value: 'גל ירוק במורד הזרם', type: 'line' as const, color: '#3b82f6', id: 'wave-2', strokeDasharray: '5 5' }
   ];
-
-  // נוסיף בדיקה שהדומיין תקין עם ערכי ברירת מחדל
-  const xDomain = [0, maxDistance || 100];
-  const yDomain = [0, maxCycleTime];
-
-  // נסדר את הנתונים לפי מרחק
-  const sortedChartData = [...chartData].sort((a, b) => a.distance - b.distance);
 
   console.log("Rendering Gantt chart with diagonal points:", diagonalPoints);
   console.log("Pairs band points:", pairsBandPoints);
@@ -316,7 +299,7 @@ export const GanttChart = ({ data, mode, speed, diagonalPoints, pairsBandPoints 
           />
           <YAxis 
             type="number"
-            domain={[0, maxCycleTime]}
+            domain={yDomain}
             label={{ value: 'זמן (שניות)', angle: -90, position: 'left' }}
           />
           <Tooltip content={<ChartTooltip />} />
