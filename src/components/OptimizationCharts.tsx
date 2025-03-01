@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis,
-  PolarRadiusAxis, Radar, ReferenceLine
+  PolarRadiusAxis, Radar, ReferenceLine, Cell
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -38,15 +37,14 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
 
   const labels = getLabels();
 
-  // Define colors by metric type
   const colors = {
     positive: {
-      baseline: '#0EA5E9',  // Ocean Blue for baseline
-      optimized: '#33C3F0'  // Sky Blue for optimized
+      baseline: '#0EA5E9',
+      optimized: '#33C3F0'
     },
     negative: {
-      baseline: '#ea384c',  // Red for baseline
-      optimized: '#F97316'  // Orange for optimized
+      baseline: '#ea384c',
+      optimized: '#F97316'
     }
   };
 
@@ -77,7 +75,6 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
     })) || [])
   ];
 
-  // Prepare data for butterfly chart
   const butterflyData = optimizationData.map(item => ({
     metric: item.metric,
     [labels.baseline]: typeof item[labels.baseline] === 'number' ? -Math.abs(Number(item[labels.baseline])) : 0,
@@ -204,7 +201,6 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
         );
 
       case 'butterfly':
-        // Group metrics by their name (without the numbers) to align on the same Y axis
         const groupedMetrics = butterflyData.reduce((acc, item) => {
           const baseMetricName = item.metric.replace(/\d+-\d+$/, '').trim();
           if (!acc[baseMetricName]) {
@@ -214,42 +210,43 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
           return acc;
         }, {} as Record<string, typeof butterflyData>);
 
-        // Flatten the grouped metrics and ensure original order is preserved
         const organizedData = Object.values(groupedMetrics).flat();
         
         return (
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={organizedData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" />
+              <XAxis type="number" domain={['auto', 'auto']} />
               <YAxis type="category" dataKey="metric" width={150} />
               <Tooltip 
-                formatter={(value, name, props) => {
-                  // Show absolute values in tooltip
-                  const displayValue = Math.abs(Number(value));
-                  return [displayValue, name];
-                }}
+                formatter={(value, name) => [Math.abs(Number(value)), name]}
               />
               <Legend />
               <ReferenceLine x={0} stroke="#000" />
-              <Bar 
-                dataKey={labels.baseline}
-                fill={props => {
-                  // Use the correct color based on the metric category
-                  const item = organizedData.find(d => d.metric === props.metric);
-                  return item?.category === 'negative' ? colors.negative.baseline : colors.positive.baseline;
-                }}
-                name={`${labels.baseline} (מצב נוכחי)`}
-              />
-              <Bar 
-                dataKey={labels.optimized}
-                fill={props => {
-                  // Use the correct color based on the metric category
-                  const item = organizedData.find(d => d.metric === props.metric);
-                  return item?.category === 'negative' ? colors.negative.optimized : colors.positive.optimized;
-                }}
-                name={`${labels.optimized} (מצב משופר)`}
-              />
+              <Bar dataKey={labels.baseline} name={`${labels.baseline} (מצב נוכחי)`}>
+                {organizedData.map((entry, index) => (
+                  <Cell
+                    key={`cell-baseline-${index}`}
+                    fill={
+                      entry.category === 'negative'
+                        ? colors.negative.baseline
+                        : colors.positive.baseline
+                    }
+                  />
+                ))}
+              </Bar>
+              <Bar dataKey={labels.optimized} name={`${labels.optimized} (מצב משופר)`}>
+                {organizedData.map((entry, index) => (
+                  <Cell
+                    key={`cell-optimized-${index}`}
+                    fill={
+                      entry.category === 'negative'
+                        ? colors.negative.optimized
+                        : colors.positive.optimized
+                    }
+                  />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         );
