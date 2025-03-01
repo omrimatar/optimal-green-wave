@@ -48,13 +48,18 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
 
   // Extract the current configuration for the Gantt chart
   // Create intersection data structure needed by GanttChart
-  const currentIntersections: Intersection[] = comparisonResults.offsets.map((offset, idx) => ({
-    id: idx + 1,
-    distance: idx * 500, // Default distance if not provided
-    cycleTime: 90, // Default cycle time
-    offset: mode === 'display' ? 0 : offset, // Use 0 offsets for baseline in display mode
-    greenPhases: createGreenPhases()  // Add sample green phases
-  }));
+  const currentIntersections: Intersection[] = comparisonResults.offsets.map((offset, idx) => {
+    // Get the original intersection data to use its actual distance
+    const originalIntersection = results.baseline_results.intersections[idx];
+    return {
+      id: idx + 1,
+      // Use the actual distance from the original data instead of idx * 500
+      distance: originalIntersection?.distance || idx * 300, 
+      cycleTime: 90, // Default cycle time
+      offset: mode === 'display' ? 0 : offset, // Use 0 offsets for baseline in display mode
+      greenPhases: createGreenPhases()  // Add sample green phases
+    };
+  });
 
   console.log("Current intersections for Gantt chart:", currentIntersections);
   
