@@ -51,19 +51,54 @@ export const GreenPhaseBar = (props: GreenPhaseBarProps) => {
 
     if (!wrapsAround) {
       // Normal case - no cycle time overflow
-      return (
-        <Rectangle 
-          key={`phase-${phaseIndex}`}
-          x={startX} 
-          y={y + (maxTime - phaseEnd) * scaleFactor} 
-          width={adjustedWidth} 
-          height={phase.duration * scaleFactor} 
-          fill={phase.direction === 'upstream' ? '#22c55e' : '#3b82f6'} 
-          opacity={0.7}
-          rx={4}
-          ry={4}
-        />
-      );
+      // If phaseEnd is less than phaseStart, it means we've wrapped around
+      if (phaseEnd < phaseStart) {
+        // Split into two rectangles when wrapping occurs
+        const firstPartDuration = maxTime - phaseStart;
+        const secondPartDuration = phaseEnd;
+
+        return [
+          // First part - from start time to end of cycle
+          <Rectangle 
+            key={`phase-${phaseIndex}-1`}
+            x={startX} 
+            y={y} 
+            width={adjustedWidth} 
+            height={firstPartDuration * scaleFactor} 
+            fill={phase.direction === 'upstream' ? '#22c55e' : '#3b82f6'} 
+            opacity={0.7}
+            rx={4}
+            ry={4}
+          />,
+          // Second part - from beginning of cycle
+          <Rectangle 
+            key={`phase-${phaseIndex}-2`}
+            x={startX} 
+            y={y + (maxTime - secondPartDuration) * scaleFactor} 
+            width={adjustedWidth} 
+            height={secondPartDuration * scaleFactor} 
+            fill={phase.direction === 'upstream' ? '#22c55e' : '#3b82f6'} 
+            opacity={0.7}
+            rx={4}
+            ry={4}
+          />
+        ];
+      } else {
+        // Regular case - start to end in same cycle
+        return (
+          <Rectangle 
+            key={`phase-${phaseIndex}`}
+            x={startX} 
+            y={y + (maxTime - phaseEnd) * scaleFactor} 
+            width={adjustedWidth} 
+            height={(phaseEnd - phaseStart) * scaleFactor} 
+            fill={phase.direction === 'upstream' ? '#22c55e' : '#3b82f6'} 
+            opacity={0.7}
+            rx={4}
+            ry={4}
+          />
+        );
+      }
     } else {
       // Split into two rectangles when cycle time overflow occurs
       const firstPartDuration = maxTime - phaseStart;
