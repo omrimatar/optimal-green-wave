@@ -36,16 +36,16 @@ export const GreenPhaseBar = (props: GreenPhaseBarProps) => {
         (phase.startTime + (payload.offset || 0)) // In calculate or manual modes, add offset
     );
     
-    const phaseEnd = phaseStart + phase.duration;
+    const phaseEnd = normalizeTime(phaseStart + phase.duration);
     
     console.log("Phase", phaseIndex, "Direction:", phase.direction, "Start:", phase.startTime, 
-                "Adjusted Start:", phaseStart, "Duration:", phase.duration);
+                "Adjusted Start:", phaseStart, "Duration:", phase.duration, "End:", phaseEnd);
     
     const adjustedWidth = width * 0.3;
     const startX = x + (phaseIndex * width * 0.35);
     
     // Check if phase wraps around the cycle time
-    const wrapsAround = phaseEnd > maxTime;
+    const wrapsAround = phaseStart + phase.duration > maxTime;
 
     console.log("End time:", phaseEnd, "Wraps around:", wrapsAround);
 
