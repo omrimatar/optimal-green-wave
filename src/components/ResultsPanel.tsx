@@ -1,8 +1,7 @@
-
 import { Card } from "@/components/ui/card";
 import { MetricsTable } from "./MetricsTable";
 import { OptimizationCharts } from "./OptimizationCharts";
-import { GanttChart } from "./GanttChart";
+import { GreenWaveChart } from "./GreenWaveChart";
 import type { RunResult } from "@/types/traffic";
 import { type Intersection, type GreenPhase } from "@/types/optimization";
 
@@ -52,14 +51,11 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
     comparisonResults.distances = comparisonResults.offsets.map((_, idx) => idx * 300);
   }
 
-  // Extract the current configuration for the Gantt chart
-  // Create intersection data structure needed by GanttChart
+  // Extract the current configuration for the GreenWaveChart
+  // Create intersection data structure needed by GreenWaveChart
   const currentIntersections: Intersection[] = comparisonResults.offsets.map((offset, idx) => {
     // Get the actual distance from the distances field
     const actualDistance = comparisonResults.distances![idx];
-    
-    // Log to debug the actual distances being used
-    console.log(`Intersection ${idx + 1} distance: ${actualDistance}`);
     
     return {
       id: idx + 1,
@@ -71,16 +67,6 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
     };
   });
 
-  console.log("Current intersections for Gantt chart:", currentIntersections);
-  
-  // Extract diagonal points from the results if available
-  const diagonalPoints = comparisonResults.diagonal_points;
-  console.log("Diagonal points for Gantt chart:", diagonalPoints);
-
-  // Extract pairs_band_points from the results if available
-  const pairsBandPoints = comparisonResults.pairs_band_points;
-  console.log("Pairs band points for Gantt chart:", pairsBandPoints);
-
   // Default speed if not provided
   const speed = 50;
 
@@ -90,12 +76,10 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
         {/* Display green wave diagram first - before graphical comparison */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">תרשים גל ירוק</h3>
-          <GanttChart 
+          <GreenWaveChart 
             data={currentIntersections}
             mode={mode}
             speed={speed}
-            diagonalPoints={diagonalPoints}
-            pairsBandPoints={pairsBandPoints}
           />
         </div>
         
