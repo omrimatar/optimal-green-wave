@@ -100,6 +100,13 @@ export interface RunResult {
   offsets: number[];
   // Added distances property to store actual intersection distances
   distances?: number[];
+  
+  // Added properties for green wave visualization
+  cycle_times?: number[];
+  green_up?: Array<{start: number; duration: number}[]>;
+  green_down?: Array<{start: number; duration: number}[]>;
+  speed?: number;
+  
   status: string;
   objective_value: number;
 }
