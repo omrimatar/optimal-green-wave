@@ -30,9 +30,22 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     content: null
   });
 
+  // Log the received intersection data for debugging
+  useEffect(() => {
+    console.log("GreenWaveChart received intersections:", intersections);
+    console.log("GreenWaveChart mode:", mode);
+    console.log("GreenWaveChart speed:", speed);
+  }, [intersections, mode, speed]);
+
   // Find maximum distance and cycle time
   const maxDistance = Math.max(...intersections.map(i => i.distance));
   const maxCycleTime = Math.max(...intersections.map(i => i.cycleTime));
+  
+  // Log computed values
+  useEffect(() => {
+    console.log("Computed maxDistance:", maxDistance);
+    console.log("Computed maxCycleTime:", maxCycleTime);
+  }, [maxDistance, maxCycleTime]);
 
   // Calculate scales
   const xScale = (value: number) => (value / maxDistance) * (dimensions.width - 80);
@@ -177,6 +190,12 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               // Get the offset for this intersection (0 if in display mode)
               const offset = mode === 'display' ? 0 : (intersection.offset || 0);
               
+              console.log(`Rendering intersection ${i+1} (ID: ${intersection.id}):`);
+              console.log(`  Distance: ${intersection.distance}m`);
+              console.log(`  Cycle Time: ${intersection.cycleTime}s`);
+              console.log(`  Offset: ${offset}s`);
+              console.log(`  Green Phases:`, intersection.greenPhases);
+              
               return intersection.greenPhases.map((phase, j) => {
                 const x = 40 + xScale(intersection.distance);
                 // Add slight left/right offset for aesthetics
@@ -191,6 +210,14 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 
                 // Handle the case where the phase wraps around the cycle
                 const wrappedPhase = endTime < startTime;
+                
+                console.log(`  Phase ${j+1}:`);
+                console.log(`    Direction: ${phase.direction}`);
+                console.log(`    Original Start: ${phase.startTime}s`);
+                console.log(`    Duration: ${phase.duration}s`);
+                console.log(`    Adjusted Start: ${startTime}s`);
+                console.log(`    Adjusted End: ${wrappedPhase ? intersection.cycleTime : endTime}s`);
+                console.log(`    Wrapped: ${wrappedPhase}`);
                 
                 return (
                   <React.Fragment key={`phase-${i}-${j}`}>
