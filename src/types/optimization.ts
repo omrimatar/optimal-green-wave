@@ -13,12 +13,6 @@ export interface Intersection {
   offset?: number;
 }
 
-export interface DiagonalPoint {
-  junction: number;
-  low: number;
-  top: number;
-}
-
 export interface OptimizationWeights {
   corridor_up: number;
   corridor_down: number;
