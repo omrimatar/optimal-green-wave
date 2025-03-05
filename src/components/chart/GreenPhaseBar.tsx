@@ -20,9 +20,6 @@ export const GreenPhaseBar = (props: GreenPhaseBarProps) => {
     return null;
   }
 
-  console.log("Rendering green phases for:", payload.name, "Mode:", mode, "Offset:", payload.offset);
-  console.log("Green phases:", payload.greenPhases);
-
   const normalizeTime = (time: number): number => {
     return ((time % maxTime) + maxTime) % maxTime;
   };
@@ -38,71 +35,31 @@ export const GreenPhaseBar = (props: GreenPhaseBarProps) => {
     
     const phaseEnd = normalizeTime(phaseStart + phase.duration);
     
-    console.log("Phase", phaseIndex, "Direction:", phase.direction, "Start:", phase.startTime, 
-                "Adjusted Start:", phaseStart, "Duration:", phase.duration, "End:", phaseEnd);
-    
     const adjustedWidth = width * 0.3;
     const startX = x + (phaseIndex * width * 0.35);
     
     // Check if phase wraps around the cycle time
-    const wrapsAround = phaseStart + phase.duration > maxTime;
-
-    console.log("End time:", phaseEnd, "Wraps around:", wrapsAround);
+    const wrapsAround = phaseEnd < phaseStart;
 
     if (!wrapsAround) {
-      // Normal case - no cycle time overflow
-      // If phaseEnd is less than phaseStart, it means we've wrapped around
-      if (phaseEnd < phaseStart) {
-        // Split into two rectangles when wrapping occurs
-        const firstPartDuration = maxTime - phaseStart;
-        const secondPartDuration = phaseEnd;
-
-        return [
-          // First part - from start time to end of cycle
-          <Rectangle 
-            key={`phase-${phaseIndex}-1`}
-            x={startX} 
-            y={y} 
-            width={adjustedWidth} 
-            height={firstPartDuration * scaleFactor} 
-            fill={phase.direction === 'upstream' ? '#22c55e' : '#3b82f6'} 
-            opacity={0.7}
-            rx={4}
-            ry={4}
-          />,
-          // Second part - from beginning of cycle
-          <Rectangle 
-            key={`phase-${phaseIndex}-2`}
-            x={startX} 
-            y={y + (maxTime - secondPartDuration) * scaleFactor} 
-            width={adjustedWidth} 
-            height={secondPartDuration * scaleFactor} 
-            fill={phase.direction === 'upstream' ? '#22c55e' : '#3b82f6'} 
-            opacity={0.7}
-            rx={4}
-            ry={4}
-          />
-        ];
-      } else {
-        // Regular case - start to end in same cycle
-        return (
-          <Rectangle 
-            key={`phase-${phaseIndex}`}
-            x={startX} 
-            y={y + (maxTime - phaseEnd) * scaleFactor} 
-            width={adjustedWidth} 
-            height={(phaseEnd - phaseStart) * scaleFactor} 
-            fill={phase.direction === 'upstream' ? '#22c55e' : '#3b82f6'} 
-            opacity={0.7}
-            rx={4}
-            ry={4}
-          />
-        );
-      }
+      // Regular case - start to end in same cycle
+      return (
+        <Rectangle 
+          key={`phase-${phaseIndex}`}
+          x={startX} 
+          y={y + (maxTime - phaseEnd) * scaleFactor} 
+          width={adjustedWidth} 
+          height={(phaseEnd - phaseStart) * scaleFactor} 
+          fill={phase.direction === 'upstream' ? '#22c55e' : '#3b82f6'} 
+          opacity={0.7}
+          rx={4}
+          ry={4}
+        />
+      );
     } else {
-      // Split into two rectangles when cycle time overflow occurs
+      // Split into two rectangles when wrapping occurs
       const firstPartDuration = maxTime - phaseStart;
-      const secondPartDuration = phase.duration - firstPartDuration;
+      const secondPartDuration = phaseEnd;
 
       return [
         // First part - from start time to end of cycle
