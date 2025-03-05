@@ -58,14 +58,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Calculate travel time between intersections in seconds
-  const calculateTravelTime = (distance: number, speed: number) => {
-    // Convert speed from km/h to m/s
-    const speedInMetersPerSecond = speed / 3.6;
-    // Calculate time in seconds
-    return distance / speedInMetersPerSecond;
-  };
-
   const handleShowTooltip = (x: number, y: number, content: React.ReactNode) => {
     setTooltipInfo({
       visible: true,
