@@ -3,17 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
 import { GreenWaveTooltip } from './GreenWaveTooltip';
 import { type Intersection } from "@/types/optimization";
+import { type PairBandPoint } from "@/types/traffic";
 
 interface GreenWaveChartProps {
   intersections: Intersection[];
   mode: 'display' | 'calculate' | 'manual';
   speed: number;
+  pairBandPoints?: PairBandPoint[];
 }
 
 export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({ 
   intersections,
   mode,
-  speed
+  speed,
+  pairBandPoints
 }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
@@ -29,32 +32,27 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     content: null
   });
 
-  // Log the received intersection data for debugging
   useEffect(() => {
     console.log("GreenWaveChart received intersections:", intersections);
     console.log("GreenWaveChart mode:", mode);
     console.log("GreenWaveChart speed:", speed);
-  }, [intersections, mode, speed]);
+    console.log("GreenWaveChart pairBandPoints:", pairBandPoints);
+  }, [intersections, mode, speed, pairBandPoints]);
 
-  // Find maximum distance and cycle time
   const maxDistance = Math.max(...intersections.map(i => i.distance));
   const maxCycleTime = Math.max(...intersections.map(i => i.cycleTime));
   
-  // Log computed values
   useEffect(() => {
     console.log("Computed maxDistance:", maxDistance);
     console.log("Computed maxCycleTime:", maxCycleTime);
   }, [maxDistance, maxCycleTime]);
 
-  // Calculate scales
   const xScale = (value: number) => (value / maxDistance) * (dimensions.width - 80);
   const yScale = (value: number) => (value / maxCycleTime) * (dimensions.height - 80);
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       if (chartRef.current) {
-        // Use parent width, but fixed height
         const width = chartRef.current.clientWidth;
         setDimensions({
           width,
@@ -63,7 +61,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       }
     };
 
-    // Set initial dimensions
     handleResize();
 
     window.addEventListener('resize', handleResize);
@@ -83,9 +80,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     setTooltipInfo(prev => ({ ...prev, visible: false }));
   };
 
-  // Generate grid lines at fixed intervals
   const generateYGridLines = () => {
-    const interval = 10; // 10 second intervals
+    const interval = 10;
     const lines = [];
     for (let t = 0; t <= maxCycleTime; t += interval) {
       const y = dimensions.height - 40 - yScale(t);
@@ -105,7 +101,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     return lines;
   };
 
-  // Generate X grid lines based on intersection distances
   const generateXGridLines = () => {
     if (intersections.length <= 1) return null;
     
@@ -128,6 +123,135 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     return lines;
   };
 
+  const renderDiagonalLines = () => {
+    if (!pairBandPoints || pairBandPoints.length === 0) {
+      return null;
+    }
+
+    return pairBandPoints.map((pair, index) => {
+      const originIdx = intersections.findIndex(i => i.id === pair.from_junction);
+      const destIdx = intersections.findIndex(i => i.id === pair.to_junction);
+
+      if (originIdx < 0 || destIdx < 0) {
+        console.warn(`Could not find intersections for pair: ${pair.from_junction} -> ${pair.to_junction}`);
+        return null;
+      }
+
+      const originX = 40 + xScale(intersections[originIdx].distance);
+      const destX = 40 + xScale(intersections[destIdx].distance);
+
+      const upLines = [];
+      const upOriginLowY = dimensions.height - 40 - yScale(pair.up.origin_low);
+      const upOriginHighY = dimensions.height - 40 - yScale(pair.up.origin_high);
+      const upDestLowY = dimensions.height - 40 - yScale(pair.up.dest_low);
+      const upDestHighY = dimensions.height - 40 - yScale(pair.up.dest_high);
+
+      upLines.push(
+        <line
+          key={`up-low-${index}`}
+          x1={originX}
+          y1={upOriginLowY}
+          x2={destX}
+          y2={upDestLowY}
+          stroke="#4ADE80"
+          strokeWidth={2}
+          strokeDasharray="none"
+          onMouseEnter={(e) => {
+            const content = (
+              <div>
+                <p>כיוון: עם הזרם</p>
+                <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                <p>נקודה תחתונה</p>
+              </div>
+            );
+            handleShowTooltip(e.clientX, e.clientY, content);
+          }}
+          onMouseLeave={handleHideTooltip}
+        />
+      );
+
+      upLines.push(
+        <line
+          key={`up-high-${index}`}
+          x1={originX}
+          y1={upOriginHighY}
+          x2={destX}
+          y2={upDestHighY}
+          stroke="#4ADE80"
+          strokeWidth={2}
+          strokeDasharray="none"
+          onMouseEnter={(e) => {
+            const content = (
+              <div>
+                <p>כיוון: עם הזרם</p>
+                <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                <p>נקודה עליונה</p>
+              </div>
+            );
+            handleShowTooltip(e.clientX, e.clientY, content);
+          }}
+          onMouseLeave={handleHideTooltip}
+        />
+      );
+
+      const downLines = [];
+      const downOriginLowY = dimensions.height - 40 - yScale(pair.down.origin_low);
+      const downOriginHighY = dimensions.height - 40 - yScale(pair.down.origin_high);
+      const downDestLowY = dimensions.height - 40 - yScale(pair.down.dest_low);
+      const downDestHighY = dimensions.height - 40 - yScale(pair.down.dest_high);
+
+      downLines.push(
+        <line
+          key={`down-low-${index}`}
+          x1={destX}
+          y1={downOriginLowY}
+          x2={originX}
+          y2={downDestLowY}
+          stroke="#60A5FA"
+          strokeWidth={2}
+          strokeDasharray="none"
+          onMouseEnter={(e) => {
+            const content = (
+              <div>
+                <p>כיוון: נגד הזרם</p>
+                <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                <p>נקודה תחתונה</p>
+              </div>
+            );
+            handleShowTooltip(e.clientX, e.clientY, content);
+          }}
+          onMouseLeave={handleHideTooltip}
+        />
+      );
+
+      downLines.push(
+        <line
+          key={`down-high-${index}`}
+          x1={destX}
+          y1={downOriginHighY}
+          x2={originX}
+          y2={downDestHighY}
+          stroke="#60A5FA"
+          strokeWidth={2}
+          strokeDasharray="none"
+          onMouseEnter={(e) => {
+            const content = (
+              <div>
+                <p>כיוון: נגד הזרם</p>
+                <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                <p>נקודה עליונה</p>
+              </div>
+            );
+            handleShowTooltip(e.clientX, e.clientY, content);
+          }}
+          onMouseLeave={handleHideTooltip}
+        />
+      );
+
+      return [...upLines, ...downLines];
+    });
+  };
+
   return (
     <Card className="mb-8">
       <CardHeader>
@@ -140,11 +264,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             height={dimensions.height}
             className="overflow-visible"
           >
-            {/* Grid Lines */}
             {generateYGridLines()}
             {generateXGridLines()}
             
-            {/* Y-axis (Time) */}
             <line 
               x1={40} 
               y1={40} 
@@ -153,7 +275,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               stroke="black" 
               strokeWidth={1} 
             />
-            {/* X-axis (Distance) */}
             <line 
               x1={40} 
               y1={dimensions.height - 40} 
@@ -163,9 +284,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               strokeWidth={1} 
             />
 
-            {/* Green Phase Bars - Render these BEFORE the axis labels */}
             {intersections.map((intersection, i) => {
-              // Get the offset for this intersection (0 if in display mode)
               const offset = mode === 'display' ? 0 : (intersection.offset || 0);
               
               console.log(`Rendering intersection ${i+1} (ID: ${intersection.id}):`);
@@ -176,17 +295,13 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               
               return intersection.greenPhases.map((phase, j) => {
                 const x = 40 + xScale(intersection.distance);
-                // Add slight left/right offset for aesthetics
                 const xOffset = phase.direction === 'upstream' ? -10 : 10;
                 
-                // Calculate wrap-around if needed
                 let startTime = (phase.startTime + offset) % intersection.cycleTime;
                 let endTime = (startTime + phase.duration) % intersection.cycleTime;
                 
-                // If end time wraps around to 0, set it to the cycle time
                 if (endTime === 0) endTime = intersection.cycleTime;
                 
-                // Handle the case where the phase wraps around the cycle
                 const wrappedPhase = endTime < startTime;
                 
                 console.log(`  Phase ${j+1}:`);
@@ -213,7 +328,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                           <div>
                             <p>צומת: {intersection.id}</p>
                             <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
-                            <p>התחלה: {Math.round(startTime)} שניות</p>
+                            <p>התחלה: {Math.round(startTime)} ��ניות</p>
                             <p>סיום: {Math.round(wrappedPhase ? intersection.cycleTime : endTime)} שניות</p>
                             <p>היסט: {Math.round(offset)} שניות</p>
                           </div>
@@ -223,7 +338,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                       onMouseLeave={handleHideTooltip}
                     />
                     
-                    {/* If the phase wraps around, draw the second part */}
                     {wrappedPhase && (
                       <GreenPhaseBar
                         x={x + xOffset}
@@ -254,7 +368,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               });
             })}
 
-            {/* X-axis ticks */}
+            {renderDiagonalLines()}
+
             {intersections.map((intersection, i) => {
               const x = 40 + xScale(intersection.distance);
               return (
@@ -279,7 +394,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               );
             })}
 
-            {/* Move Y-axis ticks (labels) AFTER the bars so they render on top */}
             {Array.from({ length: 5 }).map((_, i) => {
               const value = (maxCycleTime / 4) * i;
               const y = dimensions.height - 40 - yScale(value);
@@ -305,7 +419,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               );
             })}
 
-            {/* Axis labels */}
             <text 
               x={dimensions.width / 2} 
               y={dimensions.height - 5} 
@@ -324,7 +437,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               זמן (שניות)
             </text>
 
-            {/* Colored bars for upstream/downstream at the top right (mini legend) */}
             <g transform={`translate(${dimensions.width - 90}, 15)`}>
               <rect x={0} y={0} width={20} height={10} fill="#A7F3D0" rx={2} />
               <text x={24} y={8} fontSize={10}>עם הזרם</text>
@@ -333,7 +445,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             </g>
           </svg>
           
-          {/* Tooltip */}
           {tooltipInfo.visible && (
             <GreenWaveTooltip
               x={tooltipInfo.x}

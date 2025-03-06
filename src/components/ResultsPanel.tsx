@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { MetricsTable } from "./MetricsTable";
 import { OptimizationCharts } from "./OptimizationCharts";
 import { GreenWaveChart } from "./GreenWaveChart";
-import type { RunResult } from "@/types/traffic";
+import type { RunResult, PairBandPoint } from "@/types/traffic";
 import { type Intersection, type GreenPhase } from "@/types/optimization";
 
 interface ResultsPanelProps {
@@ -13,8 +13,8 @@ interface ResultsPanelProps {
     manual_results?: RunResult;
   } | null;
   mode: 'display' | 'calculate' | 'manual';
-  originalIntersections?: Intersection[]; // Add this new prop
-  speed?: number; // Add this new prop
+  originalIntersections?: Intersection[];
+  speed?: number;
 }
 
 export const ResultsPanel = ({ results, mode, originalIntersections, speed }: ResultsPanelProps) => {
@@ -37,6 +37,14 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed }: Re
       : results.baseline_results;  // In display mode, show baseline
   
   console.log("Selected comparison results:", comparisonResults);
+  
+  // Get pair band points from the appropriate results
+  const pairBandPoints: PairBandPoint[] | undefined = 
+    mode === 'display' 
+      ? results.baseline_results.pairs_band_points
+      : comparisonResults.pairs_band_points;
+  
+  console.log("Using pair band points:", pairBandPoints);
   
   // Create intersections for the green wave chart
   const chartIntersections: Intersection[] = comparisonResults.offsets.map((offset, idx) => {
@@ -125,6 +133,7 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed }: Re
           intersections={chartIntersections}
           mode={mode}
           speed={chartSpeed}
+          pairBandPoints={pairBandPoints}
         />
         
         {/* Display graphical comparison */}
@@ -143,3 +152,4 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed }: Re
     </Card>
   );
 };
+
