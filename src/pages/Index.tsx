@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -71,7 +70,7 @@ const Index = () => {
     const newId = Math.max(...intersections.map(i => i.id)) + 1;
     const lastIntersection = intersections[intersections.length - 1];
     const newDistance = lastIntersection.distance + 200;
-    setIntersections([...intersections, {
+    const newIntersections = [...intersections, {
       id: newId,
       distance: newDistance,
       cycleTime: 90,
@@ -84,9 +83,16 @@ const Index = () => {
         startTime: 45,
         duration: 45
       }]
-    }]);
+    }];
+    
+    setIntersections(newIntersections);
     // עדכון מערך האופסטים הידניים - הוספת 0 לצומת החדש
     setManualOffsets(prev => [...prev, 0]);
+    
+    // אם במצב תצוגה, עדכן את התרשים באופן מיידי
+    if (mode === 'display' && results) {
+      handleShowExisting();
+    }
   };
 
   const handleManualCalculate = async () => {
