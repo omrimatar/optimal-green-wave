@@ -399,7 +399,9 @@ const Index = () => {
           {results && (
             <ResultsPanel 
               results={results} 
-              mode={mode} 
+              mode={mode}
+              originalIntersections={intersections}
+              speed={speed}
             />
           )}
         </div>

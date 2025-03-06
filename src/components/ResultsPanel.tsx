@@ -13,9 +13,11 @@ interface ResultsPanelProps {
     manual_results?: RunResult;
   } | null;
   mode: 'display' | 'calculate' | 'manual';
+  originalIntersections?: Intersection[]; // Add this new prop
+  speed?: number; // Add this new prop
 }
 
-export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
+export const ResultsPanel = ({ results, mode, originalIntersections, speed }: ResultsPanelProps) => {
   if (!results || !results.baseline_results || 
      (mode === 'manual' && !results.manual_results) ||
      (mode !== 'manual' && !results.optimized_results)) {
@@ -24,6 +26,8 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
   }
 
   console.log("Rendering ResultsPanel with mode:", mode);
+  console.log("Original intersections:", originalIntersections);
+  console.log("Original speed:", speed);
 
   // Select the appropriate results based on mode
   const comparisonResults = mode === 'manual' 
@@ -36,17 +40,24 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
   
   // Create intersections for the green wave chart
   const chartIntersections: Intersection[] = comparisonResults.offsets.map((offset, idx) => {
-    // Get distance from the results
+    // If we have original intersections, use their data directly
+    if (originalIntersections && idx < originalIntersections.length) {
+      const originalIntersection = originalIntersections[idx];
+      return {
+        ...originalIntersection,
+        offset: mode === 'display' ? 0 : offset
+      };
+    }
+    
+    // Fallback to using data from results (old behavior)
     const distance = comparisonResults.distances ? 
       comparisonResults.distances[idx] : 
       idx * 300;
     
-    // Get cycle time from the results or use a default
     const cycleTime = comparisonResults.cycle_times ? 
       comparisonResults.cycle_times[idx] : 
       90;
     
-    // Get green phases from the results, if available
     const greenPhases: GreenPhase[] = [];
     
     // Add upstream phases if available
@@ -102,9 +113,9 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
     };
   });
 
-  // Get speed from results or use default
-  const speed = comparisonResults.speed || 50;
-  console.log("Chart using speed:", speed);
+  // Get speed from props first, then from results, or use default
+  const chartSpeed = speed || comparisonResults.speed || 50;
+  console.log("Chart using speed:", chartSpeed);
   
   return (
     <Card className="p-6 h-full">
@@ -113,7 +124,7 @@ export const ResultsPanel = ({ results, mode }: ResultsPanelProps) => {
         <GreenWaveChart 
           intersections={chartIntersections}
           mode={mode}
-          speed={speed}
+          speed={chartSpeed}
         />
         
         {/* Display graphical comparison */}
