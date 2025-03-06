@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,7 +11,7 @@ import { ArrowRight, Hand, Play, Plus, Settings2 } from 'lucide-react';
 import { WeightsPanel } from '@/components/WeightsPanel';
 import { FileActions } from '@/components/FileActions';
 import { ResultsPanel } from '@/components/ResultsPanel';
-import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights } from '@/types/optimization';
+import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights, type GreenPhase } from '@/types/optimization';
 import {
   Dialog,
   DialogContent,
@@ -70,27 +71,34 @@ const Index = () => {
     const newId = Math.max(...intersections.map(i => i.id)) + 1;
     const lastIntersection = intersections[intersections.length - 1];
     const newDistance = lastIntersection.distance + 200;
-    const newIntersections = [...intersections, {
+    
+    // Fix the type by explicitly declaring the green phases with proper types
+    const newIntersection: Intersection = {
       id: newId,
       distance: newDistance,
       cycleTime: 90,
-      greenPhases: [{
-        direction: 'upstream',
-        startTime: 0,
-        duration: 45
-      }, {
-        direction: 'downstream',
-        startTime: 45,
-        duration: 45
-      }]
-    }];
+      greenPhases: [
+        {
+          direction: 'upstream' as const,
+          startTime: 0,
+          duration: 45
+        },
+        {
+          direction: 'downstream' as const,
+          startTime: 45,
+          duration: 45
+        }
+      ]
+    };
     
+    const newIntersections = [...intersections, newIntersection];
     setIntersections(newIntersections);
+    
     // עדכון מערך האופסטים הידניים - הוספת 0 לצומת החדש
     setManualOffsets(prev => [...prev, 0]);
     
     // אם במצב תצוגה, עדכן את התרשים באופן מיידי
-    if (mode === 'display' && results) {
+    if (mode === 'display') {
       handleShowExisting();
     }
   };

@@ -84,6 +84,51 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     setTooltipInfo(prev => ({ ...prev, visible: false }));
   };
 
+  // Generate grid lines at fixed intervals
+  const generateYGridLines = () => {
+    const interval = 10; // 10 second intervals
+    const lines = [];
+    for (let t = 0; t <= maxCycleTime; t += interval) {
+      const y = dimensions.height - 40 - yScale(t);
+      lines.push(
+        <line 
+          key={`y-grid-${t}`}
+          x1={40} 
+          y1={y} 
+          x2={dimensions.width - 40} 
+          y2={y} 
+          stroke="#e5e7eb" 
+          strokeWidth={1}
+          strokeDasharray="4 4"
+        />
+      );
+    }
+    return lines;
+  };
+
+  // Generate X grid lines based on intersection distances
+  const generateXGridLines = () => {
+    if (intersections.length <= 1) return null;
+    
+    const lines = [];
+    for (let i = 0; i < intersections.length; i++) {
+      const x = 40 + xScale(intersections[i].distance);
+      lines.push(
+        <line 
+          key={`x-grid-${i}`}
+          x1={x} 
+          y1={40} 
+          x2={x} 
+          y2={dimensions.height - 40} 
+          stroke="#e5e7eb" 
+          strokeWidth={1}
+          strokeDasharray="4 4"
+        />
+      );
+    }
+    return lines;
+  };
+
   return (
     <Card className="mb-8">
       <CardHeader>
@@ -96,6 +141,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             height={dimensions.height}
             className="overflow-visible"
           >
+            {/* Grid Lines */}
+            {generateYGridLines()}
+            {generateXGridLines()}
+            
             {/* Y-axis (Time) */}
             <line 
               x1={40} 
@@ -276,13 +325,12 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               });
             })}
 
-            {/* Legend */}
-            <g transform={`translate(${dimensions.width - 150}, 50)`}>
-              <rect width={140} height={70} fill="white" stroke="#ccc" rx={4} />
-              <rect x={10} y={15} width={20} height={10} fill="#A7F3D0" rx={2} />
-              <text x={40} y={23} fontSize={12}>עם הזרם (ירוק)</text>
-              <rect x={10} y={40} width={20} height={10} fill="#93C5FD" rx={2} />
-              <text x={40} y={48} fontSize={12}>נגד הזרם (כחול)</text>
+            {/* Colored bars for upstream/downstream at the top right (mini legend) */}
+            <g transform={`translate(${dimensions.width - 90}, 50)`}>
+              <rect x={0} y={0} width={20} height={10} fill="#A7F3D0" rx={2} />
+              <text x={24} y={8} fontSize={10}>עם הזרם</text>
+              <rect x={0} y={15} width={20} height={10} fill="#93C5FD" rx={2} />
+              <text x={24} y={23} fontSize={10}>נגד הזרם</text>
             </g>
           </svg>
           
