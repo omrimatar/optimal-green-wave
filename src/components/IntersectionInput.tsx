@@ -11,9 +11,15 @@ interface IntersectionInputProps {
   intersection: Intersection;
   onChange: (updated: Intersection) => void;
   onDelete: () => void;
+  allIntersections: Intersection[]; // Added prop to access all intersections for validation
 }
 
-export const IntersectionInput = ({ intersection, onChange, onDelete }: IntersectionInputProps) => {
+export const IntersectionInput = ({ 
+  intersection, 
+  onChange, 
+  onDelete, 
+  allIntersections 
+}: IntersectionInputProps) => {
   const handleGreenPhaseChange = (phaseIndex: number, field: 'startTime' | 'duration', value: number) => {
     // Check for valid start time and duration based on cycle time
     const cycleTime = intersection.cycleTime;
@@ -72,6 +78,26 @@ export const IntersectionInput = ({ intersection, onChange, onDelete }: Intersec
     if (isNaN(numValue) || numValue < 0 || numValue > 10000 || !Number.isInteger(numValue)) {
       toast.error("מרחק חייב להיות מספר שלם בין 0 ל-10000 מטר");
       return;
+    }
+    
+    // Find the current index of this intersection
+    const currentIndex = allIntersections.findIndex(i => i.id === intersection.id);
+    
+    // Check if distance is valid compared to previous and next intersections
+    if (currentIndex > 0) {
+      const prevIntersection = allIntersections[currentIndex - 1];
+      if (numValue < prevIntersection.distance) {
+        toast.error(`מרחק חייב להיות גדול או שווה למרחק הצומת הקודם (${prevIntersection.distance})`);
+        return;
+      }
+    }
+    
+    if (currentIndex < allIntersections.length - 1) {
+      const nextIntersection = allIntersections[currentIndex + 1];
+      if (numValue > nextIntersection.distance) {
+        toast.error(`מרחק חייב להיות קטן או שווה למרחק הצומת הבא (${nextIntersection.distance})`);
+        return;
+      }
     }
     
     onChange({

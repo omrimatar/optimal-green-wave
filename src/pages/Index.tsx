@@ -333,11 +333,17 @@ const Index = () => {
                 {intersections.map((intersection, index) => (
                   <IntersectionInput 
                     key={intersection.id} 
-                    intersection={intersection} 
+                    intersection={intersection}
+                    allIntersections={intersections} 
                     onChange={updated => {
                       const newIntersections = [...intersections];
                       newIntersections[index] = updated;
                       setIntersections(newIntersections);
+                      
+                      // If in display mode, update the chart immediately
+                      if (mode === 'display') {
+                        handleShowExisting();
+                      }
                     }} 
                     onDelete={() => {
                       if (intersections.length > 2) {
@@ -348,6 +354,11 @@ const Index = () => {
                           newOffsets.splice(index, 1);
                           return newOffsets;
                         });
+                        
+                        // If in display mode, update the chart immediately
+                        if (mode === 'display') {
+                          handleShowExisting();
+                        }
                       }
                     }} 
                   />

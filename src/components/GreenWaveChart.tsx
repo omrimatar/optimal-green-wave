@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -190,7 +189,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               );
             })}
 
-            {/* X-axis ticks */}
+            {/* X-axis ticks - Now positioned ABOVE the chart bars */}
             {intersections.map((intersection, i) => {
               const x = 40 + xScale(intersection.distance);
               return (
@@ -205,7 +204,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                   />
                   <text 
                     x={x} 
-                    y={dimensions.height - 20} 
+                    y={30} 
                     textAnchor="middle" 
                     fontSize={12}
                   >
@@ -325,8 +324,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               });
             })}
 
-            {/* Colored bars for upstream/downstream at the top right (mini legend) */}
-            <g transform={`translate(${dimensions.width - 90}, 50)`}>
+            {/* Colored bars for upstream/downstream at the top right (mini legend) - MOVED HIGHER */}
+            <g transform={`translate(${dimensions.width - 90}, 15)`}>
               <rect x={0} y={0} width={20} height={10} fill="#A7F3D0" rx={2} />
               <text x={24} y={8} fontSize={10}>עם הזרם</text>
               <rect x={0} y={15} width={20} height={10} fill="#93C5FD" rx={2} />
