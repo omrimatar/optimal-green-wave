@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowUp, ArrowDown, Trash2 } from "lucide-react";
 import { type Intersection } from "@/types/optimization";
 import { toast } from "sonner";
+import { useState } from "react";
 
 interface IntersectionInputProps {
   intersection: Intersection;
@@ -20,6 +21,10 @@ export const IntersectionInput = ({
   onDelete, 
   allIntersections 
 }: IntersectionInputProps) => {
+  // Add local state to track if the distance input is being edited
+  const [isEditingDistance, setIsEditingDistance] = useState(false);
+  const [tempDistance, setTempDistance] = useState<string>(intersection.distance.toString());
+
   const handleGreenPhaseChange = (phaseIndex: number, field: 'startTime' | 'duration', value: number) => {
     // Check for valid start time and duration based on cycle time
     const cycleTime = intersection.cycleTime;
@@ -74,9 +79,17 @@ export const IntersectionInput = ({
   };
 
   const handleDistanceChange = (value: string) => {
-    const numValue = parseInt(value);
+    setTempDistance(value);
+    setIsEditingDistance(true);
+  };
+
+  const validateAndUpdateDistance = () => {
+    setIsEditingDistance(false);
+    
+    const numValue = parseInt(tempDistance);
     if (isNaN(numValue) || numValue < 0 || numValue > 10000 || !Number.isInteger(numValue)) {
       toast.error("מרחק חייב להיות מספר שלם בין 0 ל-10000 מטר");
+      setTempDistance(intersection.distance.toString());
       return;
     }
     
@@ -88,6 +101,7 @@ export const IntersectionInput = ({
       const prevIntersection = allIntersections[currentIndex - 1];
       if (numValue < prevIntersection.distance) {
         toast.error(`מרחק חייב להיות גדול או שווה למרחק הצומת הקודם (${prevIntersection.distance})`);
+        setTempDistance(intersection.distance.toString());
         return;
       }
     }
@@ -96,6 +110,7 @@ export const IntersectionInput = ({
       const nextIntersection = allIntersections[currentIndex + 1];
       if (numValue > nextIntersection.distance) {
         toast.error(`מרחק חייב להיות קטן או שווה למרחק הצומת הבא (${nextIntersection.distance})`);
+        setTempDistance(intersection.distance.toString());
         return;
       }
     }
@@ -138,8 +153,14 @@ export const IntersectionInput = ({
           <Label>מרחק (מטר)</Label>
           <Input
             type="number"
-            value={intersection.distance}
+            value={isEditingDistance ? tempDistance : intersection.distance}
             onChange={e => handleDistanceChange(e.target.value)}
+            onBlur={validateAndUpdateDistance}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                validateAndUpdateDistance();
+              }
+            }}
           />
         </div>
 
