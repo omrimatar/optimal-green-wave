@@ -164,7 +164,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               strokeWidth={1} 
             />
 
-            {/* Y-axis ticks */}
+            {/* Y-axis ticks - MOVED LABELS ABOVE THE TICKS */}
             {Array.from({ length: 5 }).map((_, i) => {
               const value = (maxCycleTime / 4) * i;
               const y = dimensions.height - 40 - yScale(value);
@@ -180,7 +180,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                   />
                   <text 
                     x={30} 
-                    y={y + 4} 
+                    y={y - 4} 
                     textAnchor="end" 
                     fontSize={12}
                   >
@@ -190,7 +190,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               );
             })}
 
-            {/* X-axis ticks - Reverted back to the bottom position */}
+            {/* X-axis ticks */}
             {intersections.map((intersection, i) => {
               const x = 40 + xScale(intersection.distance);
               return (
