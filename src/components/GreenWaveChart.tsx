@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -164,77 +163,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               strokeWidth={1} 
             />
 
-            {/* Y-axis ticks - MOVED LABELS ABOVE THE TICKS */}
-            {Array.from({ length: 5 }).map((_, i) => {
-              const value = (maxCycleTime / 4) * i;
-              const y = dimensions.height - 40 - yScale(value);
-              return (
-                <g key={`y-tick-${i}`}>
-                  <line 
-                    x1={35} 
-                    y1={y} 
-                    x2={40} 
-                    y2={y} 
-                    stroke="black" 
-                    strokeWidth={1} 
-                  />
-                  <text 
-                    x={30} 
-                    y={y - 10} 
-                    textAnchor="end" 
-                    fontSize={12}
-                  >
-                    {Math.round(value)}
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* X-axis ticks */}
-            {intersections.map((intersection, i) => {
-              const x = 40 + xScale(intersection.distance);
-              return (
-                <g key={`x-tick-${i}`}>
-                  <line 
-                    x1={x} 
-                    y1={dimensions.height - 40} 
-                    x2={x} 
-                    y2={dimensions.height - 35} 
-                    stroke="black" 
-                    strokeWidth={1} 
-                  />
-                  <text 
-                    x={x} 
-                    y={dimensions.height - 20} 
-                    textAnchor="middle" 
-                    fontSize={12}
-                  >
-                    {intersection.distance}m
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* Axis labels */}
-            <text 
-              x={dimensions.width / 2} 
-              y={dimensions.height - 5} 
-              textAnchor="middle" 
-              fontSize={14}
-            >
-              מרחק (מטר)
-            </text>
-            <text 
-              x={15} 
-              y={dimensions.height / 2} 
-              textAnchor="middle" 
-              fontSize={14}
-              transform={`rotate(-90 15 ${dimensions.height / 2})`}
-            >
-              זמן (שניות)
-            </text>
-
-            {/* Green Phase Bars */}
+            {/* Green Phase Bars - Render these BEFORE the axis labels */}
             {intersections.map((intersection, i) => {
               // Get the offset for this intersection (0 if in display mode)
               const offset = mode === 'display' ? 0 : (intersection.offset || 0);
@@ -324,6 +253,76 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 );
               });
             })}
+
+            {/* X-axis ticks */}
+            {intersections.map((intersection, i) => {
+              const x = 40 + xScale(intersection.distance);
+              return (
+                <g key={`x-tick-${i}`}>
+                  <line 
+                    x1={x} 
+                    y1={dimensions.height - 40} 
+                    x2={x} 
+                    y2={dimensions.height - 35} 
+                    stroke="black" 
+                    strokeWidth={1} 
+                  />
+                  <text 
+                    x={x} 
+                    y={dimensions.height - 20} 
+                    textAnchor="middle" 
+                    fontSize={12}
+                  >
+                    {intersection.distance}m
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Move Y-axis ticks (labels) AFTER the bars so they render on top */}
+            {Array.from({ length: 5 }).map((_, i) => {
+              const value = (maxCycleTime / 4) * i;
+              const y = dimensions.height - 40 - yScale(value);
+              return (
+                <g key={`y-tick-${i}`}>
+                  <line 
+                    x1={35} 
+                    y1={y} 
+                    x2={40} 
+                    y2={y} 
+                    stroke="black" 
+                    strokeWidth={1} 
+                  />
+                  <text 
+                    x={30} 
+                    y={y - 10} 
+                    textAnchor="end" 
+                    fontSize={12}
+                  >
+                    {Math.round(value)}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Axis labels */}
+            <text 
+              x={dimensions.width / 2} 
+              y={dimensions.height - 5} 
+              textAnchor="middle" 
+              fontSize={14}
+            >
+              מרחק (מטר)
+            </text>
+            <text 
+              x={15} 
+              y={dimensions.height / 2} 
+              textAnchor="middle" 
+              fontSize={14}
+              transform={`rotate(-90 15 ${dimensions.height / 2})`}
+            >
+              זמן (שניות)
+            </text>
 
             {/* Colored bars for upstream/downstream at the top right (mini legend) */}
             <g transform={`translate(${dimensions.width - 90}, 15)`}>
