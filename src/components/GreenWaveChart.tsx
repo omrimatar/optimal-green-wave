@@ -136,6 +136,18 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       </CardHeader>
       <CardContent>
         <div className="relative" ref={chartRef}>
+          {/* Colored bars for upstream/downstream at the top right (mini legend) */}
+          <div className="absolute top-2 right-2 z-10">
+            <div className="flex items-center mb-1">
+              <div className="w-5 h-2.5 bg-[#A7F3D0] rounded mr-1"></div>
+              <span className="text-xs">עם הזרם</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-5 h-2.5 bg-[#93C5FD] rounded mr-1"></div>
+              <span className="text-xs">נגד הזרם</span>
+            </div>
+          </div>
+
           <svg 
             width={dimensions.width} 
             height={dimensions.height}
@@ -164,7 +176,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               strokeWidth={1} 
             />
 
-            {/* Y-axis ticks - MOVED LABELS ABOVE THE TICKS */}
+            {/* Y-axis ticks - MOVED LABELS TO THE TOP OF THE CHART */}
             {Array.from({ length: 5 }).map((_, i) => {
               const value = (maxCycleTime / 4) * i;
               const y = dimensions.height - 40 - yScale(value);
@@ -180,9 +192,11 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                   />
                   <text 
                     x={30} 
-                    y={y - 4} 
+                    y={y + 4} 
                     textAnchor="end" 
                     fontSize={12}
+                    className="z-50"
+                    style={{ dominantBaseline: 'middle' }}
                   >
                     {Math.round(value)}
                   </text>
