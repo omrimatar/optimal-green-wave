@@ -180,7 +180,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                   />
                   <text 
                     x={30} 
-                    y={y - 4} 
+                    y={y - 10} 
                     textAnchor="end" 
                     fontSize={12}
                   >
