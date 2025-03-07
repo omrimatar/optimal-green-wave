@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { type Intersection } from '@/types/optimization';
 
 interface GreenPhaseBarProps {
   x: number;
@@ -51,62 +50,5 @@ export const GreenPhaseBar: React.FC<GreenPhaseBarProps> = ({
       onMouseLeave={onMouseLeave}
       style={{ cursor: 'pointer' }}
     />
-  );
-};
-
-// Helper component to render all green phases for an intersection
-interface IntersectionGreenPhaseBarProps {
-  intersection: Intersection;
-  xPosition: number;
-  height: number;
-  handleShowTooltip: (x: number, y: number, content: React.ReactNode) => void;
-  handleHideTooltip: () => void;
-}
-
-export const IntersectionGreenPhaseBar: React.FC<IntersectionGreenPhaseBarProps> = ({
-  intersection,
-  xPosition,
-  height,
-  handleShowTooltip,
-  handleHideTooltip
-}) => {
-  const barWidth = 30;
-  const yScale = (value: number) => (value / intersection.cycleTime) * height;
-
-  return (
-    <>
-      {intersection.greenPhases.map((phase, phaseIndex) => {
-        const startTime = phase.startTime;
-        const endTime = (phase.startTime + phase.duration) % intersection.cycleTime;
-        
-        const tooltipContent = (
-          <div>
-            <p>צומת: {intersection.id}</p>
-            <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
-            <p>זמן התחלה: {startTime.toFixed(0)} שניות</p>
-            <p>משך: {phase.duration.toFixed(0)} שניות</p>
-            <p>מהירות: {phase.direction === 'upstream' ? 
-              intersection.upstreamSpeed || '?' : 
-              intersection.downstreamSpeed || '?'} קמ"ש</p>
-          </div>
-        );
-
-        return (
-          <GreenPhaseBar
-            key={`phase-${intersection.id}-${phaseIndex}`}
-            x={xPosition}
-            startTime={startTime}
-            endTime={endTime}
-            cycleTime={intersection.cycleTime}
-            direction={phase.direction}
-            barWidth={barWidth}
-            yScale={yScale}
-            chartHeight={height}
-            onMouseEnter={(e) => handleShowTooltip(e.clientX, e.clientY, tooltipContent)}
-            onMouseLeave={handleHideTooltip}
-          />
-        );
-      })}
-    </>
   );
 };
