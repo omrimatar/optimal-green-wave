@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ArrowRight, ArrowLeft } from "lucide-react";
 import { GreenPhaseBar } from './GreenPhaseBar';
 import { GreenWaveTooltip } from './GreenWaveTooltip';
 import { type Intersection } from "@/types/optimization";
@@ -130,27 +129,57 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     return lines;
   };
 
-  const renderArrowhead = (
-    x1: number, 
-    y1: number, 
-    x2: number, 
-    y2: number, 
-    color: string,
-    direction: 'upstream' | 'downstream'
-  ) => {
-    const midX = (x1 + x2) / 2;
-    const midY = (y1 + y2) / 2;
-    
-    const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
-    
+  const renderArrowMarkers = () => {
     return (
-      <g transform={`translate(${midX}, ${midY}) rotate(${angle})`}>
-        {direction === 'upstream' ? (
-          <ArrowRight size={16} color="#10B981" strokeWidth={2} />
-        ) : (
-          <ArrowLeft size={16} color="#3B82F6" strokeWidth={2} />
-        )}
-      </g>
+      <defs>
+        <marker 
+          id="arrow-up" 
+          markerWidth="10" 
+          markerHeight="10" 
+          refX="5" 
+          refY="2.5" 
+          orient="auto"
+          markerUnits="strokeWidth"
+        >
+          <path d="M0,5 L5,0 L10,5 L5,2.5 Z" fill="#10B981" />
+        </marker>
+        
+        <marker 
+          id="arrow-down" 
+          markerWidth="10" 
+          markerHeight="10" 
+          refX="5" 
+          refY="7.5" 
+          orient="auto"
+          markerUnits="strokeWidth"
+        >
+          <path d="M0,5 L5,10 L10,5 L5,7.5 Z" fill="#10B981" />
+        </marker>
+        
+        <marker 
+          id="arrow-up-down" 
+          markerWidth="10" 
+          markerHeight="10" 
+          refX="5" 
+          refY="2.5" 
+          orient="auto"
+          markerUnits="strokeWidth"
+        >
+          <path d="M0,5 L5,0 L10,5 L5,2.5 Z" fill="#3B82F6" />
+        </marker>
+        
+        <marker 
+          id="arrow-down-down" 
+          markerWidth="10" 
+          markerHeight="10" 
+          refX="5" 
+          refY="7.5" 
+          orient="auto"
+          markerUnits="strokeWidth"
+        >
+          <path d="M0,5 L5,10 L10,5 L5,7.5 Z" fill="#3B82F6" />
+        </marker>
+      </defs>
     );
   };
 
@@ -192,7 +221,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         
         const upLowWrapsAround = pair.up.dest_low < pair.up.origin_low;
         const upHighWrapsAround = pair.up.dest_high < pair.up.origin_high;
-
+        
         console.log(`Upstream low line: origin=${pair.up.origin_low.toFixed(2)}, dest=${pair.up.dest_low.toFixed(2)}, wraps=${upLowWrapsAround}`);
         console.log(`Upstream high line: origin=${pair.up.origin_high.toFixed(2)}, dest=${pair.up.dest_high.toFixed(2)}, wraps=${upHighWrapsAround}`);
         
@@ -211,6 +240,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#4ADE80"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#arrow-up)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -224,7 +254,16 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(originX, upOriginLowY, xAtCycleEnd, upCycleEndY, "#4ADE80", "upstream")}
+              
+              <line
+                x1={(originX + xAtCycleEnd) / 2 - 10}
+                y1={(upOriginLowY + upCycleEndY) / 2 - 5}
+                x2={(originX + xAtCycleEnd) / 2 + 10}
+                y2={(upOriginLowY + upCycleEndY) / 2 + 5}
+                stroke="none"
+                strokeWidth={0}
+                markerEnd="url(#arrow-up)"
+              />
             </React.Fragment>
           );
           
@@ -240,6 +279,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#4ADE80"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#arrow-up)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -253,11 +293,21 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(xAtCycleEnd, upCycleStartY, destX, upDestLowY, "#4ADE80", "upstream")}
+              
+              <line
+                x1={(xAtCycleEnd + destX) / 2 - 10}
+                y1={(upCycleStartY + upDestLowY) / 2 - 5}
+                x2={(xAtCycleEnd + destX) / 2 + 10}
+                y2={(upCycleStartY + upDestLowY) / 2 + 5}
+                stroke="none"
+                strokeWidth={0}
+                markerEnd="url(#arrow-up)"
+              />
             </React.Fragment>
           );
         } else {
-          const slope = (upDestLowY - upOriginLowY) / (destX - originX);
+          const midX = (originX + destX) / 2;
+          const midY = (upOriginLowY + upDestLowY) / 2;
           
           lines.push(
             <React.Fragment key={`up-low-${index}`}>
@@ -282,7 +332,16 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(originX, upOriginLowY, destX, upDestLowY, "#4ADE80", "upstream")}
+              
+              <line
+                x1={midX - 10}
+                y1={midY - 5}
+                x2={midX + 10}
+                y2={midY + 5}
+                stroke="none"
+                strokeWidth={0}
+                markerEnd="url(#arrow-up)"
+              />
             </React.Fragment>
           );
         }
@@ -315,7 +374,16 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(originX, upOriginHighY, xAtCycleEnd, upCycleEndY, "#4ADE80", "upstream")}
+              
+              <line
+                x1={(originX + xAtCycleEnd) / 2 - 10}
+                y1={(upOriginHighY + upCycleEndY) / 2 - 5}
+                x2={(originX + xAtCycleEnd) / 2 + 10}
+                y2={(upOriginHighY + upCycleEndY) / 2 + 5}
+                stroke="none"
+                strokeWidth={0}
+                markerEnd="url(#arrow-down)"
+              />
             </React.Fragment>
           );
           
@@ -336,7 +404,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <div>
                       <p>כיוון: עם הזרם</p>
                       <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                      <p>נקודה עליונה - חלק 2 (מתחילת המחזור)</p>
+                      <p>נקודה עליונה - חל�� 2 (מתחילת המחזור)</p>
                       <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
                     </div>
                   );
@@ -344,11 +412,21 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(xAtCycleEnd, upCycleStartY, destX, upDestHighY, "#4ADE80", "upstream")}
+              
+              <line
+                x1={(xAtCycleEnd + destX) / 2 - 10}
+                y1={(upCycleStartY + upDestHighY) / 2 - 5}
+                x2={(xAtCycleEnd + destX) / 2 + 10}
+                y2={(upCycleStartY + upDestHighY) / 2 + 5}
+                stroke="none"
+                strokeWidth={0}
+                markerEnd="url(#arrow-down)"
+              />
             </React.Fragment>
           );
         } else {
-          const slope = (upDestHighY - upOriginHighY) / (destX - originX);
+          const midX = (originX + destX) / 2;
+          const midY = (upOriginHighY + upDestHighY) / 2;
           
           lines.push(
             <React.Fragment key={`up-high-${index}`}>
@@ -373,7 +451,16 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(originX, upOriginHighY, destX, upDestHighY, "#4ADE80", "upstream")}
+              
+              <line
+                x1={midX - 10}
+                y1={midY - 5}
+                x2={midX + 10}
+                y2={midY + 5}
+                stroke="none"
+                strokeWidth={0}
+                markerEnd="url(#arrow-down)"
+              />
             </React.Fragment>
           );
         }
@@ -442,7 +529,16 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(destX, downOriginLowY, xAtCycleEnd, downCycleEndY, "#60A5FA", "downstream")}
+              
+              <line
+                x1={(destX + xAtCycleEnd) / 2 + 10}
+                y1={(downOriginLowY + downCycleEndY) / 2 - 5}
+                x2={(destX + xAtCycleEnd) / 2 - 10}
+                y2={(downOriginLowY + downCycleEndY) / 2 + 5}
+                stroke="none"
+                strokeWidth={0}
+                markerEnd="url(#arrow-up-down)"
+              />
             </React.Fragment>
           );
           
@@ -469,10 +565,22 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(xAtCycleEnd, downCycleStartY, originX, downDestLowY, "#60A5FA", "downstream")}
+              
+              <line
+                x1={(xAtCycleEnd + originX) / 2 + 10}
+                y1={(downCycleStartY + downDestLowY) / 2 - 5}
+                x2={(xAtCycleEnd + originX) / 2 - 10}
+                y2={(downCycleStartY + downDestLowY) / 2 + 5}
+                stroke="none"
+                strokeWidth={0}
+                markerEnd="url(#arrow-up-down)"
+              />
             </React.Fragment>
           );
         } else {
+          const midX = (destX + originX) / 2;
+          const midY = (downOriginLowY + downDestLowY) / 2;
+          
           lines.push(
             <React.Fragment key={`down-low-${index}`}>
               <line
@@ -496,7 +604,16 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(destX, downOriginLowY, originX, downDestLowY, "#60A5FA", "downstream")}
+              
+              <line
+                x1={midX + 10}
+                y1={midY - 5}
+                x2={midX - 10}
+                y2={midY + 5}
+                stroke="none"
+                strokeWidth={0}
+                markerEnd="url(#arrow-up-down)"
+              />
             </React.Fragment>
           );
         }
@@ -550,7 +667,16 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(destX, downOriginHighY, xAtCycleEnd, downCycleEndY, "#60A5FA", "downstream")}
+              
+              <line
+                x1={(destX + xAtCycleEnd) / 2 + 10}
+                y1={(downOriginHighY + downCycleEndY) / 2 - 5}
+                x2={(destX + xAtCycleEnd) / 2 - 10}
+                y2={(downOriginHighY + downCycleEndY) / 2 + 5}
+                stroke="none"
+                strokeWidth={0}
+                markerEnd="url(#arrow-down-down)"
+              />
             </React.Fragment>
           );
           
@@ -577,10 +703,22 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(xAtCycleEnd, downCycleStartY, originX, downDestHighY, "#60A5FA", "downstream")}
+              
+              <line
+                x1={(xAtCycleEnd + originX) / 2 + 10}
+                y1={(downCycleStartY + downDestHighY) / 2 - 5}
+                x2={(xAtCycleEnd + originX) / 2 - 10}
+                y2={(downCycleStartY + downDestHighY) / 2 + 5}
+                stroke="none"
+                strokeWidth={0}
+                markerEnd="url(#arrow-down-down)"
+              />
             </React.Fragment>
           );
         } else {
+          const midX = (destX + originX) / 2;
+          const midY = (downOriginHighY + downDestHighY) / 2;
+          
           lines.push(
             <React.Fragment key={`down-high-${index}`}>
               <line
@@ -604,7 +742,16 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(destX, downOriginHighY, originX, downDestHighY, "#60A5FA", "downstream")}
+              
+              <line
+                x1={midX + 10}
+                y1={midY - 5}
+                x2={midX - 10}
+                y2={midY + 5}
+                stroke="none"
+                strokeWidth={0}
+                markerEnd="url(#arrow-down-down)"
+              />
             </React.Fragment>
           );
         }
@@ -628,6 +775,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             height={dimensions.height}
             className="overflow-visible w-full"
           >
+            {renderArrowMarkers()}
             {generateYGridLines()}
             {generateXGridLines()}
             
