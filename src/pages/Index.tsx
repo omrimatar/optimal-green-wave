@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -6,20 +6,12 @@ import { Label } from '@/components/ui/label';
 import { IntersectionInput } from '@/components/IntersectionInput';
 import { calculateGreenWave } from '@/lib/calculations';
 import { toast } from 'sonner';
-import { ArrowRight, Hand, Play, Plus, Settings2 } from 'lucide-react';
+import { ArrowRight, Hand, Play, Plus } from 'lucide-react';
 import { WeightsPanel } from '@/components/WeightsPanel';
 import { FileActions } from '@/components/FileActions';
 import { ResultsPanel } from '@/components/ResultsPanel';
-import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights, type GreenPhase } from '@/types/optimization';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights } from '@/types/optimization';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const Index = () => {
   const [intersections, setIntersections] = useState<Intersection[]>([{
@@ -58,7 +50,7 @@ const Index = () => {
   const [mode, setMode] = useState<'display' | 'calculate' | 'manual'>('calculate');
   const [weights, setWeights] = useState<OptimizationWeights>(DEFAULT_WEIGHTS);
   const [showWeights, setShowWeights] = useState(false);
-  const [manualOffsets, setManualOffsets] = useState<number[]>([0, 0]); // אתחול עם שני אפסים עבור שני הצמתים ההתחלתיים
+  const [manualOffsets, setManualOffsets] = useState<number[]>([0, 0]);
   const [showManualDialog, setShowManualDialog] = useState(false);
 
   const handleSpeedChange = (value: string) => {
@@ -68,18 +60,14 @@ const Index = () => {
       return;
     }
     setSpeed(numValue);
-    
-    // Update all intersections to use the new design speed if they don't have specific speeds set
+
     const updatedIntersections = intersections.map(intersection => ({
       ...intersection,
       upstreamSpeed: numValue,
       downstreamSpeed: numValue
     }));
-    
     setIntersections(updatedIntersections);
-    
-    // When design speed changes, let's update individual intersections
-    // that don't have specific speed settings to use the new default
+
     if (mode === 'display') {
       handleShowExisting();
     } else if (mode === 'calculate') {
@@ -93,32 +81,25 @@ const Index = () => {
     const newId = Math.max(...intersections.map(i => i.id)) + 1;
     const lastIntersection = intersections[intersections.length - 1];
     const newDistance = lastIntersection.distance + 200;
-    
     const newIntersection: Intersection = {
       id: newId,
       distance: newDistance,
       cycleTime: 90,
-      greenPhases: [
-        {
-          direction: 'upstream' as const,
-          startTime: 0,
-          duration: 45
-        },
-        {
-          direction: 'downstream' as const,
-          startTime: 45,
-          duration: 45
-        }
-      ],
+      greenPhases: [{
+        direction: 'upstream' as const,
+        startTime: 0,
+        duration: 45
+      }, {
+        direction: 'downstream' as const,
+        startTime: 45,
+        duration: 45
+      }],
       upstreamSpeed: speed,
       downstreamSpeed: speed
     };
-    
     const newIntersections = [...intersections, newIntersection];
     setIntersections(newIntersections);
-    
     setManualOffsets(prev => [...prev, 0]);
-    
     if (mode === 'display') {
       handleShowExisting();
     } else if (mode === 'calculate') {
@@ -138,20 +119,11 @@ const Index = () => {
         currentOffsets.pop();
       }
       currentOffsets[0] = 0;
-
-      const calculationResults = await calculateGreenWave(
-        intersections, 
-        speed, 
-        weights,
-        currentOffsets
-      );
-      
+      const calculationResults = await calculateGreenWave(intersections, speed, weights, currentOffsets);
       console.log("Manual calculation results received:", calculationResults);
-      
       if (!calculationResults.manual_results) {
         throw new Error("No manual results received from calculation");
       }
-
       setResults(calculationResults);
       setMode('manual');
       setShowManualDialog(false);
@@ -168,54 +140,40 @@ const Index = () => {
         toast.error("מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
         return;
       }
-
       for (const intersection of intersections) {
         if (intersection.distance < 0 || intersection.distance > 10000 || !Number.isInteger(intersection.distance)) {
           toast.error(`צומת ${intersection.id}: מרחק חייב להיות מספר שלם בין 0 ל-10000 מטר`);
           return;
         }
-        
         if (intersection.cycleTime < 0 || intersection.cycleTime > 300 || !Number.isInteger(intersection.cycleTime)) {
           toast.error(`צומת ${intersection.id}: זמן מחזור חייב להיות מספר שלם בין 0 ל-300 שניות`);
           return;
         }
-        
-        // Validate upstream speed if specified
-        if (intersection.upstreamSpeed !== undefined && 
-            (intersection.upstreamSpeed < 0 || 
-             intersection.upstreamSpeed > 120 || 
-             !Number.isInteger(intersection.upstreamSpeed))) {
+
+        if (intersection.upstreamSpeed !== undefined && (intersection.upstreamSpeed < 0 || intersection.upstreamSpeed > 120 || !Number.isInteger(intersection.upstreamSpeed))) {
           toast.error(`צומת ${intersection.id}: מהירות במעלה הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
         }
-        
-        // Validate downstream speed if specified
-        if (intersection.downstreamSpeed !== undefined && 
-            (intersection.downstreamSpeed < 0 || 
-             intersection.downstreamSpeed > 120 || 
-             !Number.isInteger(intersection.downstreamSpeed))) {
+
+        if (intersection.downstreamSpeed !== undefined && (intersection.downstreamSpeed < 0 || intersection.downstreamSpeed > 120 || !Number.isInteger(intersection.downstreamSpeed))) {
           toast.error(`צומת ${intersection.id}: מהירות במורד הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
         }
-
         for (const phase of intersection.greenPhases) {
           if (phase.startTime < 0 || phase.startTime > intersection.cycleTime || !Number.isInteger(phase.startTime)) {
             toast.error(`צומת ${intersection.id}: זמן התחלה חייב להיות מספר שלם בין 0 ל-${intersection.cycleTime}`);
             return;
           }
-          
           if (phase.duration < 1 || phase.duration > intersection.cycleTime || !Number.isInteger(phase.duration)) {
             toast.error(`צומת ${intersection.id}: משך חייב להיות מספר שלם בין 1 ל-${intersection.cycleTime}`);
             return;
           }
         }
       }
-      
       const baseIntersections = intersections.map(intersection => ({
         ...intersection,
         offset: 0
       }));
-      
       const calculationResults = await calculateGreenWave(intersections, speed, weights);
       console.log("Calculation results received:", calculationResults);
       setResults(calculationResults);
@@ -233,42 +191,30 @@ const Index = () => {
         toast.error("מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
         return;
       }
-
       for (const intersection of intersections) {
         if (intersection.distance < 0 || intersection.distance > 10000 || !Number.isInteger(intersection.distance)) {
           toast.error(`צומת ${intersection.id}: מרחק חייב להיות מספר שלם בין 0 ל-10000 מטר`);
           return;
         }
-        
         if (intersection.cycleTime < 0 || intersection.cycleTime > 300 || !Number.isInteger(intersection.cycleTime)) {
           toast.error(`צומת ${intersection.id}: זמן מחזור חייב להיות מספר שלם בין 0 ל-300 שניות`);
           return;
         }
-        
-        // Validate upstream speed if specified
-        if (intersection.upstreamSpeed !== undefined && 
-            (intersection.upstreamSpeed < 0 || 
-             intersection.upstreamSpeed > 120 || 
-             !Number.isInteger(intersection.upstreamSpeed))) {
+
+        if (intersection.upstreamSpeed !== undefined && (intersection.upstreamSpeed < 0 || intersection.upstreamSpeed > 120 || !Number.isInteger(intersection.upstreamSpeed))) {
           toast.error(`צומת ${intersection.id}: מהירות במעלה הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
         }
-        
-        // Validate downstream speed if specified
-        if (intersection.downstreamSpeed !== undefined && 
-            (intersection.downstreamSpeed < 0 || 
-             intersection.downstreamSpeed > 120 || 
-             !Number.isInteger(intersection.downstreamSpeed))) {
+
+        if (intersection.downstreamSpeed !== undefined && (intersection.downstreamSpeed < 0 || intersection.downstreamSpeed > 120 || !Number.isInteger(intersection.downstreamSpeed))) {
           toast.error(`צומת ${intersection.id}: מהירות במורד הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
         }
       }
-      
       const currentIntersections = intersections.map(intersection => ({
         ...intersection,
         offset: 0
       }));
-      
       const currentResults = await calculateGreenWave(currentIntersections, speed);
       console.log("Show existing results received:", currentResults);
       setResults(currentResults);
@@ -281,7 +227,9 @@ const Index = () => {
   };
 
   const updateWeight = (category: keyof OptimizationWeights, value: number) => {
-    const updatedWeights = { ...weights };
+    const updatedWeights = {
+      ...weights
+    };
     updatedWeights[category] = value;
     setWeights(updatedWeights);
   };
@@ -294,57 +242,42 @@ const Index = () => {
       toast.error("הקובץ שנטען מכיל מהירות תכן שאינה חוקית. מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
       return;
     }
-    
     for (const intersection of data.intersections) {
       if (intersection.distance < 0 || intersection.distance > 10000 || !Number.isInteger(intersection.distance)) {
         toast.error(`הקובץ שנטען מכיל צומת עם מרחק לא חוקי. מרחק חייב להיות מספר שלם בין 0 ל-10000 מטר`);
         return;
       }
-      
       if (intersection.cycleTime < 0 || intersection.cycleTime > 300 || !Number.isInteger(intersection.cycleTime)) {
         toast.error(`הקובץ שנטען מכיל צומת עם זמן מחזור לא חוקי. זמן מחזור חייב להיות מספר שלם בין 0 ל-300 שניות`);
         return;
       }
-
       for (const phase of intersection.greenPhases) {
         if (phase.startTime < 0 || phase.startTime > intersection.cycleTime || !Number.isInteger(phase.startTime)) {
           toast.error(`הקובץ שנטען מכיל צומת עם זמן התחלת פאזה לא חוקי. זמן התחלה חייב להיות מספר שלם בין 0 ל-${intersection.cycleTime}`);
           return;
         }
-        
         if (phase.duration < 1 || phase.duration > intersection.cycleTime || !Number.isInteger(phase.duration)) {
           toast.error(`הקובץ שנטען מכיל צומת עם משך פאזה לא חוקי. משך חייב להיות מספר שלם בין 1 ל-${intersection.cycleTime}`);
           return;
         }
       }
     }
-    
-    // Also validate individual speeds in loaded data
+
     for (const intersection of data.intersections) {
-      // Validate upstream speed if specified
-      if (intersection.upstreamSpeed !== undefined && 
-          (intersection.upstreamSpeed < 0 || 
-           intersection.upstreamSpeed > 120 || 
-           !Number.isInteger(intersection.upstreamSpeed))) {
+      if (intersection.upstreamSpeed !== undefined && (intersection.upstreamSpeed < 0 || intersection.upstreamSpeed > 120 || !Number.isInteger(intersection.upstreamSpeed))) {
         toast.error(`הקובץ שנטען מכיל צומת עם מהירות במעלה הזרם לא חוקית. מהירות חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
         return;
       }
-      
-      // Validate downstream speed if specified
-      if (intersection.downstreamSpeed !== undefined && 
-          (intersection.downstreamSpeed < 0 || 
-           intersection.downstreamSpeed > 120 || 
-           !Number.isInteger(intersection.downstreamSpeed))) {
+
+      if (intersection.downstreamSpeed !== undefined && (intersection.downstreamSpeed < 0 || intersection.downstreamSpeed > 120 || !Number.isInteger(intersection.downstreamSpeed))) {
         toast.error(`הקובץ שנטען מכיל צומת עם מהירות במורד הזרם לא חוקית. מהירות חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
         return;
       }
     }
-  
     setSpeed(data.speed);
     setIntersections(data.intersections);
     setManualOffsets(new Array(data.intersections.length).fill(0));
     toast.success("הקובץ נטען בהצלחה");
-    
     if (mode === 'display') {
       handleShowExisting();
     } else if (mode === 'calculate') {
@@ -366,36 +299,28 @@ const Index = () => {
   return (
     <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
       <div className="max-w-[1600px] mx-auto space-y-8 animate-fade-up">
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-gray-900">מחשבון גל ירוק</h1>
-          <p className="text-lg text-gray-600">כלי לתכנון אופטימלי של תזמוני רמזורים</p>
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <img 
+            src="/logo.png" 
+            alt="מחשבון גל ירוק" 
+            className="h-24 w-auto object-contain" 
+          />
+          <div className="text-center space-y-2">
+            <h1 className="text-4xl font-bold text-gray-900">מחשבון גל ירוק</h1>
+            <p className="text-lg text-gray-600">כלי לתכנון אופטימלי של תזמוני רמזורים</p>
+          </div>
         </div>
 
-        {/* Always show inputs in a single column */}
         <Card className="p-6 glassmorphism">
           <div className="space-y-6">
             <FileActions speed={speed} intersections={intersections} onLoadInput={handleLoadInput} />
 
             <div>
-              <Label htmlFor="speed">מהירות תכן (קמ"ש)</Label>
-              <Input 
-                id="speed" 
-                type="number" 
-                value={speed} 
-                min={0}
-                max={120}
-                onChange={e => handleSpeedChange(e.target.value)} 
-                className="w-full" 
-              />
+              <Label htmlFor="speed">מהירות ברירת מחדל (קמ"ש)</Label>
+              <Input id="speed" type="number" value={speed} min={0} max={120} onChange={e => handleSpeedChange(e.target.value)} className="w-full" />
             </div>
 
-            <WeightsPanel 
-              weights={weights} 
-              showWeights={showWeights} 
-              onWeightChange={updateWeight} 
-              onToggleWeights={() => setShowWeights(!showWeights)} 
-              onResetWeights={handleResetWeights} 
-            />
+            <WeightsPanel weights={weights} showWeights={showWeights} onWeightChange={updateWeight} onToggleWeights={() => setShowWeights(!showWeights)} onResetWeights={handleResetWeights} />
 
             <div className="space-y-4">
               <div className="flex justify-between items-center">
@@ -406,37 +331,26 @@ const Index = () => {
                 </Button>
               </div>
               
-              {intersections.map((intersection, index) => (
-                <IntersectionInput 
-                    key={intersection.id} 
-                    intersection={intersection}
-                    defaultSpeed={speed}
-                    allIntersections={intersections} 
-                    onChange={updated => {
-                      const newIntersections = [...intersections];
-                      newIntersections[index] = updated;
-                      setIntersections(newIntersections);
-                      
-                      if (mode === 'display') {
-                        handleShowExisting();
-                      }
-                    }} 
-                    onDelete={() => {
-                      if (intersections.length > 2) {
-                        setIntersections(intersections.filter(i => i.id !== intersection.id));
-                        setManualOffsets(prev => {
-                          const newOffsets = [...prev];
-                          newOffsets.splice(index, 1);
-                          return newOffsets;
-                        });
-                        
-                        if (mode === 'display') {
-                          handleShowExisting();
-                        }
-                      }
-                    }} 
-                  />
-              ))}
+              {intersections.map((intersection, index) => <IntersectionInput key={intersection.id} intersection={intersection} defaultSpeed={speed} allIntersections={intersections} onChange={updated => {
+              const newIntersections = [...intersections];
+              newIntersections[index] = updated;
+              setIntersections(newIntersections);
+              if (mode === 'display') {
+                handleShowExisting();
+              }
+            }} onDelete={() => {
+              if (intersections.length > 2) {
+                setIntersections(intersections.filter(i => i.id !== intersection.id));
+                setManualOffsets(prev => {
+                  const newOffsets = [...prev];
+                  newOffsets.splice(index, 1);
+                  return newOffsets;
+                });
+                if (mode === 'display') {
+                  handleShowExisting();
+                }
+              }
+            }} />)}
             </div>
 
             <div className="flex flex-wrap gap-4">
@@ -461,25 +375,16 @@ const Index = () => {
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                      {intersections.map((intersection, index) => (
-                        <div key={intersection.id} className="grid grid-cols-4 items-center gap-4">
+                      {intersections.map((intersection, index) => <div key={intersection.id} className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor={`offset-${index}`} className="text-right">
                             צומת {index + 1}
                           </Label>
-                          <Input
-                            id={`offset-${index}`}
-                            type="number"
-                            value={manualOffsets[index] || 0}
-                            onChange={(e) => {
-                              const newOffsets = [...manualOffsets];
-                              newOffsets[index] = Number(e.target.value);
-                              setManualOffsets(newOffsets);
-                            }}
-                            disabled={index === 0}
-                            className="col-span-3"
-                          />
-                        </div>
-                      ))}
+                          <Input id={`offset-${index}`} type="number" value={manualOffsets[index] || 0} onChange={e => {
+                      const newOffsets = [...manualOffsets];
+                      newOffsets[index] = Number(e.target.value);
+                      setManualOffsets(newOffsets);
+                    }} disabled={index === 0} className="col-span-3" />
+                        </div>)}
                     </div>
                     <DialogFooter>
                       <Button onClick={handleManualCalculate}>חשב</Button>
@@ -495,7 +400,6 @@ const Index = () => {
           </div>
         </Card>
 
-        {/* Results panel will take full width */}
         {results && (
           <ResultsPanel 
             results={results} 
