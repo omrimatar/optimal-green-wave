@@ -1,18 +1,18 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
 import { GreenWaveTooltip } from './GreenWaveTooltip';
-import type { RunResult, DiagonalPoint } from '@/types/traffic';
+import type { RunResult, PairBandPoint } from '@/types/traffic';
 import type { Intersection } from '@/types/optimization';
 
 interface GreenWaveChartProps {
-  distances: number[];
-  results: RunResult | null;
-  cycleTime: number;
-  title?: string;
-  metric?: string;
   intersections: Intersection[];
+  mode: 'display' | 'calculate' | 'manual';
   speed?: number;
+  pairBandPoints?: PairBandPoint[];
+  calculationPerformed?: boolean;
+  comparisonResults?: RunResult;
 }
 
 interface TooltipData {
@@ -22,13 +22,12 @@ interface TooltipData {
 }
 
 const GreenWaveChart: React.FC<GreenWaveChartProps> = ({ 
-  distances, 
-  results, 
-  cycleTime,
-  title,
-  metric,
   intersections,
-  speed
+  mode,
+  speed,
+  pairBandPoints,
+  calculationPerformed = false,
+  comparisonResults
 }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -41,10 +40,16 @@ const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   useEffect(() => {
     if (chartRef.current) {
       const width = chartRef.current.offsetWidth;
-      const height = chartRef.current.offsetHeight;
+      const height = chartRef.current.offsetHeight || 600;
       setDimensions({ width, height });
     }
   }, []);
+
+  // Define canvasWidth here so it's available throughout the component
+  const canvasWidth = dimensions.width ? dimensions.width - 80 : 0;
+
+  const cycleTime = intersections.length > 0 ? intersections[0].cycleTime : 90;
+  const distances = intersections.map(i => i.distance);
 
   const xScale = (distance: number) => {
     const maxDistance = Math.max(...distances);
@@ -75,12 +80,12 @@ const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   const intersectionCount = distances.length;
   const spaceBetweenBars = canvasWidth / intersectionCount;
 
-  if (!results || !distances) {
+  if (!comparisonResults || !distances) {
     return <div>No data available</div>;
   }
 
   // Extract information needed to draw the diagram
-  const { offsets, diagonal_points, pairs_band_points } = results;
+  const { offsets, diagonal_points, pairs_band_points } = comparisonResults;
 
   // Create an array of 5-pixel band colors from green to red
   const green = { r: 0, g: 128, b: 0 };
@@ -393,33 +398,23 @@ const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       const topWrapsAround = dest.top < origin.top;
       
       if (lowWrapsAround) {
-        // Draw first part: from origin to cycle end
-        const cycleEndY = dimensions.height - 40 - yScale(cycleTime);
+        // For downstream, the direction is opposite of upstream
+        // So we need to adjust our calculations
         
-        // Fix: Calculate correct slope for downstream
-        // For downstream, we need to make sure the line has correct slope
-        // and intersects with the cycle boundary at the right point
-        const totalDistance = originX - destX; // X distance between points
-        const totalTime = (cycleTime - origin.low) + dest.low; // Total time including wrap
+        // Get total travel time including wrap
+        const totalTime = (cycleTime - origin.low) + dest.low;
         
-        // Calculate proper slope (rise over run)
-        const slope = totalTime / totalDistance;
+        // Calculate time-based slope (time per distance)
+        const slope = totalTime / (originX - destX);
         
-        // Calculate where line intersects with cycle time
-        const distanceToIntersection = (cycleTime - origin.low) / slope;
+        // Calculate where the line intersects the cycle boundary
+        const timeToEnd = cycleTime - origin.low;
+        const distanceToIntersection = timeToEnd / slope;
         const xAtCycleEnd = originX - distanceToIntersection;
         
-        console.log(`Downstream low wrap calculation for points ${i}->${i+1}:`, {
-          origin: { x: originX, y: originLowY, time: origin.low },
-          dest: { x: destX, y: destLowY, time: dest.low },
-          totalDistance,
-          totalTime,
-          slope,
-          distanceToIntersection,
-          xAtCycleEnd
-        });
+        // Draw first segment: from origin to cycle end
+        const cycleEndY = dimensions.height - 40 - yScale(cycleTime);
         
-        // Draw line from origin to cycle boundary
         lines.push(
           <line
             key={`down-low-part1-${i}`}
@@ -433,7 +428,7 @@ const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           />
         );
         
-        // Draw second part: from cycle start (at same X) to destination
+        // Draw second segment: from cycle start to destination
         const cycleStartY = dimensions.height - 40 - yScale(0);
         
         lines.push(
@@ -449,7 +444,7 @@ const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           />
         );
       } else {
-        // Draw direct line if no wrapping
+        // Draw direct line for non-wrapped case
         lines.push(
           <line
             key={`down-low-${i}`}
@@ -466,31 +461,15 @@ const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       
       // Same logic for top line
       if (topWrapsAround) {
-        // Draw first part: from origin to cycle end
-        const cycleEndY = dimensions.height - 40 - yScale(cycleTime);
-        
-        // Fix: Calculate correct slope for downstream
-        const totalDistance = originX - destX;
         const totalTime = (cycleTime - origin.top) + dest.top;
-        
-        // Calculate proper slope
-        const slope = totalTime / totalDistance;
-        
-        // Calculate where line intersects with cycle time
-        const distanceToIntersection = (cycleTime - origin.top) / slope;
+        const slope = totalTime / (originX - destX);
+        const timeToEnd = cycleTime - origin.top;
+        const distanceToIntersection = timeToEnd / slope;
         const xAtCycleEnd = originX - distanceToIntersection;
         
-        console.log(`Downstream top wrap calculation for points ${i}->${i+1}:`, {
-          origin: { x: originX, y: originTopY, time: origin.top },
-          dest: { x: destX, y: destTopY, time: dest.top },
-          totalDistance,
-          totalTime,
-          slope,
-          distanceToIntersection,
-          xAtCycleEnd
-        });
+        // Draw first segment: from origin to cycle end
+        const cycleEndY = dimensions.height - 40 - yScale(cycleTime);
         
-        // Draw line from origin to cycle boundary
         lines.push(
           <line
             key={`down-top-part1-${i}`}
@@ -504,7 +483,7 @@ const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           />
         );
         
-        // Draw second part: from cycle start to destination
+        // Draw second segment: from cycle start to destination
         const cycleStartY = dimensions.height - 40 - yScale(0);
         
         lines.push(
@@ -520,7 +499,7 @@ const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           />
         );
       } else {
-        // Draw direct line if no wrapping
+        // Direct line for non-wrapped case
         lines.push(
           <line
             key={`down-top-${i}`}
@@ -537,9 +516,9 @@ const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     }
     
     // Draw band boxes between each pair of intersections
-    if (pairs_band_points) {
+    if (pairs_band_points && comparisonResults?.local_up && comparisonResults?.local_down) {
       pairs_band_points.forEach((pair, index) => {
-        if (!pair || !results.local_up || !results.local_down) return;
+        if (!pair) return;
         
         const fromIdx = pair.from_junction - 1;
         const toIdx = pair.to_junction - 1;
@@ -548,7 +527,7 @@ const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         const toX = xScale(distances[toIdx] || 0);
         
         // Create upstream bandwidth box (if there is bandwidth)
-        const upBandwidth = results.local_up[index] || 0;
+        const upBandwidth = comparisonResults.local_up[index] || 0;
         if (upBandwidth > 0) {
           const { origin_low, origin_high, dest_low, dest_high } = pair.up;
           
@@ -586,7 +565,7 @@ const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         }
         
         // Create downstream bandwidth box
-        const downBandwidth = results.local_down[index] || 0;
+        const downBandwidth = comparisonResults.local_down[index] || 0;
         if (downBandwidth > 0) {
           const { origin_low, origin_high, dest_low, dest_high } = pair.down;
           
@@ -640,48 +619,24 @@ const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     );
   };
 
-  const handleTooltipEnter = (event: React.MouseEvent, content: string) => {
-    setTooltip({
-      visible: true,
-      content: content,
-      position: {
-        x: event.clientX,
-        y: event.clientY,
-      },
-    });
-  };
-
-  const handleTooltipLeave = () => {
-    setTooltip({
-      visible: false,
-      content: '',
-      position: {
-        x: 0,
-        y: 0,
-      },
-    });
-  };
-
-  const canvasWidth = dimensions.width - 80;
-
   return (
     <>
       <CardHeader>
-        <CardTitle>{title || 'Green Wave Diagram'}</CardTitle>
+        <CardTitle>Green Wave Diagram</CardTitle>
       </CardHeader>
       <CardContent className="relative">
         <div ref={chartRef} className="w-full h-[600px]">
           <svg
-            width={dimensions.width}
-            height={dimensions.height}
+            width={dimensions.width || 800}
+            height={dimensions.height || 600}
             className="green-wave-chart"
           >
             {/* Background */}
             <rect
               x={0}
               y={0}
-              width={dimensions.width}
-              height={dimensions.height}
+              width={dimensions.width || 800}
+              height={dimensions.height || 600}
               fill="#f9fafb"
               rx={4}
             />

@@ -2,34 +2,38 @@
 import React from 'react';
 
 interface GreenPhaseBarProps {
-  x: number;
+  xPosition: number;
   startTime: number;
-  endTime: number;
+  duration: number;
   cycleTime: number;
   direction: 'upstream' | 'downstream';
-  barWidth: number;
+  dimensions: {
+    width: number;
+    height: number;
+  };
   yScale: (value: number) => number;
-  chartHeight: number;
-  onMouseEnter: (e: React.MouseEvent) => void;
-  onMouseLeave: () => void;
 }
 
 export const GreenPhaseBar: React.FC<GreenPhaseBarProps> = ({
-  x,
+  xPosition,
   startTime,
-  endTime,
+  duration,
   cycleTime,
   direction,
-  barWidth,
-  yScale,
-  chartHeight,
-  onMouseEnter,
-  onMouseLeave
+  dimensions,
+  yScale
 }) => {
+  const barWidth = 20; // Width of the phase bar
+  
   // Calculate Y positions (inverted because SVG Y grows downward)
-  const y1 = chartHeight - yScale(startTime);
-  const y2 = chartHeight - yScale(endTime);
-  const height = Math.abs(y2 - y1);
+  const startY = dimensions.height - 40 - yScale(startTime);
+  const endTime = (startTime + duration) % cycleTime;
+  const endY = dimensions.height - 40 - yScale(endTime);
+  
+  // Handle case where the phase wraps around the cycle time
+  const height = startTime + duration <= cycleTime
+    ? yScale(duration)
+    : yScale(duration - (startTime + duration - cycleTime));
 
   // Set colors based on direction
   const color = direction === 'upstream' ? '#A7F3D0' : '#93C5FD'; // Light green / Light blue
@@ -37,8 +41,8 @@ export const GreenPhaseBar: React.FC<GreenPhaseBarProps> = ({
 
   return (
     <rect
-      x={x - barWidth / 2}
-      y={y2}
+      x={xPosition - barWidth / 2}
+      y={Math.min(startY, endY)}
       width={barWidth}
       height={height}
       fill={color}
@@ -46,8 +50,6 @@ export const GreenPhaseBar: React.FC<GreenPhaseBarProps> = ({
       strokeWidth={1}
       rx={3}
       ry={3}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
       style={{ cursor: 'pointer' }}
     />
   );
