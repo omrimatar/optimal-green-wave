@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis,
-  PolarRadiusAxis, Radar, ReferenceLine, Cell
+  PolarRadiusAxis, Radar, ReferenceLine, Cell, LabelList
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -139,6 +139,46 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
     chartType === 'butterfly' ? butterflyData :
     comparisonType === 'optimization' ? optimizationData : directionData;
 
+  // Custom label formatter to ensure values are displayed correctly for negative values
+  const renderCustomBarLabel = (props: any) => {
+    const { x, y, width, height, value } = props;
+    const displayValue = Math.abs(Number(value)).toFixed(1);
+    return (
+      <text
+        x={x + width / 2}
+        y={value >= 0 ? y - 10 : y + height + 15}
+        fill="#000000"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize={12}
+        fontWeight={500}
+      >
+        {displayValue}
+      </text>
+    );
+  };
+
+  // Custom label formatter for butterfly chart
+  const renderCustomButterflyLabel = (props: any) => {
+    const { x, y, width, height, value } = props;
+    const displayValue = Math.abs(Number(value)).toFixed(1);
+    // Position labels on the inside of the bar for better readability
+    const xPos = value < 0 ? x + width - 15 : x + 15;
+    return (
+      <text
+        x={xPos}
+        y={y + height / 2}
+        fill="#000000"
+        textAnchor={value < 0 ? "end" : "start"}
+        dominantBaseline="middle"
+        fontSize={12}
+        fontWeight={500}
+      >
+        {displayValue}
+      </text>
+    );
+  };
+
   const renderChart = () => {
     switch (chartType) {
       case 'bar':
@@ -156,19 +196,31 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
                     dataKey={labels.baseline} 
                     fill={colors.positive.baseline}
                     name={`${labels.baseline}`}
-                  />
+                  >
+                    <LabelList dataKey={labels.baseline} content={renderCustomBarLabel} />
+                  </Bar>
                   <Bar 
                     dataKey={labels.optimized} 
                     fill={colors.positive.optimized}
                     name={`${labels.optimized}`}
-                  />
+                  >
+                    <LabelList dataKey={labels.optimized} content={renderCustomBarLabel} />
+                  </Bar>
                 </>
               ) : (
                 <>
-                  <Bar dataKey="מעלה הזרם - בסיס" fill={colors.positive.baseline} />
-                  <Bar dataKey="מעלה הזרם - אופטימיזציה" fill={colors.positive.optimized} />
-                  <Bar dataKey="מורד הזרם - בסיס" fill={colors.negative.baseline} />
-                  <Bar dataKey="מורד הזרם - אופטימיזציה" fill={colors.negative.optimized} />
+                  <Bar dataKey="מעלה הזרם - בסיס" fill={colors.positive.baseline}>
+                    <LabelList dataKey="מעלה הזרם - בסיס" content={renderCustomBarLabel} />
+                  </Bar>
+                  <Bar dataKey="מעלה הזרם - אופטימיזציה" fill={colors.positive.optimized}>
+                    <LabelList dataKey="מעלה הזרם - אופטימיזציה" content={renderCustomBarLabel} />
+                  </Bar>
+                  <Bar dataKey="מורד הזרם - בסיס" fill={colors.negative.baseline}>
+                    <LabelList dataKey="מורד הזרם - בסיס" content={renderCustomBarLabel} />
+                  </Bar>
+                  <Bar dataKey="מורד הזרם - אופטימיזציה" fill={colors.negative.optimized}>
+                    <LabelList dataKey="מורד הזרם - אופטימיזציה" content={renderCustomBarLabel} />
+                  </Bar>
                 </>
               )}
             </BarChart>
@@ -251,6 +303,7 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
                   // Hide the default legend for these bars
                   legendType="none"
                 >
+                  <LabelList dataKey={labels.baseline} content={renderCustomButterflyLabel} />
                   {organizedData.map((entry, index) => (
                     <Cell
                       key={`cell-baseline-${index}`}
@@ -268,6 +321,7 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
                   // Hide the default legend for these bars
                   legendType="none"
                 >
+                  <LabelList dataKey={labels.optimized} content={renderCustomButterflyLabel} />
                   {organizedData.map((entry, index) => (
                     <Cell
                       key={`cell-optimized-${index}`}
