@@ -1,7 +1,6 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { GreenPhaseBar } from './GreenPhaseBar';
+import { GreenPhaseBar, IntersectionGreenPhaseBar } from './GreenPhaseBar';
 import { GreenWaveTooltip } from './GreenWaveTooltip';
 import { type Intersection } from "@/types/optimization";
 import { type PairBandPoint, type RunResult } from "@/types/traffic";
@@ -808,7 +807,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             
             {/* Render green phase boxes */}
             {intersections.map((intersection, index) => (
-              <GreenPhaseBar
+              <IntersectionGreenPhaseBar
                 key={`phase-${index}`}
                 intersection={intersection}
                 xPosition={40 + xScale(intersection.distance)}
