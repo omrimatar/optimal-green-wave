@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -296,7 +295,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         return false;
       };
 
-      // Check if upstream bandwidth is non-zero before drawing upstream lines
+      // Check if upstream bandwidth is positive before drawing upstream lines
       const upstreamBandwidth = pair.up.dest_high - pair.up.dest_low;
       if (upstreamBandwidth > 0) {
         const upOriginLowY = dimensions.height - 40 - yScale(pair.up.origin_low);
@@ -371,7 +370,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         console.log(`Skipping upstream lines for ${pair.from_junction}->${pair.to_junction} due to zero bandwidth`);
       }
 
-      // Check if downstream bandwidth is non-zero before drawing downstream lines
+      // Check if downstream bandwidth is positive before drawing downstream lines
       const downstreamBandwidth = pair.down.dest_high - pair.down.dest_low;
       if (downstreamBandwidth > 0) {
         const downOriginLowY = dimensions.height - 40 - yScale(pair.down.origin_low);
