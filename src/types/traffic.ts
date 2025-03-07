@@ -63,6 +63,9 @@ export interface PairBandPoint {
     dest_low: number;
     dest_high: number;
   };
+  // Add these fields to store the API-provided bandwidth values
+  apiUpstreamBandwidth?: number;
+  apiDownstreamBandwidth?: number;
 }
 
 export interface RunResult {

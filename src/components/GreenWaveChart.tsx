@@ -1,9 +1,10 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
 import { GreenWaveTooltip } from './GreenWaveTooltip';
 import { type Intersection } from "@/types/optimization";
-import { type PairBandPoint } from "@/types/traffic";
+import { type PairBandPoint, type RunResult } from "@/types/traffic";
 
 interface GreenWaveChartProps {
   intersections: Intersection[];
@@ -11,6 +12,7 @@ interface GreenWaveChartProps {
   speed: number;
   pairBandPoints?: PairBandPoint[];
   calculationPerformed?: boolean;
+  comparisonResults?: RunResult;
 }
 
 export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({ 
@@ -18,7 +20,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   mode,
   speed,
   pairBandPoints,
-  calculationPerformed = false
+  calculationPerformed = false,
+  comparisonResults
 }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 600 });
@@ -39,7 +42,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     console.log("GreenWaveChart mode:", mode);
     console.log("GreenWaveChart speed:", speed);
     console.log("GreenWaveChart pairBandPoints:", pairBandPoints);
-  }, [intersections, mode, speed, pairBandPoints]);
+    console.log("GreenWaveChart comparisonResults:", comparisonResults);
+  }, [intersections, mode, speed, pairBandPoints, comparisonResults]);
 
   const maxDistance = Math.max(...intersections.map(i => i.distance));
   const maxCycleTime = Math.max(...intersections.map(i => i.cycleTime));
@@ -127,7 +131,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   };
 
   const renderDiagonalLines = () => {
-    if (!calculationPerformed || !pairBandPoints || pairBandPoints.length === 0) {
+    if (!calculationPerformed || !pairBandPoints || pairBandPoints.length === 0 || !comparisonResults) {
       return null;
     }
 
@@ -295,8 +299,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         return false;
       };
 
-      const upstreamBandwidth = pair.up.dest_high - pair.up.dest_low;
-      console.log(`Checking upstream bandwidth for ${pair.from_junction}->${pair.to_junction}: ${upstreamBandwidth}`);
+      // Get the API bandwidth values instead of calculating from dest_high and dest_low
+      const pairIndex = pair.from_junction - 1;
+      const upstreamBandwidth = comparisonResults.pair_bandwidth_up?.[pairIndex] || 0;
+      console.log(`Using API upstream bandwidth for ${pair.from_junction}->${pair.to_junction}: ${upstreamBandwidth}`);
       
       if (upstreamBandwidth > 0) {
         const upOriginLowY = dimensions.height - 40 - yScale(pair.up.origin_low);
@@ -371,8 +377,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         console.log(`Skipping upstream lines for ${pair.from_junction}->${pair.to_junction} due to zero or negative bandwidth: ${upstreamBandwidth}`);
       }
 
-      const downstreamBandwidth = Math.abs(pair.down.dest_high - pair.down.dest_low);
-      console.log(`Checking downstream bandwidth for ${pair.to_junction}->${pair.from_junction}: ${downstreamBandwidth}`);
+      // Get the API downstream bandwidth value
+      const downstreamBandwidth = comparisonResults.pair_bandwidth_down?.[pairIndex] || 0;
+      console.log(`Using API downstream bandwidth for ${pair.to_junction}->${pair.from_junction}: ${downstreamBandwidth}`);
       console.log(`Downstream values: dest_high=${pair.down.dest_high}, dest_low=${pair.down.dest_low}`);
       
       if (downstreamBandwidth > 0) {

@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { MetricsTable } from "./MetricsTable";
 import { OptimizationCharts } from "./OptimizationCharts";
@@ -49,31 +48,25 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
   if (pairBandPoints && pairBandPoints.length > 0) {
     console.log(`======= BANDWIDTH DEBUG INFORMATION =======`);
     pairBandPoints.forEach(pair => {
-      const upstreamBandwidth = pair.up.dest_high - pair.up.dest_low;
-      const calculatedDownstreamBandwidth = pair.down.dest_high - pair.down.dest_low;
-      const absoluteDownstreamBandwidth = Math.abs(calculatedDownstreamBandwidth);
-      
-      // Also log the API-provided bandwidth values for comparison
       const apiPairIndex = pair.from_junction - 1;
       const apiUpstreamBandwidth = comparisonResults.pair_bandwidth_up?.[apiPairIndex];
       const apiDownstreamBandwidth = comparisonResults.pair_bandwidth_down?.[apiPairIndex];
       
       console.log(`Junction pair ${pair.from_junction}-${pair.to_junction}:`);
-      console.log(`  Upstream bandwidth: ${upstreamBandwidth.toFixed(2)} seconds (${upstreamBandwidth > 0 ? 'DRAWING' : 'SKIPPING'})`);
+      console.log(`  API upstream bandwidth: ${apiUpstreamBandwidth?.toFixed(2) || 'N/A'} seconds (${apiUpstreamBandwidth && apiUpstreamBandwidth > 0 ? 'DRAWING' : 'SKIPPING'})`);
+      console.log(`  API downstream bandwidth: ${apiDownstreamBandwidth?.toFixed(2) || 'N/A'} seconds (${apiDownstreamBandwidth && apiDownstreamBandwidth > 0 ? 'DRAWING' : 'SKIPPING'})`);
+      
       console.log(`  Upstream details: dest_high=${pair.up.dest_high.toFixed(2)}, dest_low=${pair.up.dest_low.toFixed(2)}`);
-      console.log(`  API upstream bandwidth: ${apiUpstreamBandwidth?.toFixed(2) || 'N/A'}`);
-      
-      console.log(`  Calculated downstream bandwidth: ${calculatedDownstreamBandwidth.toFixed(2)} seconds`);
-      console.log(`  Absolute downstream bandwidth: ${absoluteDownstreamBandwidth.toFixed(2)} seconds (${absoluteDownstreamBandwidth > 0 ? 'DRAWING' : 'SKIPPING'})`);
       console.log(`  Downstream details: dest_high=${pair.down.dest_high.toFixed(2)}, dest_low=${pair.down.dest_low.toFixed(2)}`);
-      console.log(`  API downstream bandwidth: ${apiDownstreamBandwidth?.toFixed(2) || 'N/A'}`);
       
-      if (upstreamBandwidth <= 0) {
-        console.log(`  Warning: Zero or negative upstream bandwidth (${upstreamBandwidth.toFixed(2)}) for junction pair ${pair.from_junction}-${pair.to_junction}`);
+      pair.apiUpstreamBandwidth = apiUpstreamBandwidth;
+      pair.apiDownstreamBandwidth = apiDownstreamBandwidth;
+      
+      if (!apiUpstreamBandwidth || apiUpstreamBandwidth <= 0) {
+        console.log(`  Warning: Zero or negative API upstream bandwidth (${apiUpstreamBandwidth?.toFixed(2) || 'N/A'}) for junction pair ${pair.from_junction}-${pair.to_junction}`);
       }
-      if (calculatedDownstreamBandwidth <= 0) {
-        console.log(`  Warning: Negative calculated downstream bandwidth (${calculatedDownstreamBandwidth.toFixed(2)}) for junction pair ${pair.to_junction}-${pair.from_junction}`);
-        console.log(`  However, API reports downstream bandwidth as: ${apiDownstreamBandwidth?.toFixed(2) || 'N/A'}`);
+      if (!apiDownstreamBandwidth || apiDownstreamBandwidth <= 0) {
+        console.log(`  Warning: Zero or negative API downstream bandwidth (${apiDownstreamBandwidth?.toFixed(2) || 'N/A'}) for junction pair ${pair.to_junction}-${pair.from_junction}`);
       }
     });
     console.log(`=========================================`);
@@ -173,6 +166,7 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
           speed={chartSpeed}
           pairBandPoints={pairBandPoints}
           calculationPerformed={calculationPerformed}
+          comparisonResults={comparisonResults}
         />
       </Card>
       
