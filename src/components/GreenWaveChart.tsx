@@ -1,4 +1,4 @@
-<lov-code>
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -802,4 +802,36 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             height={dimensions.height}
             className="overflow-visible w-full"
           >
-            {renderArrowMarkers
+            {renderArrowMarkers()}
+            {generateYGridLines()}
+            {generateXGridLines()}
+            
+            {/* Render green phase boxes */}
+            {intersections.map((intersection, index) => (
+              <GreenPhaseBar
+                key={`phase-${index}`}
+                intersection={intersection}
+                xPosition={40 + xScale(intersection.distance)}
+                height={dimensions.height - 80}
+                handleShowTooltip={handleShowTooltip}
+                handleHideTooltip={handleHideTooltip}
+              />
+            ))}
+            
+            {/* Render diagonal band lines */}
+            {renderDiagonalLines()}
+          </svg>
+          
+          {/* Tooltip */}
+          {tooltipInfo.visible && (
+            <GreenWaveTooltip
+              x={tooltipInfo.x}
+              y={tooltipInfo.y}
+              content={tooltipInfo.content}
+            />
+          )}
+        </div>
+      </CardContent>
+    </>
+  );
+};
