@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowUp, ArrowDown, Trash2 } from "lucide-react";
 import { type Intersection } from "@/types/optimization";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface IntersectionInputProps {
   intersection: Intersection;
@@ -26,6 +25,15 @@ export const IntersectionInput = ({
   // Add local state to track if the distance input is being edited
   const [isEditingDistance, setIsEditingDistance] = useState(false);
   const [tempDistance, setTempDistance] = useState<string>(intersection.distance.toString());
+  
+  // Add effect to update speeds when defaultSpeed changes
+  useEffect(() => {
+    onChange({
+      ...intersection,
+      upstreamSpeed: defaultSpeed,
+      downstreamSpeed: defaultSpeed
+    });
+  }, [defaultSpeed]);
 
   const handleGreenPhaseChange = (phaseIndex: number, field: 'startTime' | 'duration', value: number) => {
     // Check for valid start time and duration based on cycle time

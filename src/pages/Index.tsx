@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -69,6 +68,15 @@ const Index = () => {
       return;
     }
     setSpeed(numValue);
+    
+    // Update all intersections to use the new design speed if they don't have specific speeds set
+    const updatedIntersections = intersections.map(intersection => ({
+      ...intersection,
+      upstreamSpeed: numValue,
+      downstreamSpeed: numValue
+    }));
+    
+    setIntersections(updatedIntersections);
     
     // When design speed changes, let's update individual intersections
     // that don't have specific speed settings to use the new default
