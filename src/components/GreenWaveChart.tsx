@@ -10,13 +10,15 @@ interface GreenWaveChartProps {
   mode: 'display' | 'calculate' | 'manual';
   speed: number;
   pairBandPoints?: PairBandPoint[];
+  calculationPerformed?: boolean;
 }
 
 export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({ 
   intersections,
   mode,
   speed,
-  pairBandPoints
+  pairBandPoints,
+  calculationPerformed = false
 }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 600 });
@@ -125,7 +127,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   };
 
   const renderDiagonalLines = () => {
-    if (!pairBandPoints || pairBandPoints.length === 0) {
+    if (!calculationPerformed || !pairBandPoints || pairBandPoints.length === 0) {
       return null;
     }
 

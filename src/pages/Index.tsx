@@ -405,7 +405,12 @@ const Index = () => {
           </div>
         </Card>
 
-        {results && <ResultsPanel results={results} mode={mode} originalIntersections={intersections} speed={speed} />}
+        {results && <ResultsPanel 
+          results={results} 
+          mode={mode} 
+          originalIntersections={intersections} 
+          speed={speed} 
+        />}
       </div>
     </div>;
 };
