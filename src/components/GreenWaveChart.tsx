@@ -602,8 +602,28 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
 
   return (
     <>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>תרשים גל ירוק - {mode === 'manual' ? 'מצב ידני' : mode === 'calculate' ? 'אופטימיזציה' : 'מצב קיים'}</CardTitle>
+        
+        {/* Legend moved to the header */}
+        <div className="flex items-center space-x-4 rtl:space-x-reverse">
+          <div className="flex items-center">
+            <div className="w-5 h-2.5 bg-[#A7F3D0] rounded-sm ml-2 rtl:mr-2"></div>
+            <span className="text-xs">עם הזרם</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-5 h-2.5 bg-[#93C5FD] rounded-sm ml-2 rtl:mr-2"></div>
+            <span className="text-xs">נגד הזרם</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-5 border-t-2 border-[#4ADE80] ml-2 rtl:mr-2"></div>
+            <span className="text-xs">רוחב פס עם הזרם</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-5 border-t-2 border-[#60A5FA] ml-2 rtl:mr-2"></div>
+            <span className="text-xs">רוחב פס נגד הזרם</span>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="relative w-full" ref={chartRef}>
@@ -786,20 +806,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               זמן (שניות)
             </text>
 
-            {/* Updated legend with additional elements for bandwidth lines */}
-            <g transform={`translate(${dimensions.width - 200}, 20)`}>
-              <rect x={0} y={0} width={20} height={10} fill="#A7F3D0" rx={2} />
-              <text x={24} y={8} fontSize={10}>עם הזרם</text>
-              
-              <rect x={0} y={15} width={20} height={10} fill="#93C5FD" rx={2} />
-              <text x={24} y={23} fontSize={10}>נגד הזרם</text>
-              
-              <line x1={0} y1={40} x2={20} y2={40} stroke="#4ADE80" strokeWidth={2} />
-              <text x={24} y={43} fontSize={10}>רוחב פס עם הזרם</text>
-              
-              <line x1={0} y1={55} x2={20} y2={55} stroke="#60A5FA" strokeWidth={2} />
-              <text x={24} y={58} fontSize={10}>רוחב פס נגד הזרם</text>
-            </g>
+            {/* Removed the SVG legend as it's now in the CardHeader */}
           </svg>
           
           {tooltipInfo.visible && (
