@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { MetricsTable } from "./MetricsTable";
 import { OptimizationCharts } from "./OptimizationCharts";
@@ -14,9 +15,10 @@ interface ResultsPanelProps {
   mode: 'display' | 'calculate' | 'manual';
   originalIntersections?: Intersection[];
   speed?: number;
+  calculationPerformed?: boolean;
 }
 
-export const ResultsPanel = ({ results, mode, originalIntersections, speed }: ResultsPanelProps) => {
+export const ResultsPanel = ({ results, mode, originalIntersections, speed, calculationPerformed = false }: ResultsPanelProps) => {
   if (!results || !results.baseline_results || 
      (mode === 'manual' && !results.manual_results) ||
      (mode !== 'manual' && !results.optimized_results)) {
@@ -136,7 +138,7 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed }: Re
           mode={mode}
           speed={chartSpeed}
           pairBandPoints={pairBandPoints}
-          calculationPerformed={true}
+          calculationPerformed={calculationPerformed}
         />
       </Card>
       

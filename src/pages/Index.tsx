@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -52,10 +53,12 @@ const Index = () => {
   const [showWeights, setShowWeights] = useState(false);
   const [manualOffsets, setManualOffsets] = useState<number[]>([0, 0]);
   const [showManualDialog, setShowManualDialog] = useState(false);
+  const [calculationPerformed, setCalculationPerformed] = useState(false);
 
   const clearResults = () => {
     setResults(null);
     setMode('calculate');
+    setCalculationPerformed(false);
   };
 
   const handleSpeedChange = (value: string) => {
@@ -74,7 +77,7 @@ const Index = () => {
     }));
     
     setIntersections(updatedIntersections);
-    clearResults();
+    setCalculationPerformed(false);
   };
 
   const handleAddIntersection = () => {
@@ -126,6 +129,7 @@ const Index = () => {
       setResults(calculationResults);
       setMode('manual');
       setShowManualDialog(false);
+      setCalculationPerformed(true);
       toast.success("חישוב הגל הירוק במצב ידני הושלם בהצלחה");
     } catch (error) {
       console.error("Error in manual calculation:", error);
@@ -184,6 +188,7 @@ const Index = () => {
       
       setResults(calculationResults);
       setMode('calculate');
+      setCalculationPerformed(true);
       toast.success("חישוב הגל הירוק הושלם בהצלחה");
     } catch (error) {
       console.error("Error in calculation:", error);
@@ -230,6 +235,7 @@ const Index = () => {
       
       setResults(currentResults);
       setMode('display');
+      setCalculationPerformed(true);
       toast.success("הצגת הגל הירוק הקיים הושלמה בהצלחה");
     } catch (error) {
       console.error("Error displaying existing green wave:", error);
@@ -340,6 +346,7 @@ const Index = () => {
               const newIntersections = [...intersections];
               newIntersections[index] = updated;
               setIntersections(newIntersections);
+              setCalculationPerformed(false);
               if (mode === 'display') {
                 handleShowExisting();
               }
@@ -351,6 +358,7 @@ const Index = () => {
                   newOffsets.splice(index, 1);
                   return newOffsets;
                 });
+                setCalculationPerformed(false);
                 if (mode === 'display') {
                   handleShowExisting();
                 }
@@ -410,6 +418,7 @@ const Index = () => {
           mode={mode} 
           originalIntersections={intersections} 
           speed={speed} 
+          calculationPerformed={calculationPerformed}
         />}
       </div>
     </div>;
