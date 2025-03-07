@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
 import { GreenWaveTooltip } from './GreenWaveTooltip';
 import { type Intersection } from "@/types/optimization";
@@ -20,7 +20,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   pairBandPoints
 }) => {
   const chartRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
+  const [dimensions, setDimensions] = useState({ width: 1200, height: 600 });
   const [tooltipInfo, setTooltipInfo] = useState<{
     visible: boolean;
     x: number;
@@ -48,16 +48,17 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     console.log("Computed maxCycleTime:", maxCycleTime);
   }, [maxDistance, maxCycleTime]);
 
-  const xScale = (value: number) => (value / maxDistance) * (dimensions.width - 80);
+  const xScale = (value: number) => (value / maxDistance) * (dimensions.width - 120);
   const yScale = (value: number) => (value / maxCycleTime) * (dimensions.height - 80);
 
   useEffect(() => {
     const handleResize = () => {
       if (chartRef.current) {
         const width = chartRef.current.clientWidth;
+        const height = Math.min(600, Math.max(500, width * 0.5)); // Responsive height, but not too tall
         setDimensions({
-          width,
-          height: 500
+          width: width,
+          height: height
         });
       }
     };
@@ -486,32 +487,32 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   };
 
   return (
-    <Card className="mb-8">
+    <>
       <CardHeader>
         <CardTitle>תרשים גל ירוק - {mode === 'manual' ? 'מצב ידני' : mode === 'calculate' ? 'אופטימיזציה' : 'מצב קיים'}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="relative" ref={chartRef}>
+        <div className="relative w-full" ref={chartRef}>
           <svg 
             width={dimensions.width} 
             height={dimensions.height}
-            className="overflow-visible"
+            className="overflow-visible w-full"
           >
             {generateYGridLines()}
             {generateXGridLines()}
             
             <line 
-              x1={40} 
+              x1={60} 
               y1={40} 
-              x2={40} 
+              x2={60} 
               y2={dimensions.height - 40} 
               stroke="black" 
               strokeWidth={1} 
             />
             <line 
-              x1={40} 
+              x1={60} 
               y1={dimensions.height - 40} 
-              x2={dimensions.width - 40} 
+              x2={dimensions.width - 60} 
               y2={dimensions.height - 40} 
               stroke="black" 
               strokeWidth={1} 
@@ -610,15 +611,15 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               return (
                 <g key={`y-tick-${i}`}>
                   <line 
-                    x1={35} 
+                    x1={55} 
                     y1={y} 
-                    x2={40} 
+                    x2={60} 
                     y2={y} 
                     stroke="black" 
                     strokeWidth={1} 
                   />
                   <text 
-                    x={30} 
+                    x={50} 
                     y={y - 10} 
                     textAnchor="end" 
                     fontSize={12}
@@ -671,7 +672,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               זמן (שניות)
             </text>
 
-            <g transform={`translate(${dimensions.width - 90}, 15)`}>
+            <g transform={`translate(${dimensions.width - 100}, 20)`}>
               <rect x={0} y={0} width={20} height={10} fill="#A7F3D0" rx={2} />
               <text x={24} y={8} fontSize={10}>עם הזרם</text>
               <rect x={0} y={15} width={20} height={10} fill="#93C5FD" rx={2} />
@@ -688,6 +689,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           )}
         </div>
       </CardContent>
-    </Card>
+    </>
   );
 };

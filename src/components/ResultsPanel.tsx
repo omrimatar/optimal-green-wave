@@ -126,30 +126,33 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed }: Re
   console.log("Chart using speed:", chartSpeed);
   
   return (
-    <Card className="p-6 h-full">
-      <div className="space-y-4">
-        {/* Display green wave diagram */}
+    <div className="space-y-6">
+      {/* Display green wave diagram - now full width */}
+      <Card className="p-6 w-full">
         <GreenWaveChart 
           intersections={chartIntersections}
           mode={mode}
           speed={chartSpeed}
           pairBandPoints={pairBandPoints}
         />
-        
-        {/* Display graphical comparison */}
-        <OptimizationCharts
-          baseline={results.baseline_results}
-          optimized={comparisonResults}
-          mode={mode}
-        />
-        
-        <MetricsTable 
-          baseline={results.baseline_results}
-          optimized={comparisonResults}
-          mode={mode}
-        />
-      </div>
-    </Card>
+      </Card>
+      
+      {/* Display graphical comparison and metrics table in a card */}
+      <Card className="p-6">
+        <div className="space-y-4">
+          <OptimizationCharts
+            baseline={results.baseline_results}
+            optimized={comparisonResults}
+            mode={mode}
+          />
+          
+          <MetricsTable 
+            baseline={results.baseline_results}
+            optimized={comparisonResults}
+            mode={mode}
+          />
+        </div>
+      </Card>
+    </div>
   );
 };
-

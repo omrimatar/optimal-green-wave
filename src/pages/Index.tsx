@@ -283,49 +283,49 @@ const Index = () => {
 
   return (
     <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
-      <div className="max-w-6xl mx-auto space-y-8 animate-fade-up">
+      <div className="max-w-[1600px] mx-auto space-y-8 animate-fade-up">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold text-gray-900">מחשבון גל ירוק</h1>
           <p className="text-lg text-gray-600">כלי לתכנון אופטימלי של תזמוני רמזורים</p>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2">
-          <Card className="p-6 glassmorphism">
-            <div className="space-y-6">
-              <FileActions speed={speed} intersections={intersections} onLoadInput={handleLoadInput} />
+        {/* Always show inputs in a single column */}
+        <Card className="p-6 glassmorphism">
+          <div className="space-y-6">
+            <FileActions speed={speed} intersections={intersections} onLoadInput={handleLoadInput} />
 
-              <div>
-                <Label htmlFor="speed">מהירות תכן (קמ"ש)</Label>
-                <Input 
-                  id="speed" 
-                  type="number" 
-                  value={speed} 
-                  min={0}
-                  max={120}
-                  onChange={e => handleSpeedChange(e.target.value)} 
-                  className="w-full" 
-                />
-              </div>
-
-              <WeightsPanel 
-                weights={weights} 
-                showWeights={showWeights} 
-                onWeightChange={updateWeight} 
-                onToggleWeights={() => setShowWeights(!showWeights)} 
-                onResetWeights={handleResetWeights} 
+            <div>
+              <Label htmlFor="speed">מהירות תכן (קמ"ש)</Label>
+              <Input 
+                id="speed" 
+                type="number" 
+                value={speed} 
+                min={0}
+                max={120}
+                onChange={e => handleSpeedChange(e.target.value)} 
+                className="w-full" 
               />
+            </div>
 
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <Label>צמתים</Label>
-                  <Button variant="outline" size="sm" onClick={handleAddIntersection} className="flex items-center gap-2">
-                    <Plus size={16} />
-                    הוסף צומת
-                  </Button>
-                </div>
-                
-                {intersections.map((intersection, index) => (
-                  <IntersectionInput 
+            <WeightsPanel 
+              weights={weights} 
+              showWeights={showWeights} 
+              onWeightChange={updateWeight} 
+              onToggleWeights={() => setShowWeights(!showWeights)} 
+              onResetWeights={handleResetWeights} 
+            />
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <Label>צמתים</Label>
+                <Button variant="outline" size="sm" onClick={handleAddIntersection} className="flex items-center gap-2">
+                  <Plus size={16} />
+                  הוסף צומת
+                </Button>
+              </div>
+              
+              {intersections.map((intersection, index) => (
+                <IntersectionInput 
                     key={intersection.id} 
                     intersection={intersection}
                     allIntersections={intersections} 
@@ -353,24 +353,24 @@ const Index = () => {
                       }
                     }} 
                   />
-                ))}
-              </div>
+              ))}
+            </div>
 
-              <div className="flex flex-wrap gap-4">
-                <Button variant="outline" onClick={handleShowExisting} className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white">
-                  <Play size={16} />
-                  צייר גל ירוק קיים
-                </Button>
+            <div className="flex flex-wrap gap-4">
+              <Button variant="outline" onClick={handleShowExisting} className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white">
+                <Play size={16} />
+                צייר גל ירוק קיים
+              </Button>
 
-                <Dialog open={showManualDialog} onOpenChange={setShowManualDialog}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white">
-                      <Hand size={16} />
-                      חישוב ידני
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
+              <Dialog open={showManualDialog} onOpenChange={setShowManualDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white">
+                    <Hand size={16} />
+                    חישוב ידני
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
                       <DialogTitle>הזנת היסטים ידנית</DialogTitle>
                       <DialogDescription>
                         הזן את ערכי ה-offset עבור כל צומת (בשניות).
@@ -401,26 +401,26 @@ const Index = () => {
                     <DialogFooter>
                       <Button onClick={handleManualCalculate}>חשב</Button>
                     </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                </DialogContent>
+              </Dialog>
 
-                <Button onClick={handleCalculate} className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white">
-                  חשב גל ירוק
-                  <ArrowRight className="mr-2" size={16} />
-                </Button>
-              </div>
+              <Button onClick={handleCalculate} className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white">
+                חשב גל ירוק
+                <ArrowRight className="mr-2" size={16} />
+              </Button>
             </div>
-          </Card>
+          </div>
+        </Card>
 
-          {results && (
-            <ResultsPanel 
-              results={results} 
-              mode={mode}
-              originalIntersections={intersections}
-              speed={speed}
-            />
-          )}
-        </div>
+        {/* Results panel will take full width */}
+        {results && (
+          <ResultsPanel 
+            results={results} 
+            mode={mode}
+            originalIntersections={intersections}
+            speed={speed}
+          />
+        )}
       </div>
     </div>
   );
