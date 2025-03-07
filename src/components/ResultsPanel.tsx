@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { MetricsTable } from "./MetricsTable";
 import { OptimizationCharts } from "./OptimizationCharts";
@@ -45,6 +44,24 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
       : comparisonResults.pairs_band_points;
   
   console.log("Using pair band points:", pairBandPoints);
+  
+  if (pairBandPoints && pairBandPoints.length > 0) {
+    pairBandPoints.forEach(pair => {
+      const upstreamBandwidth = pair.up.dest_high - pair.up.dest_low;
+      const downstreamBandwidth = pair.down.dest_high - pair.down.dest_low;
+      console.log(`=== Bandwidth Information ===`);
+      console.log(`Junction pair ${pair.from_junction}-${pair.to_junction}:`);
+      console.log(`  Upstream bandwidth: ${upstreamBandwidth.toFixed(2)} seconds`);
+      console.log(`  Downstream bandwidth: ${downstreamBandwidth.toFixed(2)} seconds`);
+      
+      if (upstreamBandwidth <= 0) {
+        console.log(`  Warning: Zero or negative upstream bandwidth for junction pair ${pair.from_junction}-${pair.to_junction}`);
+      }
+      if (downstreamBandwidth <= 0) {
+        console.log(`  Warning: Zero or negative downstream bandwidth for junction pair ${pair.from_junction}-${pair.to_junction}`);
+      }
+    });
+  }
   
   const chartIntersections: Intersection[] = comparisonResults.offsets.map((offset, idx) => {
     if (originalIntersections && idx < originalIntersections.length) {

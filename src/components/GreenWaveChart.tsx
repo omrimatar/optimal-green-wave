@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -295,144 +296,163 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         return false;
       };
 
-      const upOriginLowY = dimensions.height - 40 - yScale(pair.up.origin_low);
-      const upOriginHighY = dimensions.height - 40 - yScale(pair.up.origin_high);
-      const upDestLowY = dimensions.height - 40 - yScale(pair.up.dest_low);
-      const upDestHighY = dimensions.height - 40 - yScale(pair.up.dest_high);
+      // Check if upstream bandwidth is non-zero before drawing upstream lines
+      const upstreamBandwidth = pair.up.dest_high - pair.up.dest_low;
+      if (upstreamBandwidth > 0) {
+        const upOriginLowY = dimensions.height - 40 - yScale(pair.up.origin_low);
+        const upOriginHighY = dimensions.height - 40 - yScale(pair.up.origin_high);
+        const upDestLowY = dimensions.height - 40 - yScale(pair.up.dest_low);
+        const upDestHighY = dimensions.height - 40 - yScale(pair.up.dest_high);
 
-      if (!handleBoundaryCrossing(originX, upOriginLowY, destX, upDestLowY, 'up', 'low', 'קו תחתון')) {
-        const slope = (upDestLowY - upOriginLowY) / (destX - originX);
-        console.log(`Upstream low line slope: ${slope}`);
-        
-        lines.push(
-          <line
-            key={`up-low-${index}`}
-            x1={originX}
-            y1={upOriginLowY}
-            x2={destX}
-            y2={upDestLowY}
-            stroke="#4ADE80"
-            strokeWidth={2}
-            strokeDasharray="none"
-            onMouseEnter={(e) => {
-              const content = (
-                <div>
-                  <p>כיוון: עם הזרם</p>
-                  <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                  <p>נקודה תחתונה</p>
-                  <p>שיפוע: {Math.abs(slope).toFixed(2)}</p>
-                </div>
-              );
-              handleShowTooltip(e.clientX, e.clientY, content);
-            }}
-            onMouseLeave={handleHideTooltip}
-          />
-        );
-      }
+        console.log(`Upstream bandwidth for ${pair.from_junction}->${pair.to_junction}: ${upstreamBandwidth.toFixed(2)}`);
 
-      if (!handleBoundaryCrossing(originX, upOriginHighY, destX, upDestHighY, 'up', 'high', 'קו עליון')) {
-        const slope = (upDestHighY - upOriginHighY) / (destX - originX);
-        console.log(`Upstream high line slope: ${slope}`);
-        
-        lines.push(
-          <line
-            key={`up-high-${index}`}
-            x1={originX}
-            y1={upOriginHighY}
-            x2={destX}
-            y2={upDestHighY}
-            stroke="#4ADE80"
-            strokeWidth={2}
-            strokeDasharray="none"
-            onMouseEnter={(e) => {
-              const content = (
-                <div>
-                  <p>כיוון: עם הזרם</p>
-                  <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                  <p>נקודה עליונה</p>
-                  <p>שיפוע: {Math.abs(slope).toFixed(2)}</p>
-                </div>
-              );
-              handleShowTooltip(e.clientX, e.clientY, content);
-            }}
-            onMouseLeave={handleHideTooltip}
-          />
-        );
-      }
-
-      const downOriginLowY = dimensions.height - 40 - yScale(pair.down.origin_low);
-      const downOriginHighY = dimensions.height - 40 - yScale(pair.down.origin_high);
-      const downDestLowY = dimensions.height - 40 - yScale(pair.down.dest_low);
-      const downDestHighY = dimensions.height - 40 - yScale(pair.down.dest_high);
-      
-      console.log(`Downstream low line: (${destX}, ${downOriginLowY}) to (${originX}, ${downDestLowY})`);
-      
-      if (!handleBoundaryCrossing(destX, downOriginLowY, originX, downDestLowY, 'down', 'low', 'קו תחתון')) {
-        const slope = (downOriginLowY - downDestLowY) / (destX - originX);
-        console.log(`Downstream low line slope: ${slope}`);
-        
-        if (slope >= 0) {
-          console.warn("WARNING: Downstream low line has incorrect slope (vehicles moving backward in time)");
+        if (!handleBoundaryCrossing(originX, upOriginLowY, destX, upDestLowY, 'up', 'low', 'קו תחתון')) {
+          const slope = (upDestLowY - upOriginLowY) / (destX - originX);
+          console.log(`Upstream low line slope: ${slope}`);
+          
+          lines.push(
+            <line
+              key={`up-low-${index}`}
+              x1={originX}
+              y1={upOriginLowY}
+              x2={destX}
+              y2={upDestLowY}
+              stroke="#4ADE80"
+              strokeWidth={2}
+              strokeDasharray="none"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם</p>
+                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                    <p>נקודה תחתונה</p>
+                    <p>שיפוע: {Math.abs(slope).toFixed(2)}</p>
+                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
         }
-        
-        lines.push(
-          <line
-            key={`down-low-${index}`}
-            x1={destX}
-            y1={downOriginLowY}
-            x2={originX}
-            y2={downDestLowY}
-            stroke="#60A5FA"
-            strokeWidth={2}
-            strokeDasharray="none"
-            onMouseEnter={(e) => {
-              const content = (
-                <div>
-                  <p>כיוון: נגד הזרם</p>
-                  <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                  <p>נקודה תחתונה</p>
-                  <p>שיפוע: {Math.abs(slope).toFixed(2)}</p>
-                </div>
-              );
-              handleShowTooltip(e.clientX, e.clientY, content);
-            }}
-            onMouseLeave={handleHideTooltip}
-          />
-        );
+
+        if (!handleBoundaryCrossing(originX, upOriginHighY, destX, upDestHighY, 'up', 'high', 'קו עליון')) {
+          const slope = (upDestHighY - upOriginHighY) / (destX - originX);
+          console.log(`Upstream high line slope: ${slope}`);
+          
+          lines.push(
+            <line
+              key={`up-high-${index}`}
+              x1={originX}
+              y1={upOriginHighY}
+              x2={destX}
+              y2={upDestHighY}
+              stroke="#4ADE80"
+              strokeWidth={2}
+              strokeDasharray="none"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם</p>
+                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                    <p>נקודה עליונה</p>
+                    <p>שיפוע: {Math.abs(slope).toFixed(2)}</p>
+                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+        }
+      } else {
+        console.log(`Skipping upstream lines for ${pair.from_junction}->${pair.to_junction} due to zero bandwidth`);
       }
 
-      if (!handleBoundaryCrossing(destX, downOriginHighY, originX, downDestHighY, 'down', 'high', 'קו עליון')) {
-        const slope = (downOriginHighY - downDestHighY) / (destX - originX);
-        console.log(`Downstream high line slope: ${slope}`);
+      // Check if downstream bandwidth is non-zero before drawing downstream lines
+      const downstreamBandwidth = pair.down.dest_high - pair.down.dest_low;
+      if (downstreamBandwidth > 0) {
+        const downOriginLowY = dimensions.height - 40 - yScale(pair.down.origin_low);
+        const downOriginHighY = dimensions.height - 40 - yScale(pair.down.origin_high);
+        const downDestLowY = dimensions.height - 40 - yScale(pair.down.dest_low);
+        const downDestHighY = dimensions.height - 40 - yScale(pair.down.dest_high);
         
-        if (slope >= 0) {
-          console.warn("WARNING: Downstream high line has incorrect slope (vehicles moving backward in time)");
+        console.log(`Downstream bandwidth for ${pair.to_junction}->${pair.from_junction}: ${downstreamBandwidth.toFixed(2)}`);
+        console.log(`Downstream low line: (${destX}, ${downOriginLowY}) to (${originX}, ${downDestLowY})`);
+        
+        if (!handleBoundaryCrossing(destX, downOriginLowY, originX, downDestLowY, 'down', 'low', 'קו תחתון')) {
+          const slope = (downOriginLowY - downDestLowY) / (destX - originX);
+          console.log(`Downstream low line slope: ${slope}`);
+          
+          if (slope >= 0) {
+            console.warn("WARNING: Downstream low line has incorrect slope (vehicles moving backward in time)");
+          }
+          
+          lines.push(
+            <line
+              key={`down-low-${index}`}
+              x1={destX}
+              y1={downOriginLowY}
+              x2={originX}
+              y2={downDestLowY}
+              stroke="#60A5FA"
+              strokeWidth={2}
+              strokeDasharray="none"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם</p>
+                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                    <p>נקודה תחתונה</p>
+                    <p>שיפוע: {Math.abs(slope).toFixed(2)}</p>
+                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
         }
-        
-        lines.push(
-          <line
-            key={`down-high-${index}`}
-            x1={destX}
-            y1={downOriginHighY}
-            x2={originX}
-            y2={downDestHighY}
-            stroke="#60A5FA"
-            strokeWidth={2}
-            strokeDasharray="none"
-            onMouseEnter={(e) => {
-              const content = (
-                <div>
-                  <p>כיוון: נגד הזרם</p>
-                  <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                  <p>נקודה עליונה</p>
-                  <p>שיפוע: {Math.abs(slope).toFixed(2)}</p>
-                </div>
-              );
-              handleShowTooltip(e.clientX, e.clientY, content);
-            }}
-            onMouseLeave={handleHideTooltip}
-          />
-        );
+
+        if (!handleBoundaryCrossing(destX, downOriginHighY, originX, downDestHighY, 'down', 'high', 'קו עליון')) {
+          const slope = (downOriginHighY - downDestHighY) / (destX - originX);
+          console.log(`Downstream high line slope: ${slope}`);
+          
+          if (slope >= 0) {
+            console.warn("WARNING: Downstream high line has incorrect slope (vehicles moving backward in time)");
+          }
+          
+          lines.push(
+            <line
+              key={`down-high-${index}`}
+              x1={destX}
+              y1={downOriginHighY}
+              x2={originX}
+              y2={downDestHighY}
+              stroke="#60A5FA"
+              strokeWidth={2}
+              strokeDasharray="none"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם</p>
+                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                    <p>נקודה עליונה</p>
+                    <p>שיפוע: {Math.abs(slope).toFixed(2)}</p>
+                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+        }
+      } else {
+        console.log(`Skipping downstream lines for ${pair.to_junction}->${pair.from_junction} due to zero bandwidth`);
       }
 
       return lines;
