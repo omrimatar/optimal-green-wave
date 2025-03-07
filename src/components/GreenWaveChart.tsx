@@ -1,6 +1,6 @@
+<lov-code>
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ArrowRight, ArrowLeft } from "lucide-react";
 import { GreenPhaseBar } from './GreenPhaseBar';
 import { GreenWaveTooltip } from './GreenWaveTooltip';
 import { type Intersection } from "@/types/optimization";
@@ -130,27 +130,63 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     return lines;
   };
 
-  const renderArrowhead = (
-    x1: number, 
-    y1: number, 
-    x2: number, 
-    y2: number, 
-    color: string,
-    direction: 'upstream' | 'downstream'
-  ) => {
-    const midX = (x1 + x2) / 2;
-    const midY = (y1 + y2) / 2;
-    
-    const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
-    
+  const renderArrowMarkers = () => {
     return (
-      <g transform={`translate(${midX}, ${midY}) rotate(${angle})`}>
-        {direction === 'upstream' ? (
-          <ArrowRight size={16} color="#10B981" strokeWidth={2} />
-        ) : (
-          <ArrowLeft size={16} color="#3B82F6" strokeWidth={2} />
-        )}
-      </g>
+      <defs>
+        {/* Upstream direction arrows */}
+        {/* Bottom line arrow - points upward */}
+        <marker 
+          id="upstream-bottom-arrow" 
+          markerWidth="10" 
+          markerHeight="10" 
+          refX="5" 
+          refY="2.5" 
+          orient="auto"
+          markerUnits="strokeWidth"
+        >
+          <path d="M0,5 L5,0 L10,5" stroke="#10B981" fill="none" strokeWidth="1.5" />
+        </marker>
+        
+        {/* Top line arrow - points downward */}
+        <marker 
+          id="upstream-top-arrow" 
+          markerWidth="10" 
+          markerHeight="10" 
+          refX="5" 
+          refY="7.5" 
+          orient="auto"
+          markerUnits="strokeWidth"
+        >
+          <path d="M0,5 L5,10 L10,5" stroke="#10B981" fill="none" strokeWidth="1.5" />
+        </marker>
+        
+        {/* Downstream direction arrows (opposite direction) */}
+        {/* Bottom line arrow - points upward */}
+        <marker 
+          id="downstream-bottom-arrow" 
+          markerWidth="10" 
+          markerHeight="10" 
+          refX="5" 
+          refY="2.5" 
+          orient="auto"
+          markerUnits="strokeWidth"
+        >
+          <path d="M0,5 L5,0 L10,5" stroke="#3B82F6" fill="none" strokeWidth="1.5" />
+        </marker>
+        
+        {/* Top line arrow - points downward */}
+        <marker 
+          id="downstream-top-arrow" 
+          markerWidth="10" 
+          markerHeight="10" 
+          refX="5" 
+          refY="7.5" 
+          orient="auto"
+          markerUnits="strokeWidth"
+        >
+          <path d="M0,5 L5,10 L10,5" stroke="#3B82F6" fill="none" strokeWidth="1.5" />
+        </marker>
+      </defs>
     );
   };
 
@@ -184,6 +220,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         intersections[destIdx].cycleTime || 90
       );
       
+      // Upstream lines (green)
       if (upstreamBandwidth > 0) {
         const upOriginLowY = dimensions.height - 40 - yScale(pair.up.origin_low);
         const upOriginHighY = dimensions.height - 40 - yScale(pair.up.origin_high);
@@ -192,15 +229,17 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         
         const upLowWrapsAround = pair.up.dest_low < pair.up.origin_low;
         const upHighWrapsAround = pair.up.dest_high < pair.up.origin_high;
-
+        
         console.log(`Upstream low line: origin=${pair.up.origin_low.toFixed(2)}, dest=${pair.up.dest_low.toFixed(2)}, wraps=${upLowWrapsAround}`);
         console.log(`Upstream high line: origin=${pair.up.origin_high.toFixed(2)}, dest=${pair.up.dest_high.toFixed(2)}, wraps=${upHighWrapsAround}`);
         
+        // Draw lower boundary line (with upward arrow)
         if (upLowWrapsAround) {
           const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
           const slope = (upCycleEndY - upOriginLowY) / (destX - originX);
           const xAtCycleEnd = originX + (upCycleEndY - upOriginLowY) / slope;
           
+          // First part of wrapped line
           lines.push(
             <React.Fragment key={`up-low-part1-${index}`}>
               <line
@@ -211,6 +250,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#4ADE80"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#upstream-bottom-arrow)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -224,12 +264,12 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(originX, upOriginLowY, xAtCycleEnd, upCycleEndY, "#4ADE80", "upstream")}
             </React.Fragment>
           );
           
           const upCycleStartY = dimensions.height - 40 - yScale(0);
           
+          // Second part of wrapped line
           lines.push(
             <React.Fragment key={`up-low-part2-${index}`}>
               <line
@@ -240,6 +280,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#4ADE80"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#upstream-bottom-arrow)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -253,12 +294,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(xAtCycleEnd, upCycleStartY, destX, upDestLowY, "#4ADE80", "upstream")}
             </React.Fragment>
           );
         } else {
-          const slope = (upDestLowY - upOriginLowY) / (destX - originX);
-          
+          // Non-wrapped line
           lines.push(
             <React.Fragment key={`up-low-${index}`}>
               <line
@@ -269,6 +308,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#4ADE80"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#upstream-bottom-arrow)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -282,16 +322,17 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(originX, upOriginLowY, destX, upDestLowY, "#4ADE80", "upstream")}
             </React.Fragment>
           );
         }
         
+        // Draw upper boundary line (with downward arrow)
         if (upHighWrapsAround) {
           const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
           const slope = (upCycleEndY - upOriginHighY) / (destX - originX);
           const xAtCycleEnd = originX + (upCycleEndY - upOriginHighY) / slope;
           
+          // First part of wrapped line
           lines.push(
             <React.Fragment key={`up-high-part1-${index}`}>
               <line
@@ -302,6 +343,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#4ADE80"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#upstream-top-arrow)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -315,12 +357,12 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(originX, upOriginHighY, xAtCycleEnd, upCycleEndY, "#4ADE80", "upstream")}
             </React.Fragment>
           );
           
           const upCycleStartY = dimensions.height - 40 - yScale(0);
           
+          // Second part of wrapped line
           lines.push(
             <React.Fragment key={`up-high-part2-${index}`}>
               <line
@@ -331,6 +373,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#4ADE80"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#upstream-top-arrow)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -344,12 +387,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(xAtCycleEnd, upCycleStartY, destX, upDestHighY, "#4ADE80", "upstream")}
             </React.Fragment>
           );
         } else {
-          const slope = (upDestHighY - upOriginHighY) / (destX - originX);
-          
+          // Non-wrapped line
           lines.push(
             <React.Fragment key={`up-high-${index}`}>
               <line
@@ -360,6 +401,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#4ADE80"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#upstream-top-arrow)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -373,7 +415,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(originX, upOriginHighY, destX, upDestHighY, "#4ADE80", "upstream")}
             </React.Fragment>
           );
         }
@@ -381,6 +422,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         console.log(`Skipping upstream lines for ${pair.from_junction}->${pair.to_junction} due to zero or negative bandwidth: ${upstreamBandwidth}`);
       }
 
+      // Downstream lines (blue) - in opposite direction
       if (downstreamBandwidth > 0) {
         const downOriginLowY = dimensions.height - 40 - yScale(pair.down.origin_low);
         const downOriginHighY = dimensions.height - 40 - yScale(pair.down.origin_high);
@@ -393,6 +435,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         console.log(`Downstream low line: origin=${pair.down.origin_low.toFixed(2)}, dest=${pair.down.dest_low.toFixed(2)}, wraps=${downLowWrapsAround}`);
         console.log(`Downstream high line: origin=${pair.down.origin_high.toFixed(2)}, dest=${pair.down.dest_high.toFixed(2)}, wraps=${downHighWrapsAround}`);
         
+        // Draw lower boundary line (with upward arrow)
         if (downLowWrapsAround) {
           const totalTimeDiff = cycleTime - pair.down.origin_low + pair.down.dest_low;
           
@@ -406,19 +449,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           const downCycleEndY = dimensions.height - 40 - yScale(cycleTime);
           const downCycleStartY = dimensions.height - 40 - yScale(0);
           
-          console.log(`Downstream wrap calculation for low line:`, {
-            totalTimeDiff,
-            timeToCycleEnd,
-            proportionToCycleEnd,
-            distanceToTravel,
-            distanceToCycleEnd,
-            xAtCycleEnd,
-            downOriginLowY,
-            downCycleEndY,
-            downCycleStartY,
-            downDestLowY
-          });
-          
+          // First part of wrapped line
           lines.push(
             <React.Fragment key={`down-low-part1-${index}`}>
               <line
@@ -429,6 +460,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#60A5FA"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#downstream-bottom-arrow)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -442,10 +474,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(destX, downOriginLowY, xAtCycleEnd, downCycleEndY, "#60A5FA", "downstream")}
             </React.Fragment>
           );
           
+          // Second part of wrapped line
           lines.push(
             <React.Fragment key={`down-low-part2-${index}`}>
               <line
@@ -456,6 +488,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#60A5FA"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#downstream-bottom-arrow)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -469,10 +502,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(xAtCycleEnd, downCycleStartY, originX, downDestLowY, "#60A5FA", "downstream")}
             </React.Fragment>
           );
         } else {
+          // Non-wrapped line
           lines.push(
             <React.Fragment key={`down-low-${index}`}>
               <line
@@ -483,6 +516,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#60A5FA"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#downstream-bottom-arrow)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -496,11 +530,11 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(destX, downOriginLowY, originX, downDestLowY, "#60A5FA", "downstream")}
             </React.Fragment>
           );
         }
         
+        // Draw upper boundary line (with downward arrow)
         if (downHighWrapsAround) {
           const totalTimeDiff = cycleTime - pair.down.origin_high + pair.down.dest_high;
           
@@ -514,19 +548,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           const downCycleEndY = dimensions.height - 40 - yScale(cycleTime);
           const downCycleStartY = dimensions.height - 40 - yScale(0);
           
-          console.log(`Downstream wrap calculation for high line:`, {
-            totalTimeDiff,
-            timeToCycleEnd,
-            proportionToCycleEnd,
-            distanceToTravel,
-            distanceToCycleEnd,
-            xAtCycleEnd,
-            downOriginHighY,
-            downCycleEndY,
-            downCycleStartY,
-            downDestHighY
-          });
-          
+          // First part of wrapped line
           lines.push(
             <React.Fragment key={`down-high-part1-${index}`}>
               <line
@@ -537,6 +559,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#60A5FA"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#downstream-top-arrow)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -550,10 +573,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(destX, downOriginHighY, xAtCycleEnd, downCycleEndY, "#60A5FA", "downstream")}
             </React.Fragment>
           );
           
+          // Second part of wrapped line
           lines.push(
             <React.Fragment key={`down-high-part2-${index}`}>
               <line
@@ -564,6 +587,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#60A5FA"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#downstream-top-arrow)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -577,10 +601,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(xAtCycleEnd, downCycleStartY, originX, downDestHighY, "#60A5FA", "downstream")}
             </React.Fragment>
           );
         } else {
+          // Non-wrapped line
           lines.push(
             <React.Fragment key={`down-high-${index}`}>
               <line
@@ -591,6 +615,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#60A5FA"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#downstream-top-arrow)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -604,7 +629,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
               />
-              {renderArrowhead(destX, downOriginHighY, originX, downDestHighY, "#60A5FA", "downstream")}
             </React.Fragment>
           );
         }
@@ -616,6 +640,30 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     });
   };
 
+  const renderArrowhead = (
+    x1: number, 
+    y1: number, 
+    x2: number, 
+    y2: number, 
+    color: string,
+    direction: 'upstream' | 'downstream'
+  ) => {
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+    
+    const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
+    
+    return (
+      <g transform={`translate(${midX}, ${midY}) rotate(${angle})`}>
+        {direction === 'upstream' ? (
+          <ArrowRight size={16} color="#10B981" strokeWidth={2} />
+        ) : (
+          <ArrowLeft size={16} color="#3B82F6" strokeWidth={2} />
+        )}
+      </g>
+    );
+  };
+  
   return (
     <>
       <CardHeader>
@@ -628,6 +676,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             height={dimensions.height}
             className="overflow-visible w-full"
           >
+            {renderArrowMarkers()}
             {generateYGridLines()}
             {generateXGridLines()}
             
@@ -766,59 +815,4 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 <g key={`x-tick-${i}`}>
                   <line 
                     x1={x} 
-                    y1={dimensions.height - 40} 
-                    x2={x} 
-                    y2={dimensions.height - 35} 
-                    stroke="black" 
-                    strokeWidth={1} 
-                  />
-                  <text 
-                    x={x} 
-                    y={dimensions.height - 20} 
-                    textAnchor="middle" 
-                    fontSize={12}
-                  >
-                    {intersection.distance}מ'
-                  </text>
-                </g>
-              );
-            })}
-
-            <text 
-              x={dimensions.width / 2} 
-              y={dimensions.height - 5} 
-              textAnchor="middle" 
-              fontSize={14}
-            >
-              מרחק (מטר)
-            </text>
-            <text 
-              x={15} 
-              y={dimensions.height / 2} 
-              textAnchor="middle" 
-              fontSize={14}
-              transform={`rotate(-90 15 ${dimensions.height / 2})`}
-            >
-              זמן (שניות)
-            </text>
-
-            <g transform={`translate(${dimensions.width - 100}, 20)`}>
-              <rect x={0} y={0} width={20} height={10} fill="#A7F3D0" rx={2} />
-              <text x={24} y={8} fontSize={10}>עם הזרם</text>
-              <rect x={0} y={15} width={20} height={10} fill="#93C5FD" rx={2} />
-              <text x={24} y={23} fontSize={10}>נגד הזרם</text>
-            </g>
-          </svg>
-          
-          {tooltipInfo.visible && (
-            <GreenWaveTooltip
-              x={tooltipInfo.x}
-              y={tooltipInfo.y}
-              content={tooltipInfo.content}
-            />
-          )}
-        </div>
-      </CardContent>
-    </>
-  );
-};
+                    y1={dimensions.height - 
