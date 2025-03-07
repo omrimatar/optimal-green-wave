@@ -375,26 +375,31 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         
         // Draw lower line (downstream)
         if (downLowWrapsAround) {
-          // FIX: Calculate slope correctly for downstream lines
-          const distanceX = originX - destX; // For downstream, we go from destX to originX
+          // FIXED: Use proper slope calculation for diagonal downstream line
+          // Calculate the time and distance differences
+          const timeDiff = cycleTime - pair.down.origin_low;
+          const distanceProportion = (originX - destX) / (pair.down.origin_low - pair.down.dest_low); 
           
-          // Draw first part: from origin to cycle end
+          // Calculate the x-coordinate at the cycle time boundary
+          const distanceToIntersection = timeDiff * distanceProportion;
+          const xAtCycleEnd = destX + distanceToIntersection;
+          
+          // Calculate Y values
           const downCycleEndY = dimensions.height - 40 - yScale(cycleTime);
-          // Note: For downstream, slope = rise/run where run is originX - destX
-          const slope = (downCycleEndY - downOriginLowY) / distanceX;
-          
-          // Calculate intersection with cycle end (vertical line at y=cycleTime)
-          // Using point-slope form of line equation to find x where y = cycleTime
-          const xAtCycleEnd = destX + (downCycleEndY - downOriginLowY) / slope;
+          const downCycleStartY = dimensions.height - 40 - yScale(0);
           
           console.log(`Downstream wrap calculation for low line:`, {
-            distanceX,
-            originY: downOriginLowY,
-            cycleEndY: downCycleEndY,
-            slope,
-            xAtCycleEnd
+            timeDiff,
+            distanceProportion,
+            distanceToIntersection,
+            xAtCycleEnd,
+            downOriginLowY,
+            downCycleEndY,
+            downCycleStartY,
+            downDestLowY
           });
           
+          // Draw first part: from origin to cycle end
           lines.push(
             <line
               key={`down-low-part1-${index}`}
@@ -421,9 +426,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           );
           
           // Draw second part: from cycle start to destination
-          const downCycleStartY = dimensions.height - 40 - yScale(0);
+          // Calculate the actual time and distance for the second part
+          const remainingTime = pair.down.dest_low;
+          const remainingDistanceProportion = (originX - xAtCycleEnd) / remainingTime;
           
-          // Continue from same X position but at y=0
           lines.push(
             <line
               key={`down-low-part2-${index}`}
@@ -478,24 +484,31 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         
         // Draw upper line (downstream)
         if (downHighWrapsAround) {
-          // FIX: Calculate slope correctly for downstream high line
-          const distanceX = originX - destX;
+          // FIXED: Use proper slope calculation for diagonal downstream high line
+          // Calculate the time and distance differences
+          const timeDiff = cycleTime - pair.down.origin_high;
+          const distanceProportion = (originX - destX) / (pair.down.origin_high - pair.down.dest_high);
           
-          // Draw first part: from origin to cycle end
+          // Calculate the x-coordinate at the cycle time boundary
+          const distanceToIntersection = timeDiff * distanceProportion;
+          const xAtCycleEnd = destX + distanceToIntersection;
+          
+          // Calculate Y values
           const downCycleEndY = dimensions.height - 40 - yScale(cycleTime);
-          const slope = (downCycleEndY - downOriginHighY) / distanceX;
-          
-          // Calculate intersection with cycle end line
-          const xAtCycleEnd = destX + (downCycleEndY - downOriginHighY) / slope;
+          const downCycleStartY = dimensions.height - 40 - yScale(0);
           
           console.log(`Downstream wrap calculation for high line:`, {
-            distanceX,
-            originY: downOriginHighY,
-            cycleEndY: downCycleEndY,
-            slope,
-            xAtCycleEnd
+            timeDiff,
+            distanceProportion,
+            distanceToIntersection,
+            xAtCycleEnd,
+            downOriginHighY,
+            downCycleEndY,
+            downCycleStartY,
+            downDestHighY
           });
           
+          // Draw first part: from origin to cycle end
           lines.push(
             <line
               key={`down-high-part1-${index}`}
@@ -522,7 +535,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           );
           
           // Draw second part: from cycle start to destination
-          const downCycleStartY = dimensions.height - 40 - yScale(0);
+          // Calculate the actual time and distance for the second part
+          const remainingTime = pair.down.dest_high;
+          const remainingDistanceProportion = (originX - xAtCycleEnd) / remainingTime;
           
           lines.push(
             <line
