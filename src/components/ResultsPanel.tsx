@@ -171,3 +171,4 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed }: Re
     </div>
   );
 };
+

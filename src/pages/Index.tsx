@@ -12,6 +12,7 @@ import { FileActions } from '@/components/FileActions';
 import { ResultsPanel } from '@/components/ResultsPanel';
 import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights } from '@/types/optimization';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
 const Index = () => {
   const [intersections, setIntersections] = useState<Intersection[]>([{
     id: 1,
@@ -51,31 +52,36 @@ const Index = () => {
   const [showWeights, setShowWeights] = useState(false);
   const [manualOffsets, setManualOffsets] = useState<number[]>([0, 0]);
   const [showManualDialog, setShowManualDialog] = useState(false);
+
+  const clearResults = () => {
+    setResults(null);
+    setMode('calculate');
+  };
+
   const handleSpeedChange = (value: string) => {
     const numValue = parseInt(value);
     if (isNaN(numValue) || numValue < 0 || numValue > 120 || !Number.isInteger(numValue)) {
       toast.error("מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
       return;
     }
+    
     setSpeed(numValue);
+    
     const updatedIntersections = intersections.map(intersection => ({
       ...intersection,
       upstreamSpeed: numValue,
       downstreamSpeed: numValue
     }));
+    
     setIntersections(updatedIntersections);
-    if (mode === 'display') {
-      handleShowExisting();
-    } else if (mode === 'calculate') {
-      handleCalculate();
-    } else if (mode === 'manual') {
-      handleManualCalculate();
-    }
+    clearResults();
   };
+
   const handleAddIntersection = () => {
     const newId = Math.max(...intersections.map(i => i.id)) + 1;
     const lastIntersection = intersections[intersections.length - 1];
     const newDistance = lastIntersection.distance + 200;
+    
     const newIntersection: Intersection = {
       id: newId,
       distance: newDistance,
@@ -92,17 +98,13 @@ const Index = () => {
       upstreamSpeed: speed,
       downstreamSpeed: speed
     };
+    
     const newIntersections = [...intersections, newIntersection];
     setIntersections(newIntersections);
     setManualOffsets(prev => [...prev, 0]);
-    if (mode === 'display') {
-      handleShowExisting();
-    } else if (mode === 'calculate') {
-      handleCalculate();
-    } else if (mode === 'manual') {
-      handleManualCalculate();
-    }
+    clearResults();
   };
+
   const handleManualCalculate = async () => {
     try {
       const currentOffsets = [...manualOffsets];
@@ -113,11 +115,14 @@ const Index = () => {
         currentOffsets.pop();
       }
       currentOffsets[0] = 0;
+      
       const calculationResults = await calculateGreenWave(intersections, speed, weights, currentOffsets);
       console.log("Manual calculation results received:", calculationResults);
+      
       if (!calculationResults.manual_results) {
         throw new Error("No manual results received from calculation");
       }
+      
       setResults(calculationResults);
       setMode('manual');
       setShowManualDialog(false);
@@ -127,46 +132,56 @@ const Index = () => {
       toast.error("שגיאה בחישוב הגל הירוק במצב ידני");
     }
   };
+
   const handleCalculate = async () => {
     try {
       if (speed < 0 || speed > 120 || !Number.isInteger(speed)) {
         toast.error("מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
         return;
       }
+      
       for (const intersection of intersections) {
         if (intersection.distance < 0 || intersection.distance > 10000 || !Number.isInteger(intersection.distance)) {
           toast.error(`צומת ${intersection.id}: מרחק חייב להיות מספר שלם בין 0 ל-10000 מטר`);
           return;
         }
+        
         if (intersection.cycleTime < 0 || intersection.cycleTime > 300 || !Number.isInteger(intersection.cycleTime)) {
           toast.error(`צומת ${intersection.id}: זמן מחזור חייב להיות מספר שלם בין 0 ל-300 שניות`);
           return;
         }
+        
         if (intersection.upstreamSpeed !== undefined && (intersection.upstreamSpeed < 0 || intersection.upstreamSpeed > 120 || !Number.isInteger(intersection.upstreamSpeed))) {
           toast.error(`צומת ${intersection.id}: מהירות במעלה הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
         }
+        
         if (intersection.downstreamSpeed !== undefined && (intersection.downstreamSpeed < 0 || intersection.downstreamSpeed > 120 || !Number.isInteger(intersection.downstreamSpeed))) {
           toast.error(`צומת ${intersection.id}: מהירות במורד הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
         }
+        
         for (const phase of intersection.greenPhases) {
           if (phase.startTime < 0 || phase.startTime > intersection.cycleTime || !Number.isInteger(phase.startTime)) {
             toast.error(`צומת ${intersection.id}: זמן התחלה חייב להיות מספר שלם בין 0 ל-${intersection.cycleTime}`);
             return;
           }
+          
           if (phase.duration < 1 || phase.duration > intersection.cycleTime || !Number.isInteger(phase.duration)) {
             toast.error(`צומת ${intersection.id}: משך חייב להיות מספר שלם בין 1 ל-${intersection.cycleTime}`);
             return;
           }
         }
       }
+      
       const baseIntersections = intersections.map(intersection => ({
         ...intersection,
         offset: 0
       }));
+      
       const calculationResults = await calculateGreenWave(intersections, speed, weights);
       console.log("Calculation results received:", calculationResults);
+      
       setResults(calculationResults);
       setMode('calculate');
       toast.success("חישוב הגל הירוק הושלם בהצלחה");
@@ -175,36 +190,44 @@ const Index = () => {
       toast.error("שגיאה בחישוב הגל הירוק");
     }
   };
+
   const handleShowExisting = async () => {
     try {
       if (speed < 0 || speed > 120 || !Number.isInteger(speed)) {
         toast.error("מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
         return;
       }
+      
       for (const intersection of intersections) {
         if (intersection.distance < 0 || intersection.distance > 10000 || !Number.isInteger(intersection.distance)) {
           toast.error(`צומת ${intersection.id}: מרחק חייב להיות מספר שלם בין 0 ל-10000 מטר`);
           return;
         }
+        
         if (intersection.cycleTime < 0 || intersection.cycleTime > 300 || !Number.isInteger(intersection.cycleTime)) {
           toast.error(`צומת ${intersection.id}: זמן מחזור חייב להיות מספר שלם בין 0 ל-300 שניות`);
           return;
         }
+        
         if (intersection.upstreamSpeed !== undefined && (intersection.upstreamSpeed < 0 || intersection.upstreamSpeed > 120 || !Number.isInteger(intersection.upstreamSpeed))) {
           toast.error(`צומת ${intersection.id}: מהירות במעלה הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
         }
+        
         if (intersection.downstreamSpeed !== undefined && (intersection.downstreamSpeed < 0 || intersection.downstreamSpeed > 120 || !Number.isInteger(intersection.downstreamSpeed))) {
           toast.error(`צומת ${intersection.id}: מהירות במורד הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
         }
       }
+      
       const currentIntersections = intersections.map(intersection => ({
         ...intersection,
         offset: 0
       }));
+      
       const currentResults = await calculateGreenWave(currentIntersections, speed);
       console.log("Show existing results received:", currentResults);
+      
       setResults(currentResults);
       setMode('display');
       toast.success("הצגת הגל הירוק הקיים הושלמה בהצלחה");
@@ -213,13 +236,16 @@ const Index = () => {
       toast.error("שגיאה בהצגת הגל הירוק הקיים");
     }
   };
+
   const updateWeight = (category: keyof OptimizationWeights, value: number) => {
     const updatedWeights = {
       ...weights
     };
     updatedWeights[category] = value;
     setWeights(updatedWeights);
+    clearResults();
   };
+
   const handleLoadInput = (data: {
     speed: number;
     intersections: Intersection[];
@@ -228,55 +254,58 @@ const Index = () => {
       toast.error("הקובץ שנטען מכיל מהירות תכן שאינה חוקית. מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
       return;
     }
+    
     for (const intersection of data.intersections) {
       if (intersection.distance < 0 || intersection.distance > 10000 || !Number.isInteger(intersection.distance)) {
         toast.error(`הקובץ שנטען מכיל צומת עם מרחק לא חוקי. מרחק חייב להיות מספר שלם בין 0 ל-10000 מטר`);
         return;
       }
+      
       if (intersection.cycleTime < 0 || intersection.cycleTime > 300 || !Number.isInteger(intersection.cycleTime)) {
         toast.error(`הקובץ שנטען מכיל צומת עם זמן מחזור לא חוקי. זמן מחזור חייב להיות מספר שלם בין 0 ל-300 שניות`);
         return;
       }
+      
       for (const phase of intersection.greenPhases) {
         if (phase.startTime < 0 || phase.startTime > intersection.cycleTime || !Number.isInteger(phase.startTime)) {
           toast.error(`הקובץ שנטען מכיל צומת עם זמן התחלת פאזה לא חוקי. זמן התחלה חייב להיות מספר שלם בין 0 ל-${intersection.cycleTime}`);
           return;
         }
+        
         if (phase.duration < 1 || phase.duration > intersection.cycleTime || !Number.isInteger(phase.duration)) {
           toast.error(`הקובץ שנטען מכיל צומת עם משך פאזה לא חוקי. משך חייב להיות מספר שלם בין 1 ל-${intersection.cycleTime}`);
           return;
         }
       }
     }
+    
     for (const intersection of data.intersections) {
       if (intersection.upstreamSpeed !== undefined && (intersection.upstreamSpeed < 0 || intersection.upstreamSpeed > 120 || !Number.isInteger(intersection.upstreamSpeed))) {
         toast.error(`הקובץ שנטען מכיל צומת עם מהירות במעלה הזרם לא חוקית. מהירות חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
         return;
       }
+      
       if (intersection.downstreamSpeed !== undefined && (intersection.downstreamSpeed < 0 || intersection.downstreamSpeed > 120 || !Number.isInteger(intersection.downstreamSpeed))) {
         toast.error(`הקובץ שנטען מכיל צומת עם מהירות במורד הזרם לא חוקית. מהירות חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
         return;
       }
     }
+    
     setSpeed(data.speed);
     setIntersections(data.intersections);
     setManualOffsets(new Array(data.intersections.length).fill(0));
+    clearResults();
     toast.success("הקובץ נטען בהצלחה");
-    if (mode === 'display') {
-      handleShowExisting();
-    } else if (mode === 'calculate') {
-      handleCalculate();
-    } else if (mode === 'manual') {
-      handleManualCalculate();
-    }
   };
+
   const handleResetWeights = () => {
     setWeights(DEFAULT_WEIGHTS);
-    setResults(null);
-    setMode('calculate');
+    clearResults();
     toast.success("המשקולות אופסו לברירת המחדל");
   };
+
   console.log("Current results state:", results);
+
   return <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
       <div className="max-w-[1600px] mx-auto space-y-8 animate-fade-up">
         <div className="flex flex-col items-center justify-center space-y-4">
@@ -380,4 +409,5 @@ const Index = () => {
       </div>
     </div>;
 };
+
 export default Index;

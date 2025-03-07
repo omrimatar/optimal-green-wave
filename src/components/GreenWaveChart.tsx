@@ -125,8 +125,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     return lines;
   };
 
+  // Modified function to only render diagonal lines when a calculation has been performed
   const renderDiagonalLines = () => {
-    if (!pairBandPoints || pairBandPoints.length === 0) {
+    // Only show diagonal lines if pairBandPoints exist AND we're in one of the calculation modes
+    if (!pairBandPoints || pairBandPoints.length === 0 || mode === '') {
       return null;
     }
 
