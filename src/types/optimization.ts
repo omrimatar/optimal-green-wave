@@ -51,9 +51,10 @@ export const normalizeWeights = (
   
   updatedWeights[changedKey] = newValue;
   
-  // Get keys to adjust (excluding the changed key)
+  // Get keys to adjust (excluding the changed key and fixed keys)
+  const fixedKeys = ['corridor_up', 'corridor_down'];
   const keysToAdjust = Object.keys(updatedWeights).filter(
-    key => key !== changedKey
+    key => key !== changedKey && !fixedKeys.includes(key)
   ) as Array<keyof OptimizationWeights>;
   
   // Calculate sum of weights to adjust

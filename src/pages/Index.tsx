@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,7 +10,7 @@ import { ArrowRight, Hand, Play, Plus } from 'lucide-react';
 import { WeightsPanel } from '@/components/WeightsPanel';
 import { FileActions } from '@/components/FileActions';
 import { ResultsPanel } from '@/components/ResultsPanel';
-import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights } from '@/types/optimization';
+import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights, normalizeWeights } from '@/types/optimization';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const Index = () => {
@@ -244,10 +243,7 @@ const Index = () => {
   };
 
   const updateWeight = (category: keyof OptimizationWeights, value: number) => {
-    const updatedWeights = {
-      ...weights
-    };
-    updatedWeights[category] = value;
+    const updatedWeights = normalizeWeights(weights, category, value);
     setWeights(updatedWeights);
     clearResults();
   };
@@ -331,7 +327,13 @@ const Index = () => {
               <Input id="speed" type="number" value={speed} min={0} max={120} onChange={e => handleSpeedChange(e.target.value)} className="w-full" />
             </div>
 
-            <WeightsPanel weights={weights} showWeights={showWeights} onWeightChange={updateWeight} onToggleWeights={() => setShowWeights(!showWeights)} onResetWeights={handleResetWeights} />
+            <WeightsPanel 
+              weights={weights} 
+              showWeights={showWeights} 
+              onWeightChange={updateWeight} 
+              onToggleWeights={() => setShowWeights(!showWeights)} 
+              onResetWeights={handleResetWeights} 
+            />
 
             <div className="space-y-4">
               <div className="flex justify-between items-center">

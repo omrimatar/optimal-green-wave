@@ -35,10 +35,24 @@ export const WeightsPanel = ({
       return;
     }
     
+    // Make sure value is between 0 and 1
+    value = Math.max(0, Math.min(1, value));
+    
     // Normalize weights so they sum to 1
     const updatedWeights = normalizeWeights(localWeights, category, value);
+    
+    // Update local state immediately for responsive UI
     setLocalWeights(updatedWeights);
+    
+    // Notify parent component
     onWeightChange(category, value);
+  };
+  
+  const handleInputChange = (category: keyof OptimizationWeights, value: string) => {
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue)) {
+      handleWeightChange(category, numValue);
+    }
   };
   
   const getDisabled = (category: keyof OptimizationWeights) => {
@@ -118,11 +132,11 @@ export const WeightsPanel = ({
                 <Label>במעלה הזרם ({formatNumber(localWeights.overlap_up)})</Label>
                 <input 
                   type="number" 
-                  value={localWeights.overlap_up} 
+                  value={parseFloat(localWeights.overlap_up.toFixed(2))} 
                   min="0" 
                   max="1" 
                   step="0.1"
-                  onChange={e => handleWeightChange('overlap_up', Number(e.target.value))}
+                  onChange={e => handleInputChange('overlap_up', e.target.value)}
                   className="w-16 text-right border rounded px-2"
                 />
               </div>
@@ -137,11 +151,11 @@ export const WeightsPanel = ({
                 <Label>במורד הזרם ({formatNumber(localWeights.overlap_down)})</Label>
                 <input 
                   type="number" 
-                  value={localWeights.overlap_down} 
+                  value={parseFloat(localWeights.overlap_down.toFixed(2))} 
                   min="0" 
                   max="1" 
                   step="0.1"
-                  onChange={e => handleWeightChange('overlap_down', Number(e.target.value))}
+                  onChange={e => handleInputChange('overlap_down', e.target.value)}
                   className="w-16 text-right border rounded px-2"
                 />
               </div>
@@ -161,11 +175,11 @@ export const WeightsPanel = ({
                 <Label>במעלה הזרם ({formatNumber(localWeights.avg_delay_up)})</Label>
                 <input 
                   type="number" 
-                  value={localWeights.avg_delay_up} 
+                  value={parseFloat(localWeights.avg_delay_up.toFixed(2))} 
                   min="0" 
                   max="1" 
                   step="0.1"
-                  onChange={e => handleWeightChange('avg_delay_up', Number(e.target.value))}
+                  onChange={e => handleInputChange('avg_delay_up', e.target.value)}
                   className="w-16 text-right border rounded px-2"
                 />
               </div>
@@ -180,11 +194,11 @@ export const WeightsPanel = ({
                 <Label>במורד הזרם ({formatNumber(localWeights.avg_delay_down)})</Label>
                 <input 
                   type="number" 
-                  value={localWeights.avg_delay_down} 
+                  value={parseFloat(localWeights.avg_delay_down.toFixed(2))} 
                   min="0" 
                   max="1" 
                   step="0.1"
-                  onChange={e => handleWeightChange('avg_delay_down', Number(e.target.value))}
+                  onChange={e => handleInputChange('avg_delay_down', e.target.value)}
                   className="w-16 text-right border rounded px-2"
                 />
               </div>
@@ -204,11 +218,11 @@ export const WeightsPanel = ({
                 <Label>במעלה הזרם ({formatNumber(localWeights.max_delay_up)})</Label>
                 <input 
                   type="number" 
-                  value={localWeights.max_delay_up} 
+                  value={parseFloat(localWeights.max_delay_up.toFixed(2))} 
                   min="0" 
                   max="1" 
                   step="0.1"
-                  onChange={e => handleWeightChange('max_delay_up', Number(e.target.value))}
+                  onChange={e => handleInputChange('max_delay_up', e.target.value)}
                   className="w-16 text-right border rounded px-2"
                 />
               </div>
@@ -223,11 +237,11 @@ export const WeightsPanel = ({
                 <Label>במורד הזרם ({formatNumber(localWeights.max_delay_down)})</Label>
                 <input 
                   type="number" 
-                  value={localWeights.max_delay_down} 
+                  value={parseFloat(localWeights.max_delay_down.toFixed(2))} 
                   min="0" 
                   max="1" 
                   step="0.1"
-                  onChange={e => handleWeightChange('max_delay_down', Number(e.target.value))}
+                  onChange={e => handleInputChange('max_delay_down', e.target.value)}
                   className="w-16 text-right border rounded px-2"
                 />
               </div>
