@@ -103,8 +103,8 @@ export interface RunResult {
   
   // Added properties for green wave visualization
   cycle_times?: number[];
-  green_up?: Array<{start: number; duration: number; speed?: number}[]>;
-  green_down?: Array<{start: number; duration: number; speed?: number}[]>;
+  green_up?: Array<{start: number; duration: number}[]>;
+  green_down?: Array<{start: number; duration: number}[]>;
   speed?: number;
   
   status: string;
@@ -120,7 +120,6 @@ export interface LambdaResponse {
 export interface GreenPhase {
   start: number;
   duration: number;
-  speed?: number;
 }
 
 export interface Intersection {

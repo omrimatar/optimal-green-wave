@@ -13,15 +13,13 @@ interface IntersectionInputProps {
   onChange: (updated: Intersection) => void;
   onDelete: () => void;
   allIntersections: Intersection[]; // Added prop to access all intersections for validation
-  defaultSpeed: number; // Default speed from design speed
 }
 
 export const IntersectionInput = ({ 
   intersection, 
   onChange, 
   onDelete, 
-  allIntersections, 
-  defaultSpeed 
+  allIntersections 
 }: IntersectionInputProps) => {
   // Add local state to track if the distance input is being edited
   const [isEditingDistance, setIsEditingDistance] = useState(false);
@@ -136,31 +134,6 @@ export const IntersectionInput = ({
     });
   };
 
-  const handleSpeedChange = (direction: 'upstream' | 'downstream', value: string) => {
-    const numValue = parseInt(value);
-    
-    if (isNaN(numValue) || numValue < 0 || numValue > 120 || !Number.isInteger(numValue)) {
-      toast.error("מהירות חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
-      return;
-    }
-    
-    if (direction === 'upstream') {
-      onChange({
-        ...intersection,
-        upstreamSpeed: numValue
-      });
-    } else {
-      onChange({
-        ...intersection,
-        downstreamSpeed: numValue
-      });
-    }
-  };
-
-  // Get the effective speeds (either specific speeds or default)
-  const upstreamSpeed = intersection.upstreamSpeed !== undefined ? intersection.upstreamSpeed : defaultSpeed;
-  const downstreamSpeed = intersection.downstreamSpeed !== undefined ? intersection.downstreamSpeed : defaultSpeed;
-
   return (
     <Card className="p-4 space-y-4">
       <div className="flex justify-between items-center">
@@ -197,29 +170,6 @@ export const IntersectionInput = ({
             type="number"
             value={intersection.cycleTime}
             onChange={e => handleCycleTimeChange(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Speed inputs */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <Label>מהירות במעלה הזרם (קמ"ש)</Label>
-          <Input
-            type="number"
-            value={upstreamSpeed}
-            placeholder={defaultSpeed.toString()}
-            onChange={e => handleSpeedChange('upstream', e.target.value)}
-          />
-        </div>
-
-        <div>
-          <Label>מהירות במורד הזרם (קמ"ש)</Label>
-          <Input
-            type="number"
-            value={downstreamSpeed}
-            placeholder={defaultSpeed.toString()}
-            onChange={e => handleSpeedChange('downstream', e.target.value)}
           />
         </div>
       </div>

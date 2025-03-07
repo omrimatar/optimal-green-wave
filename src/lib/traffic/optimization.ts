@@ -45,12 +45,12 @@ export async function greenWaveOptimization(
           green_up: intersection.green_up.map(phase => ({
             start: phase.start,
             duration: phase.duration,
-            speed: phase.speed || data.travel.up.speed // Use phase-specific speed if available
+            speed: data.travel.up.speed
           })),
           green_down: intersection.green_down.map(phase => ({
             start: phase.start,
             duration: phase.duration,
-            speed: phase.speed || data.travel.down.speed // Use phase-specific speed if available
+            speed: data.travel.down.speed
           })),
           cycle: intersection.cycle_up || intersection.cycle_down || 90
         }))
