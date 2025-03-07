@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -125,10 +124,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     return lines;
   };
 
-  // Modified function to only render diagonal lines when a calculation has been performed
   const renderDiagonalLines = () => {
-    // Only show diagonal lines if pairBandPoints exist AND we're in one of the calculation modes
-    if (!pairBandPoints || pairBandPoints.length === 0 || mode === '') {
+    if (!pairBandPoints || pairBandPoints.length === 0) {
       return null;
     }
 
@@ -150,13 +147,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       const upDestLowY = dimensions.height - 40 - yScale(pair.up.dest_low);
       const upDestHighY = dimensions.height - 40 - yScale(pair.up.dest_high);
 
-      // Check if low point needs to be wrapped
       if (pair.up.origin_low > pair.up.dest_low) {
-        // Calculate intersection with cycle time boundary for wrapping (upstream low)
         const ratio = (maxCycleTime - pair.up.origin_low) / ((pair.up.dest_low + maxCycleTime) - pair.up.origin_low);
         const intersectX = originX + ratio * (destX - originX);
         
-        // Draw first segment to the cycle time boundary
         upLines.push(
           <line
             key={`up-low-part1-${index}`}
@@ -181,7 +175,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           />
         );
         
-        // Draw second segment from 0 to destination
         upLines.push(
           <line
             key={`up-low-part2-${index}`}
@@ -206,7 +199,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           />
         );
       } else {
-        // Normal case - no wrapping needed
         upLines.push(
           <line
             key={`up-low-${index}`}
@@ -232,13 +224,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         );
       }
 
-      // Check if high point needs to be wrapped
       if (pair.up.origin_high > pair.up.dest_high) {
-        // Calculate intersection with cycle time boundary for wrapping (upstream high)
         const ratio = (maxCycleTime - pair.up.origin_high) / ((pair.up.dest_high + maxCycleTime) - pair.up.origin_high);
         const intersectX = originX + ratio * (destX - originX);
         
-        // Draw first segment to the cycle time boundary
         upLines.push(
           <line
             key={`up-high-part1-${index}`}
@@ -263,7 +252,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           />
         );
         
-        // Draw second segment from 0 to destination
         upLines.push(
           <line
             key={`up-high-part2-${index}`}
@@ -288,7 +276,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           />
         );
       } else {
-        // Normal case - no wrapping needed
         upLines.push(
           <line
             key={`up-high-${index}`}
@@ -320,13 +307,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       const downDestLowY = dimensions.height - 40 - yScale(pair.down.dest_low);
       const downDestHighY = dimensions.height - 40 - yScale(pair.down.dest_high);
 
-      // Check if low point needs to be wrapped
       if (pair.down.origin_low > pair.down.dest_low) {
-        // Calculate intersection with cycle time boundary for wrapping (downstream low)
         const ratio = (maxCycleTime - pair.down.origin_low) / ((pair.down.dest_low + maxCycleTime) - pair.down.origin_low);
         const intersectX = destX + ratio * (originX - destX);
         
-        // Draw first segment to the cycle time boundary
         downLines.push(
           <line
             key={`down-low-part1-${index}`}
@@ -351,7 +335,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           />
         );
         
-        // Draw second segment from 0 to destination
         downLines.push(
           <line
             key={`down-low-part2-${index}`}
@@ -376,7 +359,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           />
         );
       } else {
-        // Normal case - no wrapping needed
         downLines.push(
           <line
             key={`down-low-${index}`}
@@ -402,13 +384,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         );
       }
 
-      // Check if high point needs to be wrapped
       if (pair.down.origin_high > pair.down.dest_high) {
-        // Calculate intersection with cycle time boundary for wrapping (downstream high)
         const ratio = (maxCycleTime - pair.down.origin_high) / ((pair.down.dest_high + maxCycleTime) - pair.down.origin_high);
         const intersectX = destX + ratio * (originX - destX);
         
-        // Draw first segment to the cycle time boundary
         downLines.push(
           <line
             key={`down-high-part1-${index}`}
@@ -433,7 +412,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           />
         );
         
-        // Draw second segment from 0 to destination
         downLines.push(
           <line
             key={`down-high-part2-${index}`}
@@ -458,7 +436,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           />
         );
       } else {
-        // Normal case - no wrapping needed
         downLines.push(
           <line
             key={`down-high-${index}`}
@@ -606,7 +583,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               });
             })}
 
-            {/* Move Y-axis ticks (labels) to render on top of the bars */}
             {Array.from({ length: 5 }).map((_, i) => {
               const value = (maxCycleTime / 4) * i;
               const y = dimensions.height - 40 - yScale(value);
