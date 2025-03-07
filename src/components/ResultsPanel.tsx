@@ -29,6 +29,7 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
   console.log("Rendering ResultsPanel with mode:", mode);
   console.log("Original intersections:", originalIntersections);
   console.log("Original speed:", speed);
+  console.log("Calculation performed:", calculationPerformed);
 
   const comparisonResults = mode === 'manual' 
     ? results.manual_results! 

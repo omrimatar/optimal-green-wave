@@ -144,18 +144,35 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       const destX = 40 + xScale(intersections[destIdx].distance);
       const lines = [];
 
-      // Helper function to handle line crossing cycle boundaries
-      const handleBoundaryCrossing = (x1: number, y1: number, x2: number, y2: number, direction: 'up' | 'down', lineType: 'low' | 'high', description: string) => {
+      const handleBoundaryCrossing = (
+        x1: number, 
+        y1: number, 
+        x2: number, 
+        y2: number, 
+        direction: 'up' | 'down', 
+        lineType: 'low' | 'high', 
+        description: string
+      ) => {
         const chartTopY = 40; // Top boundary Y coordinate
         const chartBottomY = dimensions.height - 40; // Bottom boundary Y coordinate
-        const slope = (y2 - y1) / (x2 - x1);
         
-        // Check if line crosses top boundary (y=cycle time)
+        const slope = direction === 'up' ? 
+          (y2 - y1) / (x2 - x1) : // Upstream: positive slope
+          (y1 - y2) / (x1 - x2);  // Downstream: positive slope but reversed direction
+        
+        const actualSlope = direction === 'up' ? slope : -slope;
+        
+        console.log(`Line ${direction} ${lineType}: Slope = ${actualSlope}`);
+        
         if ((y1 < chartTopY && y2 > chartTopY) || (y1 > chartTopY && y2 < chartTopY)) {
-          // Calculate intersection with top boundary
-          const xAtTop = x1 + (chartTopY - y1) / slope;
+          let xAtTop;
           
-          // Add line from starting point to top boundary
+          if (direction === 'up') {
+            xAtTop = x1 + (chartTopY - y1) / slope;
+          } else {
+            xAtTop = x1 - (chartTopY - y1) / slope;
+          }
+          
           lines.push(
             <line
               key={`${direction}-${lineType}-top1-${index}`}
@@ -173,6 +190,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>{direction === 'up' ? `מצומת ${pair.from_junction} לצומת ${pair.to_junction}` : 
                           `מצומת ${pair.to_junction} לצומת ${pair.from_junction}`}</p>
                     <p>נקודה {lineType === 'low' ? 'תחתונה' : 'עליונה'} - חלק 1 ({description})</p>
+                    <p>שיפוע: {Math.abs(actualSlope).toFixed(2)}</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
@@ -181,7 +199,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             />
           );
           
-          // Add line from bottom boundary to end point
           lines.push(
             <line
               key={`${direction}-${lineType}-top2-${index}`}
@@ -199,6 +216,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>{direction === 'up' ? `מצומת ${pair.from_junction} לצומת ${pair.to_junction}` : 
                           `מצומת ${pair.to_junction} לצומת ${pair.from_junction}`}</p>
                     <p>נקודה {lineType === 'low' ? 'תחתונה' : 'עליונה'} - חלק 2 ({description})</p>
+                    <p>שיפוע: {Math.abs(actualSlope).toFixed(2)}</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
@@ -210,12 +228,15 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           return true;
         }
         
-        // Check if line crosses bottom boundary (y=0)
         if ((y1 < chartBottomY && y2 > chartBottomY) || (y1 > chartBottomY && y2 < chartBottomY)) {
-          // Calculate intersection with bottom boundary
-          const xAtBottom = x1 + (chartBottomY - y1) / slope;
+          let xAtBottom;
           
-          // Add line from starting point to bottom boundary
+          if (direction === 'up') {
+            xAtBottom = x1 + (chartBottomY - y1) / slope;
+          } else {
+            xAtBottom = x1 - (chartBottomY - y1) / slope;
+          }
+          
           lines.push(
             <line
               key={`${direction}-${lineType}-bottom1-${index}`}
@@ -233,6 +254,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>{direction === 'up' ? `מצומת ${pair.from_junction} לצומת ${pair.to_junction}` : 
                           `מצומת ${pair.to_junction} לצומת ${pair.from_junction}`}</p>
                     <p>נקודה {lineType === 'low' ? 'תחתונה' : 'עליונה'} - חלק 1 ({description})</p>
+                    <p>שיפוע: {Math.abs(actualSlope).toFixed(2)}</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
@@ -241,7 +263,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             />
           );
           
-          // Add line from top boundary to end point
           lines.push(
             <line
               key={`${direction}-${lineType}-bottom2-${index}`}
@@ -259,6 +280,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>{direction === 'up' ? `מצומת ${pair.from_junction} לצומת ${pair.to_junction}` : 
                           `מצומת ${pair.to_junction} לצומת ${pair.from_junction}`}</p>
                     <p>נקודה {lineType === 'low' ? 'תחתונה' : 'עליונה'} - חלק 2 ({description})</p>
+                    <p>שיפוע: {Math.abs(actualSlope).toFixed(2)}</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
@@ -273,15 +295,15 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         return false;
       };
 
-      // Draw upstream lines
       const upOriginLowY = dimensions.height - 40 - yScale(pair.up.origin_low);
       const upOriginHighY = dimensions.height - 40 - yScale(pair.up.origin_high);
       const upDestLowY = dimensions.height - 40 - yScale(pair.up.dest_low);
       const upDestHighY = dimensions.height - 40 - yScale(pair.up.dest_high);
 
-      // Handle lower upstream line
       if (!handleBoundaryCrossing(originX, upOriginLowY, destX, upDestLowY, 'up', 'low', 'קו תחתון')) {
-        // If no boundary crossing, draw a single line
+        const slope = (upDestLowY - upOriginLowY) / (destX - originX);
+        console.log(`Upstream low line slope: ${slope}`);
+        
         lines.push(
           <line
             key={`up-low-${index}`}
@@ -298,6 +320,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                   <p>כיוון: עם הזרם</p>
                   <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
                   <p>נקודה תחתונה</p>
+                  <p>שיפוע: {Math.abs(slope).toFixed(2)}</p>
                 </div>
               );
               handleShowTooltip(e.clientX, e.clientY, content);
@@ -307,9 +330,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         );
       }
 
-      // Handle upper upstream line
       if (!handleBoundaryCrossing(originX, upOriginHighY, destX, upDestHighY, 'up', 'high', 'קו עליון')) {
-        // If no boundary crossing, draw a single line
+        const slope = (upDestHighY - upOriginHighY) / (destX - originX);
+        console.log(`Upstream high line slope: ${slope}`);
+        
         lines.push(
           <line
             key={`up-high-${index}`}
@@ -326,6 +350,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                   <p>כיוון: עם הזרם</p>
                   <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
                   <p>נקודה עליונה</p>
+                  <p>שיפוע: {Math.abs(slope).toFixed(2)}</p>
                 </div>
               );
               handleShowTooltip(e.clientX, e.clientY, content);
@@ -335,15 +360,21 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         );
       }
 
-      // Draw downstream lines
       const downOriginLowY = dimensions.height - 40 - yScale(pair.down.origin_low);
       const downOriginHighY = dimensions.height - 40 - yScale(pair.down.origin_high);
       const downDestLowY = dimensions.height - 40 - yScale(pair.down.dest_low);
       const downDestHighY = dimensions.height - 40 - yScale(pair.down.dest_high);
-
-      // Handle lower downstream line
+      
+      console.log(`Downstream low line: (${destX}, ${downOriginLowY}) to (${originX}, ${downDestLowY})`);
+      
       if (!handleBoundaryCrossing(destX, downOriginLowY, originX, downDestLowY, 'down', 'low', 'קו תחתון')) {
-        // If no boundary crossing, draw a single line
+        const slope = (downOriginLowY - downDestLowY) / (destX - originX);
+        console.log(`Downstream low line slope: ${slope}`);
+        
+        if (slope >= 0) {
+          console.warn("WARNING: Downstream low line has incorrect slope (vehicles moving backward in time)");
+        }
+        
         lines.push(
           <line
             key={`down-low-${index}`}
@@ -360,6 +391,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                   <p>כיוון: נגד הזרם</p>
                   <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
                   <p>נקודה תחתונה</p>
+                  <p>שיפוע: {Math.abs(slope).toFixed(2)}</p>
                 </div>
               );
               handleShowTooltip(e.clientX, e.clientY, content);
@@ -369,9 +401,14 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         );
       }
 
-      // Handle upper downstream line
       if (!handleBoundaryCrossing(destX, downOriginHighY, originX, downDestHighY, 'down', 'high', 'קו עליון')) {
-        // If no boundary crossing, draw a single line
+        const slope = (downOriginHighY - downDestHighY) / (destX - originX);
+        console.log(`Downstream high line slope: ${slope}`);
+        
+        if (slope >= 0) {
+          console.warn("WARNING: Downstream high line has incorrect slope (vehicles moving backward in time)");
+        }
+        
         lines.push(
           <line
             key={`down-high-${index}`}
@@ -388,6 +425,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                   <p>כיוון: נגד הזרם</p>
                   <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
                   <p>נקודה עליונה</p>
+                  <p>שיפוע: {Math.abs(slope).toFixed(2)}</p>
                 </div>
               );
               handleShowTooltip(e.clientX, e.clientY, content);
