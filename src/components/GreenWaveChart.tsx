@@ -762,7 +762,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     textAnchor="middle" 
                     fontSize={12}
                   >
-                    {intersection.distance}מ'
+                    {intersection.distance}
                   </text>
                 </g>
               );
@@ -786,11 +786,19 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               זמן (שניות)
             </text>
 
-            <g transform={`translate(${dimensions.width - 100}, 20)`}>
+            {/* Updated legend with additional elements for bandwidth lines */}
+            <g transform={`translate(${dimensions.width - 200}, 20)`}>
               <rect x={0} y={0} width={20} height={10} fill="#A7F3D0" rx={2} />
               <text x={24} y={8} fontSize={10}>עם הזרם</text>
+              
               <rect x={0} y={15} width={20} height={10} fill="#93C5FD" rx={2} />
               <text x={24} y={23} fontSize={10}>נגד הזרם</text>
+              
+              <line x1={0} y1={40} x2={20} y2={40} stroke="#4ADE80" strokeWidth={2} />
+              <text x={24} y={43} fontSize={10}>רוחב פס עם הזרם</text>
+              
+              <line x1={0} y1={55} x2={20} y2={55} stroke="#60A5FA" strokeWidth={2} />
+              <text x={24} y={58} fontSize={10}>רוחב פס נגד הזרם</text>
             </g>
           </svg>
           
@@ -806,4 +814,3 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     </>
   );
 };
-
