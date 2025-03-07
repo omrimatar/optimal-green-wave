@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -6,12 +6,13 @@ import { Label } from '@/components/ui/label';
 import { IntersectionInput } from '@/components/IntersectionInput';
 import { calculateGreenWave } from '@/lib/calculations';
 import { toast } from 'sonner';
-import { ArrowRight, Hand, Play, Plus, Settings2 } from 'lucide-react';
+import { ArrowRight, Hand, Play, Plus } from 'lucide-react';
 import { WeightsPanel } from '@/components/WeightsPanel';
 import { FileActions } from '@/components/FileActions';
 import { ResultsPanel } from '@/components/ResultsPanel';
-import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights, type GreenPhase } from '@/types/optimization';
+import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights } from '@/types/optimization';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
 const Index = () => {
   const [intersections, setIntersections] = useState<Intersection[]>([{
     id: 1,
@@ -49,8 +50,9 @@ const Index = () => {
   const [mode, setMode] = useState<'display' | 'calculate' | 'manual'>('calculate');
   const [weights, setWeights] = useState<OptimizationWeights>(DEFAULT_WEIGHTS);
   const [showWeights, setShowWeights] = useState(false);
-  const [manualOffsets, setManualOffsets] = useState<number[]>([0, 0]); // אתחול עם שני אפסים עבור שני הצמתים ההתחלתיים
+  const [manualOffsets, setManualOffsets] = useState<number[]>([0, 0]);
   const [showManualDialog, setShowManualDialog] = useState(false);
+
   const handleSpeedChange = (value: string) => {
     const numValue = parseInt(value);
     if (isNaN(numValue) || numValue < 0 || numValue > 120 || !Number.isInteger(numValue)) {
@@ -59,7 +61,6 @@ const Index = () => {
     }
     setSpeed(numValue);
 
-    // Update all intersections to use the new design speed if they don't have specific speeds set
     const updatedIntersections = intersections.map(intersection => ({
       ...intersection,
       upstreamSpeed: numValue,
@@ -67,8 +68,6 @@ const Index = () => {
     }));
     setIntersections(updatedIntersections);
 
-    // When design speed changes, let's update individual intersections
-    // that don't have specific speed settings to use the new default
     if (mode === 'display') {
       handleShowExisting();
     } else if (mode === 'calculate') {
@@ -77,6 +76,7 @@ const Index = () => {
       handleManualCalculate();
     }
   };
+
   const handleAddIntersection = () => {
     const newId = Math.max(...intersections.map(i => i.id)) + 1;
     const lastIntersection = intersections[intersections.length - 1];
@@ -108,6 +108,7 @@ const Index = () => {
       handleManualCalculate();
     }
   };
+
   const handleManualCalculate = async () => {
     try {
       const currentOffsets = [...manualOffsets];
@@ -132,6 +133,7 @@ const Index = () => {
       toast.error("שגיאה בחישוב הגל הירוק במצב ידני");
     }
   };
+
   const handleCalculate = async () => {
     try {
       if (speed < 0 || speed > 120 || !Number.isInteger(speed)) {
@@ -148,13 +150,11 @@ const Index = () => {
           return;
         }
 
-        // Validate upstream speed if specified
         if (intersection.upstreamSpeed !== undefined && (intersection.upstreamSpeed < 0 || intersection.upstreamSpeed > 120 || !Number.isInteger(intersection.upstreamSpeed))) {
           toast.error(`צומת ${intersection.id}: מהירות במעלה הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
         }
 
-        // Validate downstream speed if specified
         if (intersection.downstreamSpeed !== undefined && (intersection.downstreamSpeed < 0 || intersection.downstreamSpeed > 120 || !Number.isInteger(intersection.downstreamSpeed))) {
           toast.error(`צומת ${intersection.id}: מהירות במורד הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
@@ -184,6 +184,7 @@ const Index = () => {
       toast.error("שגיאה בחישוב הגל הירוק");
     }
   };
+
   const handleShowExisting = async () => {
     try {
       if (speed < 0 || speed > 120 || !Number.isInteger(speed)) {
@@ -200,13 +201,11 @@ const Index = () => {
           return;
         }
 
-        // Validate upstream speed if specified
         if (intersection.upstreamSpeed !== undefined && (intersection.upstreamSpeed < 0 || intersection.upstreamSpeed > 120 || !Number.isInteger(intersection.upstreamSpeed))) {
           toast.error(`צומת ${intersection.id}: מהירות במעלה הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
         }
 
-        // Validate downstream speed if specified
         if (intersection.downstreamSpeed !== undefined && (intersection.downstreamSpeed < 0 || intersection.downstreamSpeed > 120 || !Number.isInteger(intersection.downstreamSpeed))) {
           toast.error(`צומת ${intersection.id}: מהירות במורד הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
@@ -226,6 +225,7 @@ const Index = () => {
       toast.error("שגיאה בהצגת הגל הירוק הקיים");
     }
   };
+
   const updateWeight = (category: keyof OptimizationWeights, value: number) => {
     const updatedWeights = {
       ...weights
@@ -233,6 +233,7 @@ const Index = () => {
     updatedWeights[category] = value;
     setWeights(updatedWeights);
   };
+
   const handleLoadInput = (data: {
     speed: number;
     intersections: Intersection[];
@@ -262,15 +263,12 @@ const Index = () => {
       }
     }
 
-    // Also validate individual speeds in loaded data
     for (const intersection of data.intersections) {
-      // Validate upstream speed if specified
       if (intersection.upstreamSpeed !== undefined && (intersection.upstreamSpeed < 0 || intersection.upstreamSpeed > 120 || !Number.isInteger(intersection.upstreamSpeed))) {
         toast.error(`הקובץ שנטען מכיל צומת עם מהירות במעלה הזרם לא חוקית. מהירות חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
         return;
       }
 
-      // Validate downstream speed if specified
       if (intersection.downstreamSpeed !== undefined && (intersection.downstreamSpeed < 0 || intersection.downstreamSpeed > 120 || !Number.isInteger(intersection.downstreamSpeed))) {
         toast.error(`הקובץ שנטען מכיל צומת עם מהירות במורד הזרם לא חוקית. מהירות חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
         return;
@@ -288,21 +286,35 @@ const Index = () => {
       handleManualCalculate();
     }
   };
+
   const handleResetWeights = () => {
     setWeights(DEFAULT_WEIGHTS);
     setResults(null);
     setMode('calculate');
     toast.success("המשקולות אופסו לברירת המחדל");
   };
+
   console.log("Current results state:", results);
-  return <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
+
+  return (
+    <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
       <div className="max-w-[1600px] mx-auto space-y-8 animate-fade-up">
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-gray-900">מחשבון גל ירוק</h1>
-          <p className="text-lg text-gray-600">כלי לתכנון אופטימלי של תזמוני רמזורים</p>
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <img 
+            src="/logo.png" 
+            alt="מחשבון גל ירוק" 
+            className="h-24 w-auto object-contain"
+            onError={(e) => {
+              console.error("Failed to load logo image");
+              e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f9ff'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='14' text-anchor='middle' alignment-baseline='middle' fill='%2322c55e'%3Eגל ירוק%3C/text%3E%3C/svg%3E";
+            }}
+          />
+          <div className="text-center space-y-2">
+            <h1 className="text-4xl font-bold text-gray-900">מחשבון גל ירוק</h1>
+            <p className="text-lg text-gray-600">כלי לתכנון אופטימלי של תזמוני רמזורים</p>
+          </div>
         </div>
 
-        {/* Always show inputs in a single column */}
         <Card className="p-6 glassmorphism">
           <div className="space-y-6">
             <FileActions speed={speed} intersections={intersections} onLoadInput={handleLoadInput} />
@@ -392,9 +404,17 @@ const Index = () => {
           </div>
         </Card>
 
-        {/* Results panel will take full width */}
-        {results && <ResultsPanel results={results} mode={mode} originalIntersections={intersections} speed={speed} />}
+        {results && (
+          <ResultsPanel 
+            results={results} 
+            mode={mode}
+            originalIntersections={intersections}
+            speed={speed}
+          />
+        )}
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
