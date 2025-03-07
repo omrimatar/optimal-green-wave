@@ -295,8 +295,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         return false;
       };
 
-      // Check if upstream bandwidth is positive before drawing upstream lines
-      // Calculate bandwidth correctly from the dest_high and dest_low values
       const upstreamBandwidth = pair.up.dest_high - pair.up.dest_low;
       console.log(`Checking upstream bandwidth for ${pair.from_junction}->${pair.to_junction}: ${upstreamBandwidth}`);
       
@@ -373,13 +371,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         console.log(`Skipping upstream lines for ${pair.from_junction}->${pair.to_junction} due to zero or negative bandwidth: ${upstreamBandwidth}`);
       }
 
-      // Check if downstream bandwidth is positive before drawing downstream lines
-      // We need to calculate this correctly as dest_high - dest_low
-      const downstreamBandwidth = pair.down.dest_high - pair.down.dest_low;
+      const downstreamBandwidth = Math.abs(pair.down.dest_high - pair.down.dest_low);
       console.log(`Checking downstream bandwidth for ${pair.to_junction}->${pair.from_junction}: ${downstreamBandwidth}`);
+      console.log(`Downstream values: dest_high=${pair.down.dest_high}, dest_low=${pair.down.dest_low}`);
       
-      // Fix: Make sure we're correctly checking if bandwidth is > 0
-      // When dest_high is smaller than dest_low, the bandwidth will be negative
       if (downstreamBandwidth > 0) {
         const downOriginLowY = dimensions.height - 40 - yScale(pair.down.origin_low);
         const downOriginHighY = dimensions.height - 40 - yScale(pair.down.origin_high);
