@@ -11,6 +11,8 @@ export interface Intersection {
   cycleTime: number;
   greenPhases: GreenPhase[];
   offset?: number;
+  upstreamSpeed?: number;
+  downstreamSpeed?: number;
 }
 
 export interface OptimizationWeights {

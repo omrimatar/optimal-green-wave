@@ -104,12 +104,25 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed }: Re
       });
     }
     
+    // Get speeds from original intersections or use default
+    const upstreamSpeed = originalIntersections && originalIntersections[idx] && 
+                         originalIntersections[idx].upstreamSpeed !== undefined ? 
+                         originalIntersections[idx].upstreamSpeed : 
+                         speed;
+    
+    const downstreamSpeed = originalIntersections && originalIntersections[idx] && 
+                            originalIntersections[idx].downstreamSpeed !== undefined ? 
+                            originalIntersections[idx].downstreamSpeed : 
+                            speed;
+    
     console.log(`ResultsPanel created intersection ${idx+1}:`, {
       id: idx + 1,
       distance,
       cycleTime,
       offset,
-      greenPhases
+      greenPhases,
+      upstreamSpeed,
+      downstreamSpeed
     });
     
     return {
@@ -117,13 +130,15 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed }: Re
       distance,
       cycleTime,
       offset: mode === 'display' ? 0 : offset,
-      greenPhases
+      greenPhases,
+      upstreamSpeed,
+      downstreamSpeed
     };
   });
 
-  // Get speed from props first, then from results, or use default
+  // Get global design speed from props or results
   const chartSpeed = speed || comparisonResults.speed || 50;
-  console.log("Chart using speed:", chartSpeed);
+  console.log("Chart using global design speed:", chartSpeed);
   
   return (
     <div className="space-y-6">
