@@ -1,8 +1,7 @@
-
 import { Card } from "@/components/ui/card";
 import { MetricsTable } from "./MetricsTable";
 import { OptimizationCharts } from "./OptimizationCharts";
-import GreenWaveChart from "./GreenWaveChart";
+import { GreenWaveChart } from "./GreenWaveChart";
 import type { RunResult, PairBandPoint } from "@/types/traffic";
 import { type Intersection, type GreenPhase } from "@/types/optimization";
 

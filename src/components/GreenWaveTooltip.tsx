@@ -2,17 +2,15 @@
 import React from 'react';
 
 interface GreenWaveTooltipProps {
+  x: number;
+  y: number;
   content: React.ReactNode;
-  position: {
-    x: number;
-    y: number;
-  };
 }
 
-export const GreenWaveTooltip: React.FC<GreenWaveTooltipProps> = ({ content, position }) => {
+export const GreenWaveTooltip: React.FC<GreenWaveTooltipProps> = ({ x, y, content }) => {
   // Calculate position to ensure tooltip stays within viewport
-  const adjustedX = Math.min(position.x, window.innerWidth - 200);
-  const adjustedY = Math.min(position.y, window.innerHeight - 200);
+  const adjustedX = Math.min(x, window.innerWidth - 200);
+  const adjustedY = Math.min(y, window.innerHeight - 200);
 
   return (
     <div

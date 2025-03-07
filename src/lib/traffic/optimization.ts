@@ -110,27 +110,6 @@ function enhanceResults(result: RunResult, actualDistances?: number[]): RunResul
     local_up: result.pair_bandwidth_up || [],
     local_down: result.pair_bandwidth_down || [],
     // Add the actual distances to the result
-    distances: actualDistances || result.distances,
-    // Ensure all pairs_band_points have the correct structure, especially for pairs with zero bandwidth
-    pairs_band_points: (result.pairs_band_points || []).map((pair, idx) => {
-      // For diagnostics
-      console.log(`Processing pair_band_point ${idx}:`, pair);
-      
-      if (!pair) return pair;
-      
-      // Check if we need to fix any wrapping issues in the pairs
-      return {
-        ...pair,
-        // Make sure we preserve the correct wrapping for downstream directions
-        down: {
-          ...pair.down,
-          // Log the values for debugging
-          origin_low: pair.down.origin_low,
-          origin_high: pair.down.origin_high,
-          dest_low: pair.down.dest_low,
-          dest_high: pair.down.dest_high
-        }
-      };
-    })
+    distances: actualDistances || result.distances
   };
 }
