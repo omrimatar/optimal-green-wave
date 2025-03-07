@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -34,7 +35,9 @@ const Index = () => {
       direction: 'downstream',
       startTime: 45,
       duration: 45
-    }]
+    }],
+    upstreamSpeed: 50,
+    downstreamSpeed: 50
   }, {
     id: 2,
     distance: 300,
@@ -47,7 +50,9 @@ const Index = () => {
       direction: 'downstream',
       startTime: 45,
       duration: 45
-    }]
+    }],
+    upstreamSpeed: 50,
+    downstreamSpeed: 50
   }]);
   const [speed, setSpeed] = useState(50);
   const [results, setResults] = useState<any>(null);
@@ -64,6 +69,16 @@ const Index = () => {
       return;
     }
     setSpeed(numValue);
+    
+    // When design speed changes, let's update individual intersections
+    // that don't have specific speed settings to use the new default
+    if (mode === 'display') {
+      handleShowExisting();
+    } else if (mode === 'calculate') {
+      handleCalculate();
+    } else if (mode === 'manual') {
+      handleManualCalculate();
+    }
   };
 
   const handleAddIntersection = () => {
@@ -86,7 +101,9 @@ const Index = () => {
           startTime: 45,
           duration: 45
         }
-      ]
+      ],
+      upstreamSpeed: speed,
+      downstreamSpeed: speed
     };
     
     const newIntersections = [...intersections, newIntersection];
@@ -154,6 +171,24 @@ const Index = () => {
           toast.error(`צומת ${intersection.id}: זמן מחזור חייב להיות מספר שלם בין 0 ל-300 שניות`);
           return;
         }
+        
+        // Validate upstream speed if specified
+        if (intersection.upstreamSpeed !== undefined && 
+            (intersection.upstreamSpeed < 0 || 
+             intersection.upstreamSpeed > 120 || 
+             !Number.isInteger(intersection.upstreamSpeed))) {
+          toast.error(`צומת ${intersection.id}: מהירות במעלה הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
+          return;
+        }
+        
+        // Validate downstream speed if specified
+        if (intersection.downstreamSpeed !== undefined && 
+            (intersection.downstreamSpeed < 0 || 
+             intersection.downstreamSpeed > 120 || 
+             !Number.isInteger(intersection.downstreamSpeed))) {
+          toast.error(`צומת ${intersection.id}: מהירות במורד הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
+          return;
+        }
 
         for (const phase of intersection.greenPhases) {
           if (phase.startTime < 0 || phase.startTime > intersection.cycleTime || !Number.isInteger(phase.startTime)) {
@@ -199,6 +234,24 @@ const Index = () => {
         
         if (intersection.cycleTime < 0 || intersection.cycleTime > 300 || !Number.isInteger(intersection.cycleTime)) {
           toast.error(`צומת ${intersection.id}: זמן מחזור חייב להיות מספר שלם בין 0 ל-300 שניות`);
+          return;
+        }
+        
+        // Validate upstream speed if specified
+        if (intersection.upstreamSpeed !== undefined && 
+            (intersection.upstreamSpeed < 0 || 
+             intersection.upstreamSpeed > 120 || 
+             !Number.isInteger(intersection.upstreamSpeed))) {
+          toast.error(`צומת ${intersection.id}: מהירות במעלה הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
+          return;
+        }
+        
+        // Validate downstream speed if specified
+        if (intersection.downstreamSpeed !== undefined && 
+            (intersection.downstreamSpeed < 0 || 
+             intersection.downstreamSpeed > 120 || 
+             !Number.isInteger(intersection.downstreamSpeed))) {
+          toast.error(`צומת ${intersection.id}: מהירות במורד הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
         }
       }
@@ -258,6 +311,27 @@ const Index = () => {
       }
     }
     
+    // Also validate individual speeds in loaded data
+    for (const intersection of data.intersections) {
+      // Validate upstream speed if specified
+      if (intersection.upstreamSpeed !== undefined && 
+          (intersection.upstreamSpeed < 0 || 
+           intersection.upstreamSpeed > 120 || 
+           !Number.isInteger(intersection.upstreamSpeed))) {
+        toast.error(`הקובץ שנטען מכיל צומת עם מהירות במעלה הזרם לא חוקית. מהירות חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
+        return;
+      }
+      
+      // Validate downstream speed if specified
+      if (intersection.downstreamSpeed !== undefined && 
+          (intersection.downstreamSpeed < 0 || 
+           intersection.downstreamSpeed > 120 || 
+           !Number.isInteger(intersection.downstreamSpeed))) {
+        toast.error(`הקובץ שנטען מכיל צומת עם מהירות במורד הזרם לא חוקית. מהירות חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
+        return;
+      }
+    }
+  
     setSpeed(data.speed);
     setIntersections(data.intersections);
     setManualOffsets(new Array(data.intersections.length).fill(0));
@@ -328,6 +402,7 @@ const Index = () => {
                 <IntersectionInput 
                     key={intersection.id} 
                     intersection={intersection}
+                    defaultSpeed={speed}
                     allIntersections={intersections} 
                     onChange={updated => {
                       const newIntersections = [...intersections];
