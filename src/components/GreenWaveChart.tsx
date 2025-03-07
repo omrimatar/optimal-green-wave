@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -148,173 +147,96 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       const destX = 40 + xScale(intersections[destIdx].distance);
       const lines = [];
 
-      const handleBoundaryCrossing = (
-        x1: number, 
-        y1: number, 
-        x2: number, 
-        y2: number, 
-        direction: 'up' | 'down', 
-        lineType: 'low' | 'high', 
-        description: string
-      ) => {
-        const chartTopY = 40; // Top boundary Y coordinate
-        const chartBottomY = dimensions.height - 40; // Bottom boundary Y coordinate
-        
-        const slope = direction === 'up' ? 
-          (y2 - y1) / (x2 - x1) : // Upstream: positive slope
-          (y1 - y2) / (x1 - x2);  // Downstream: positive slope but reversed direction
-        
-        const actualSlope = direction === 'up' ? slope : -slope;
-        
-        console.log(`Line ${direction} ${lineType}: Slope = ${actualSlope}`);
-        
-        if ((y1 < chartTopY && y2 > chartTopY) || (y1 > chartTopY && y2 < chartTopY)) {
-          let xAtTop;
-          
-          if (direction === 'up') {
-            xAtTop = x1 + (chartTopY - y1) / slope;
-          } else {
-            xAtTop = x1 - (chartTopY - y1) / slope;
-          }
-          
-          lines.push(
-            <line
-              key={`${direction}-${lineType}-top1-${index}`}
-              x1={x1}
-              y1={y1}
-              x2={xAtTop}
-              y2={chartTopY}
-              stroke={direction === 'up' ? "#4ADE80" : "#60A5FA"}
-              strokeWidth={2}
-              strokeDasharray="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: {direction === 'up' ? 'עם הזרם' : 'נגד הזרם'}</p>
-                    <p>{direction === 'up' ? `מצומת ${pair.from_junction} לצומת ${pair.to_junction}` : 
-                          `מצומת ${pair.to_junction} לצומת ${pair.from_junction}`}</p>
-                    <p>נקודה {lineType === 'low' ? 'תחתונה' : 'עליונה'} - חלק 1 ({description})</p>
-                    <p>שיפוע: {Math.abs(actualSlope).toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
-          );
-          
-          lines.push(
-            <line
-              key={`${direction}-${lineType}-top2-${index}`}
-              x1={xAtTop}
-              y1={chartBottomY}
-              x2={x2}
-              y2={y2}
-              stroke={direction === 'up' ? "#4ADE80" : "#60A5FA"}
-              strokeWidth={2}
-              strokeDasharray="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: {direction === 'up' ? 'עם הזרם' : 'נגד הזרם'}</p>
-                    <p>{direction === 'up' ? `מצומת ${pair.from_junction} לצומת ${pair.to_junction}` : 
-                          `מצומת ${pair.to_junction} לצומת ${pair.from_junction}`}</p>
-                    <p>נקודה {lineType === 'low' ? 'תחתונה' : 'עליונה'} - חלק 2 ({description})</p>
-                    <p>שיפוע: {Math.abs(actualSlope).toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
-          );
-          
-          return true;
-        }
-        
-        if ((y1 < chartBottomY && y2 > chartBottomY) || (y1 > chartBottomY && y2 < chartBottomY)) {
-          let xAtBottom;
-          
-          if (direction === 'up') {
-            xAtBottom = x1 + (chartBottomY - y1) / slope;
-          } else {
-            xAtBottom = x1 - (chartBottomY - y1) / slope;
-          }
-          
-          lines.push(
-            <line
-              key={`${direction}-${lineType}-bottom1-${index}`}
-              x1={x1}
-              y1={y1}
-              x2={xAtBottom}
-              y2={chartBottomY}
-              stroke={direction === 'up' ? "#4ADE80" : "#60A5FA"}
-              strokeWidth={2}
-              strokeDasharray="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: {direction === 'up' ? 'עם הזרם' : 'נגד הזרם'}</p>
-                    <p>{direction === 'up' ? `מצומת ${pair.from_junction} לצומת ${pair.to_junction}` : 
-                          `מצומת ${pair.to_junction} לצומת ${pair.from_junction}`}</p>
-                    <p>נקודה {lineType === 'low' ? 'תחתונה' : 'עליונה'} - חלק 1 ({description})</p>
-                    <p>שיפוע: {Math.abs(actualSlope).toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
-          );
-          
-          lines.push(
-            <line
-              key={`${direction}-${lineType}-bottom2-${index}`}
-              x1={xAtBottom}
-              y1={chartTopY}
-              x2={x2}
-              y2={y2}
-              stroke={direction === 'up' ? "#4ADE80" : "#60A5FA"}
-              strokeWidth={2}
-              strokeDasharray="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: {direction === 'up' ? 'עם הזרם' : 'נגד הזרם'}</p>
-                    <p>{direction === 'up' ? `מצומת ${pair.from_junction} לצומת ${pair.to_junction}` : 
-                          `מצומת ${pair.to_junction} לצומת ${pair.from_junction}`}</p>
-                    <p>נקודה {lineType === 'low' ? 'תחתונה' : 'עליונה'} - חלק 2 ({description})</p>
-                    <p>שיפוע: {Math.abs(actualSlope).toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
-          );
-          
-          return true;
-        }
-        
-        return false;
-      };
-
-      // Get the API bandwidth values instead of calculating from dest_high and dest_low
+      // Get the API bandwidth values
       const pairIndex = pair.from_junction - 1;
       const upstreamBandwidth = comparisonResults.pair_bandwidth_up?.[pairIndex] || 0;
-      console.log(`Using API upstream bandwidth for ${pair.from_junction}->${pair.to_junction}: ${upstreamBandwidth}`);
+      const downstreamBandwidth = comparisonResults.pair_bandwidth_down?.[pairIndex] || 0;
       
+      console.log(`Rendering diagonal lines for pair ${pair.from_junction}->${pair.to_junction}:`);
+      console.log(`Upstream bandwidth: ${upstreamBandwidth}, Downstream bandwidth: ${downstreamBandwidth}`);
+      
+      // Check if we need to handle cycle wrapping for this pair
+      const cycleTime = Math.max(
+        intersections[originIdx].cycleTime || 90,
+        intersections[destIdx].cycleTime || 90
+      );
+      
+      // Handle upstream (with-flow) lines
       if (upstreamBandwidth > 0) {
         const upOriginLowY = dimensions.height - 40 - yScale(pair.up.origin_low);
         const upOriginHighY = dimensions.height - 40 - yScale(pair.up.origin_high);
         const upDestLowY = dimensions.height - 40 - yScale(pair.up.dest_low);
         const upDestHighY = dimensions.height - 40 - yScale(pair.up.dest_high);
+        
+        // Check if wrapping is needed
+        const upLowWrapsAround = pair.up.dest_low < pair.up.origin_low;
+        const upHighWrapsAround = pair.up.dest_high < pair.up.origin_high;
 
-        console.log(`Drawing upstream lines for ${pair.from_junction}->${pair.to_junction} with bandwidth: ${upstreamBandwidth.toFixed(2)}`);
-
-        if (!handleBoundaryCrossing(originX, upOriginLowY, destX, upDestLowY, 'up', 'low', 'קו תחתון')) {
+        console.log(`Upstream low line: origin=${pair.up.origin_low.toFixed(2)}, dest=${pair.up.dest_low.toFixed(2)}, wraps=${upLowWrapsAround}`);
+        console.log(`Upstream high line: origin=${pair.up.origin_high.toFixed(2)}, dest=${pair.up.dest_high.toFixed(2)}, wraps=${upHighWrapsAround}`);
+        
+        // Draw lower line (upstream)
+        if (upLowWrapsAround) {
+          // Draw first part: from origin to cycle end
+          const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
+          const slope = (upCycleEndY - upOriginLowY) / (destX - originX);
+          const xAtCycleEnd = originX + (upCycleEndY - upOriginLowY) / slope;
+          
+          lines.push(
+            <line
+              key={`up-low-part1-${index}`}
+              x1={originX}
+              y1={upOriginLowY}
+              x2={xAtCycleEnd}
+              y2={upCycleEndY}
+              stroke="#4ADE80"
+              strokeWidth={2}
+              strokeDasharray="none"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם</p>
+                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                    <p>נקודה תחתונה - חלק 1 (עד סוף המחזור)</p>
+                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          
+          // Draw second part: from cycle start to destination
+          const upCycleStartY = dimensions.height - 40 - yScale(0);
+          
+          lines.push(
+            <line
+              key={`up-low-part2-${index}`}
+              x1={xAtCycleEnd}
+              y1={upCycleStartY}
+              x2={destX}
+              y2={upDestLowY}
+              stroke="#4ADE80"
+              strokeWidth={2}
+              strokeDasharray="none"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם</p>
+                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                    <p>נקודה תחתונה - חלק 2 (מתחילת המחזור)</p>
+                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+        } else {
+          // No wrapping needed, draw a single line
           const slope = (upDestLowY - upOriginLowY) / (destX - originX);
-          console.log(`Upstream low line slope: ${slope}`);
           
           lines.push(
             <line
@@ -332,7 +254,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>כיוון: עם הזרם</p>
                     <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
                     <p>נקודה תחתונה</p>
-                    <p>שיפוע: {Math.abs(slope).toFixed(2)}</p>
                     <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
                   </div>
                 );
@@ -342,10 +263,69 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             />
           );
         }
-
-        if (!handleBoundaryCrossing(originX, upOriginHighY, destX, upDestHighY, 'up', 'high', 'קו עליון')) {
+        
+        // Draw upper line (upstream)
+        if (upHighWrapsAround) {
+          // Draw first part: from origin to cycle end
+          const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
+          const slope = (upCycleEndY - upOriginHighY) / (destX - originX);
+          const xAtCycleEnd = originX + (upCycleEndY - upOriginHighY) / slope;
+          
+          lines.push(
+            <line
+              key={`up-high-part1-${index}`}
+              x1={originX}
+              y1={upOriginHighY}
+              x2={xAtCycleEnd}
+              y2={upCycleEndY}
+              stroke="#4ADE80"
+              strokeWidth={2}
+              strokeDasharray="none"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם</p>
+                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                    <p>נקודה עליונה - חלק 1 (עד סוף המחזור)</p>
+                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          
+          // Draw second part: from cycle start to destination
+          const upCycleStartY = dimensions.height - 40 - yScale(0);
+          
+          lines.push(
+            <line
+              key={`up-high-part2-${index}`}
+              x1={xAtCycleEnd}
+              y1={upCycleStartY}
+              x2={destX}
+              y2={upDestHighY}
+              stroke="#4ADE80"
+              strokeWidth={2}
+              strokeDasharray="none"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם</p>
+                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                    <p>נקודה עליונה - חלק 2 (מתחילת המחזור)</p>
+                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+        } else {
+          // No wrapping needed, draw a single line
           const slope = (upDestHighY - upOriginHighY) / (destX - originX);
-          console.log(`Upstream high line slope: ${slope}`);
           
           lines.push(
             <line
@@ -363,7 +343,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>כיוון: עם הזרם</p>
                     <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
                     <p>נקודה עליונה</p>
-                    <p>שיפוע: {Math.abs(slope).toFixed(2)}</p>
                     <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
                   </div>
                 );
@@ -377,28 +356,81 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         console.log(`Skipping upstream lines for ${pair.from_junction}->${pair.to_junction} due to zero or negative bandwidth: ${upstreamBandwidth}`);
       }
 
-      // Get the API downstream bandwidth value
-      const downstreamBandwidth = comparisonResults.pair_bandwidth_down?.[pairIndex] || 0;
-      console.log(`Using API downstream bandwidth for ${pair.to_junction}->${pair.from_junction}: ${downstreamBandwidth}`);
-      console.log(`Downstream values: dest_high=${pair.down.dest_high}, dest_low=${pair.down.dest_low}`);
-      
+      // Handle downstream (against-flow) lines
       if (downstreamBandwidth > 0) {
         const downOriginLowY = dimensions.height - 40 - yScale(pair.down.origin_low);
         const downOriginHighY = dimensions.height - 40 - yScale(pair.down.origin_high);
         const downDestLowY = dimensions.height - 40 - yScale(pair.down.dest_low);
         const downDestHighY = dimensions.height - 40 - yScale(pair.down.dest_high);
         
-        console.log(`Drawing downstream lines for ${pair.to_junction}->${pair.from_junction} with bandwidth: ${downstreamBandwidth.toFixed(2)}`);
-        console.log(`Downstream low line: (${destX}, ${downOriginLowY}) to (${originX}, ${downDestLowY})`);
+        // Check if wrapping is needed
+        const downLowWrapsAround = pair.down.dest_low < pair.down.origin_low;
+        const downHighWrapsAround = pair.down.dest_high < pair.down.origin_high;
         
-        if (!handleBoundaryCrossing(destX, downOriginLowY, originX, downDestLowY, 'down', 'low', 'קו תחתון')) {
-          const slope = (downOriginLowY - downDestLowY) / (destX - originX);
-          console.log(`Downstream low line slope: ${slope}`);
+        console.log(`Downstream low line: origin=${pair.down.origin_low.toFixed(2)}, dest=${pair.down.dest_low.toFixed(2)}, wraps=${downLowWrapsAround}`);
+        console.log(`Downstream high line: origin=${pair.down.origin_high.toFixed(2)}, dest=${pair.down.dest_high.toFixed(2)}, wraps=${downHighWrapsAround}`);
+        
+        // Draw lower line (downstream)
+        if (downLowWrapsAround) {
+          // Draw first part: from origin to cycle end
+          const downCycleEndY = dimensions.height - 40 - yScale(cycleTime);
+          const slope = (downCycleEndY - downOriginLowY) / (originX - destX);
+          const xAtCycleEnd = destX + (downCycleEndY - downOriginLowY) / slope;
           
-          if (slope >= 0) {
-            console.warn("WARNING: Downstream low line has incorrect slope (vehicles moving backward in time)");
-          }
+          lines.push(
+            <line
+              key={`down-low-part1-${index}`}
+              x1={destX}
+              y1={downOriginLowY}
+              x2={xAtCycleEnd}
+              y2={downCycleEndY}
+              stroke="#60A5FA"
+              strokeWidth={2}
+              strokeDasharray="none"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם</p>
+                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                    <p>נקודה תחתונה - חלק 1 (עד סוף המחזור)</p>
+                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
           
+          // Draw second part: from cycle start to destination
+          const downCycleStartY = dimensions.height - 40 - yScale(0);
+          
+          lines.push(
+            <line
+              key={`down-low-part2-${index}`}
+              x1={xAtCycleEnd}
+              y1={downCycleStartY}
+              x2={originX}
+              y2={downDestLowY}
+              stroke="#60A5FA"
+              strokeWidth={2}
+              strokeDasharray="none"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם</p>
+                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                    <p>נקודה תחתונה - חלק 2 (מתחילת המחזור)</p>
+                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+        } else {
+          // No wrapping needed, draw a single line
           lines.push(
             <line
               key={`down-low-${index}`}
@@ -415,7 +447,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>כיוון: נגד הזרם</p>
                     <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
                     <p>נקודה תחתונה</p>
-                    <p>שיפוע: {Math.abs(slope).toFixed(2)}</p>
                     <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
                   </div>
                 );
@@ -425,15 +456,68 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             />
           );
         }
-
-        if (!handleBoundaryCrossing(destX, downOriginHighY, originX, downDestHighY, 'down', 'high', 'קו עליון')) {
-          const slope = (downOriginHighY - downDestHighY) / (destX - originX);
-          console.log(`Downstream high line slope: ${slope}`);
+        
+        // Draw upper line (downstream)
+        if (downHighWrapsAround) {
+          // Draw first part: from origin to cycle end
+          const downCycleEndY = dimensions.height - 40 - yScale(cycleTime);
+          const slope = (downCycleEndY - downOriginHighY) / (originX - destX);
+          const xAtCycleEnd = destX + (downCycleEndY - downOriginHighY) / slope;
           
-          if (slope >= 0) {
-            console.warn("WARNING: Downstream high line has incorrect slope (vehicles moving backward in time)");
-          }
+          lines.push(
+            <line
+              key={`down-high-part1-${index}`}
+              x1={destX}
+              y1={downOriginHighY}
+              x2={xAtCycleEnd}
+              y2={downCycleEndY}
+              stroke="#60A5FA"
+              strokeWidth={2}
+              strokeDasharray="none"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם</p>
+                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                    <p>נקודה עליונה - חלק 1 (עד סוף המחזור)</p>
+                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
           
+          // Draw second part: from cycle start to destination
+          const downCycleStartY = dimensions.height - 40 - yScale(0);
+          
+          lines.push(
+            <line
+              key={`down-high-part2-${index}`}
+              x1={xAtCycleEnd}
+              y1={downCycleStartY}
+              x2={originX}
+              y2={downDestHighY}
+              stroke="#60A5FA"
+              strokeWidth={2}
+              strokeDasharray="none"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם</p>
+                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                    <p>נקודה עליונה - חלק 2 (מתחילת המחזור)</p>
+                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+        } else {
+          // No wrapping needed, draw a single line
           lines.push(
             <line
               key={`down-high-${index}`}
@@ -450,7 +534,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>כיוון: נגד הזרם</p>
                     <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
                     <p>נקודה עליונה</p>
-                    <p>שיפוע: {Math.abs(slope).toFixed(2)}</p>
                     <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
                   </div>
                 );
@@ -601,9 +684,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                   />
                   <text 
                     x={50} 
-                    y={y - 10} 
+                    y={y} 
                     textAnchor="end" 
                     fontSize={12}
+                    dominantBaseline="middle"
                   >
                     {Math.round(value)}
                   </text>
@@ -629,7 +713,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     textAnchor="middle" 
                     fontSize={12}
                   >
-                    {intersection.distance}m
+                    {intersection.distance}מ'
                   </text>
                 </g>
               );
