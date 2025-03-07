@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -148,9 +147,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       const upDestHighY = dimensions.height - 40 - yScale(pair.up.dest_high);
 
       // Check if low point needs to be wrapped
-      if (pair.up.origin_low > pair.up.dest_low) {
+      if (pair.up.dest_low > maxCycleTime) {
         // Calculate intersection with cycle time boundary
-        const ratio = (maxCycleTime - pair.up.origin_low) / ((pair.up.dest_low + maxCycleTime) - pair.up.origin_low);
+        const ratio = (maxCycleTime - pair.up.origin_low) / (pair.up.dest_low - pair.up.origin_low);
         const intersectX = originX + ratio * (destX - originX);
         
         // Draw first segment to the cycle time boundary
@@ -230,9 +229,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       }
 
       // Check if high point needs to be wrapped
-      if (pair.up.origin_high > pair.up.dest_high) {
+      if (pair.up.dest_high > maxCycleTime) {
         // Calculate intersection with cycle time boundary
-        const ratio = (maxCycleTime - pair.up.origin_high) / ((pair.up.dest_high + maxCycleTime) - pair.up.origin_high);
+        const ratio = (maxCycleTime - pair.up.origin_high) / (pair.up.dest_high - pair.up.origin_high);
         const intersectX = originX + ratio * (destX - originX);
         
         // Draw first segment to the cycle time boundary
@@ -318,9 +317,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       const downDestHighY = dimensions.height - 40 - yScale(pair.down.dest_high);
 
       // Check if low point needs to be wrapped
-      if (pair.down.origin_low < pair.down.dest_low) {
+      if (pair.down.dest_low > maxCycleTime) {
         // Calculate intersection with cycle time boundary
-        const ratio = (pair.down.origin_low) / (pair.down.origin_low - (pair.down.dest_low - maxCycleTime));
+        const ratio = (maxCycleTime - pair.down.origin_low) / (pair.down.dest_low - pair.down.origin_low);
         const intersectX = destX + ratio * (originX - destX);
         
         // Draw first segment to the cycle time boundary
@@ -400,9 +399,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       }
 
       // Check if high point needs to be wrapped
-      if (pair.down.origin_high < pair.down.dest_high) {
+      if (pair.down.dest_high > maxCycleTime) {
         // Calculate intersection with cycle time boundary
-        const ratio = (pair.down.origin_high) / (pair.down.origin_high - (pair.down.dest_high - maxCycleTime));
+        const ratio = (maxCycleTime - pair.down.origin_high) / (pair.down.dest_high - pair.down.origin_high);
         const intersectX = destX + ratio * (originX - destX);
         
         // Draw first segment to the cycle time boundary
