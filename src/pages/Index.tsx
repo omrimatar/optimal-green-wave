@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -303,7 +304,11 @@ const Index = () => {
           <img 
             src="/logo.png" 
             alt="מחשבון גל ירוק" 
-            className="h-24 w-auto object-contain" 
+            className="h-24 w-auto object-contain"
+            onError={(e) => {
+              console.error("Failed to load logo image");
+              e.currentTarget.style.display = 'none';
+            }}
           />
           <div className="text-center space-y-2">
             <h1 className="text-4xl font-bold text-gray-900">מחשבון גל ירוק</h1>
