@@ -142,66 +142,147 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
 
       const originX = 40 + xScale(intersections[originIdx].distance);
       const destX = 40 + xScale(intersections[destIdx].distance);
+      const lines = [];
 
-      const upLines = [];
+      // Helper function to handle line crossing cycle boundaries
+      const handleBoundaryCrossing = (x1: number, y1: number, x2: number, y2: number, direction: 'up' | 'down', lineType: 'low' | 'high', description: string) => {
+        const chartTopY = 40; // Top boundary Y coordinate
+        const chartBottomY = dimensions.height - 40; // Bottom boundary Y coordinate
+        const slope = (y2 - y1) / (x2 - x1);
+        
+        // Check if line crosses top boundary (y=cycle time)
+        if ((y1 < chartTopY && y2 > chartTopY) || (y1 > chartTopY && y2 < chartTopY)) {
+          // Calculate intersection with top boundary
+          const xAtTop = x1 + (chartTopY - y1) / slope;
+          
+          // Add line from starting point to top boundary
+          lines.push(
+            <line
+              key={`${direction}-${lineType}-top1-${index}`}
+              x1={x1}
+              y1={y1}
+              x2={xAtTop}
+              y2={chartTopY}
+              stroke={direction === 'up' ? "#4ADE80" : "#60A5FA"}
+              strokeWidth={2}
+              strokeDasharray="none"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: {direction === 'up' ? 'עם הזרם' : 'נגד הזרם'}</p>
+                    <p>{direction === 'up' ? `מצומת ${pair.from_junction} לצומת ${pair.to_junction}` : 
+                          `מצומת ${pair.to_junction} לצומת ${pair.from_junction}`}</p>
+                    <p>נקודה {lineType === 'low' ? 'תחתונה' : 'עליונה'} - חלק 1 ({description})</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          
+          // Add line from bottom boundary to end point
+          lines.push(
+            <line
+              key={`${direction}-${lineType}-top2-${index}`}
+              x1={xAtTop}
+              y1={chartBottomY}
+              x2={x2}
+              y2={y2}
+              stroke={direction === 'up' ? "#4ADE80" : "#60A5FA"}
+              strokeWidth={2}
+              strokeDasharray="none"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: {direction === 'up' ? 'עם הזרם' : 'נגד הזרם'}</p>
+                    <p>{direction === 'up' ? `מצומת ${pair.from_junction} לצומת ${pair.to_junction}` : 
+                          `מצומת ${pair.to_junction} לצומת ${pair.from_junction}`}</p>
+                    <p>נקודה {lineType === 'low' ? 'תחתונה' : 'עליונה'} - חלק 2 ({description})</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          
+          return true;
+        }
+        
+        // Check if line crosses bottom boundary (y=0)
+        if ((y1 < chartBottomY && y2 > chartBottomY) || (y1 > chartBottomY && y2 < chartBottomY)) {
+          // Calculate intersection with bottom boundary
+          const xAtBottom = x1 + (chartBottomY - y1) / slope;
+          
+          // Add line from starting point to bottom boundary
+          lines.push(
+            <line
+              key={`${direction}-${lineType}-bottom1-${index}`}
+              x1={x1}
+              y1={y1}
+              x2={xAtBottom}
+              y2={chartBottomY}
+              stroke={direction === 'up' ? "#4ADE80" : "#60A5FA"}
+              strokeWidth={2}
+              strokeDasharray="none"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: {direction === 'up' ? 'עם הזרם' : 'נגד הזרם'}</p>
+                    <p>{direction === 'up' ? `מצומת ${pair.from_junction} לצומת ${pair.to_junction}` : 
+                          `מצומת ${pair.to_junction} לצומת ${pair.from_junction}`}</p>
+                    <p>נקודה {lineType === 'low' ? 'תחתונה' : 'עליונה'} - חלק 1 ({description})</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          
+          // Add line from top boundary to end point
+          lines.push(
+            <line
+              key={`${direction}-${lineType}-bottom2-${index}`}
+              x1={xAtBottom}
+              y1={chartTopY}
+              x2={x2}
+              y2={y2}
+              stroke={direction === 'up' ? "#4ADE80" : "#60A5FA"}
+              strokeWidth={2}
+              strokeDasharray="none"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: {direction === 'up' ? 'עם הזרם' : 'נגד הזרם'}</p>
+                    <p>{direction === 'up' ? `מצומת ${pair.from_junction} לצומת ${pair.to_junction}` : 
+                          `מצומת ${pair.to_junction} לצומת ${pair.from_junction}`}</p>
+                    <p>נקודה {lineType === 'low' ? 'תחתונה' : 'עליונה'} - חלק 2 ({description})</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          
+          return true;
+        }
+        
+        return false;
+      };
+
+      // Draw upstream lines
       const upOriginLowY = dimensions.height - 40 - yScale(pair.up.origin_low);
       const upOriginHighY = dimensions.height - 40 - yScale(pair.up.origin_high);
       const upDestLowY = dimensions.height - 40 - yScale(pair.up.dest_low);
       const upDestHighY = dimensions.height - 40 - yScale(pair.up.dest_high);
 
-      if (pair.up.origin_low > pair.up.dest_low) {
-        const ratio = (maxCycleTime - pair.up.origin_low) / ((pair.up.dest_low + maxCycleTime) - pair.up.origin_low);
-        const intersectX = originX + ratio * (destX - originX);
-        
-        upLines.push(
-          <line
-            key={`up-low-part1-${index}`}
-            x1={originX}
-            y1={upOriginLowY}
-            x2={intersectX}
-            y2={dimensions.height - 40 - yScale(maxCycleTime)}
-            stroke="#4ADE80"
-            strokeWidth={2}
-            strokeDasharray="none"
-            onMouseEnter={(e) => {
-              const content = (
-                <div>
-                  <p>כיוון: עם הזרם</p>
-                  <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                  <p>נקודה תחתונה (חלק 1)</p>
-                </div>
-              );
-              handleShowTooltip(e.clientX, e.clientY, content);
-            }}
-            onMouseLeave={handleHideTooltip}
-          />
-        );
-        
-        upLines.push(
-          <line
-            key={`up-low-part2-${index}`}
-            x1={intersectX}
-            y1={dimensions.height - 40 - yScale(0)}
-            x2={destX}
-            y2={upDestLowY}
-            stroke="#4ADE80"
-            strokeWidth={2}
-            strokeDasharray="none"
-            onMouseEnter={(e) => {
-              const content = (
-                <div>
-                  <p>כיוון: עם הזרם</p>
-                  <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                  <p>נקודה תחתונה (חלק 2)</p>
-                </div>
-              );
-              handleShowTooltip(e.clientX, e.clientY, content);
-            }}
-            onMouseLeave={handleHideTooltip}
-          />
-        );
-      } else {
-        upLines.push(
+      // Handle lower upstream line
+      if (!handleBoundaryCrossing(originX, upOriginLowY, destX, upDestLowY, 'up', 'low', 'קו תחתון')) {
+        // If no boundary crossing, draw a single line
+        lines.push(
           <line
             key={`up-low-${index}`}
             x1={originX}
@@ -226,59 +307,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         );
       }
 
-      if (pair.up.origin_high > pair.up.dest_high) {
-        const ratio = (maxCycleTime - pair.up.origin_high) / ((pair.up.dest_high + maxCycleTime) - pair.up.origin_high);
-        const intersectX = originX + ratio * (destX - originX);
-        
-        upLines.push(
-          <line
-            key={`up-high-part1-${index}`}
-            x1={originX}
-            y1={upOriginHighY}
-            x2={intersectX}
-            y2={dimensions.height - 40 - yScale(maxCycleTime)}
-            stroke="#4ADE80"
-            strokeWidth={2}
-            strokeDasharray="none"
-            onMouseEnter={(e) => {
-              const content = (
-                <div>
-                  <p>כיוון: עם הזרם</p>
-                  <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                  <p>נקודה עליונה (חלק 1)</p>
-                </div>
-              );
-              handleShowTooltip(e.clientX, e.clientY, content);
-            }}
-            onMouseLeave={handleHideTooltip}
-          />
-        );
-        
-        upLines.push(
-          <line
-            key={`up-high-part2-${index}`}
-            x1={intersectX}
-            y1={dimensions.height - 40 - yScale(0)}
-            x2={destX}
-            y2={upDestHighY}
-            stroke="#4ADE80"
-            strokeWidth={2}
-            strokeDasharray="none"
-            onMouseEnter={(e) => {
-              const content = (
-                <div>
-                  <p>כיוון: עם הזרם</p>
-                  <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                  <p>נקודה עליונה (חלק 2)</p>
-                </div>
-              );
-              handleShowTooltip(e.clientX, e.clientY, content);
-            }}
-            onMouseLeave={handleHideTooltip}
-          />
-        );
-      } else {
-        upLines.push(
+      // Handle upper upstream line
+      if (!handleBoundaryCrossing(originX, upOriginHighY, destX, upDestHighY, 'up', 'high', 'קו עליון')) {
+        // If no boundary crossing, draw a single line
+        lines.push(
           <line
             key={`up-high-${index}`}
             x1={originX}
@@ -303,65 +335,16 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         );
       }
 
-      const downLines = [];
+      // Draw downstream lines
       const downOriginLowY = dimensions.height - 40 - yScale(pair.down.origin_low);
       const downOriginHighY = dimensions.height - 40 - yScale(pair.down.origin_high);
       const downDestLowY = dimensions.height - 40 - yScale(pair.down.dest_low);
       const downDestHighY = dimensions.height - 40 - yScale(pair.down.dest_high);
 
-      if (pair.down.origin_low > pair.down.dest_low) {
-        const ratio = (maxCycleTime - pair.down.origin_low) / ((pair.down.dest_low + maxCycleTime) - pair.down.origin_low);
-        const intersectX = destX + ratio * (originX - destX);
-        
-        downLines.push(
-          <line
-            key={`down-low-part1-${index}`}
-            x1={destX}
-            y1={downOriginLowY}
-            x2={intersectX}
-            y2={dimensions.height - 40 - yScale(maxCycleTime)}
-            stroke="#60A5FA"
-            strokeWidth={2}
-            strokeDasharray="none"
-            onMouseEnter={(e) => {
-              const content = (
-                <div>
-                  <p>כיוון: נגד הזרם</p>
-                  <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                  <p>נקודה תחתונה (חלק 1)</p>
-                </div>
-              );
-              handleShowTooltip(e.clientX, e.clientY, content);
-            }}
-            onMouseLeave={handleHideTooltip}
-          />
-        );
-        
-        downLines.push(
-          <line
-            key={`down-low-part2-${index}`}
-            x1={intersectX}
-            y1={dimensions.height - 40 - yScale(0)}
-            x2={originX}
-            y2={downDestLowY}
-            stroke="#60A5FA"
-            strokeWidth={2}
-            strokeDasharray="none"
-            onMouseEnter={(e) => {
-              const content = (
-                <div>
-                  <p>כיוון: נגד הזרם</p>
-                  <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                  <p>נקודה תחתונה (חלק 2)</p>
-                </div>
-              );
-              handleShowTooltip(e.clientX, e.clientY, content);
-            }}
-            onMouseLeave={handleHideTooltip}
-          />
-        );
-      } else {
-        downLines.push(
+      // Handle lower downstream line
+      if (!handleBoundaryCrossing(destX, downOriginLowY, originX, downDestLowY, 'down', 'low', 'קו תחתון')) {
+        // If no boundary crossing, draw a single line
+        lines.push(
           <line
             key={`down-low-${index}`}
             x1={destX}
@@ -386,59 +369,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         );
       }
 
-      if (pair.down.origin_high > pair.down.dest_high) {
-        const ratio = (maxCycleTime - pair.down.origin_high) / ((pair.down.dest_high + maxCycleTime) - pair.down.origin_high);
-        const intersectX = destX + ratio * (originX - destX);
-        
-        downLines.push(
-          <line
-            key={`down-high-part1-${index}`}
-            x1={destX}
-            y1={downOriginHighY}
-            x2={intersectX}
-            y2={dimensions.height - 40 - yScale(maxCycleTime)}
-            stroke="#60A5FA"
-            strokeWidth={2}
-            strokeDasharray="none"
-            onMouseEnter={(e) => {
-              const content = (
-                <div>
-                  <p>כיוון: נגד הזרם</p>
-                  <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                  <p>נקודה עליונה (חלק 1)</p>
-                </div>
-              );
-              handleShowTooltip(e.clientX, e.clientY, content);
-            }}
-            onMouseLeave={handleHideTooltip}
-          />
-        );
-        
-        downLines.push(
-          <line
-            key={`down-high-part2-${index}`}
-            x1={intersectX}
-            y1={dimensions.height - 40 - yScale(0)}
-            x2={originX}
-            y2={downDestHighY}
-            stroke="#60A5FA"
-            strokeWidth={2}
-            strokeDasharray="none"
-            onMouseEnter={(e) => {
-              const content = (
-                <div>
-                  <p>כיוון: נגד הזרם</p>
-                  <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                  <p>נקודה עליונה (חלק 2)</p>
-                </div>
-              );
-              handleShowTooltip(e.clientX, e.clientY, content);
-            }}
-            onMouseLeave={handleHideTooltip}
-          />
-        );
-      } else {
-        downLines.push(
+      // Handle upper downstream line
+      if (!handleBoundaryCrossing(destX, downOriginHighY, originX, downDestHighY, 'down', 'high', 'קו עליון')) {
+        // If no boundary crossing, draw a single line
+        lines.push(
           <line
             key={`down-high-${index}`}
             x1={destX}
@@ -463,7 +397,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         );
       }
 
-      return [...upLines, ...downLines];
+      return lines;
     });
   };
 
