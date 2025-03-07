@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -307,7 +306,7 @@ const Index = () => {
             className="h-24 w-auto object-contain"
             onError={(e) => {
               console.error("Failed to load logo image");
-              e.currentTarget.style.display = 'none';
+              e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f9ff'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='14' text-anchor='middle' alignment-baseline='middle' fill='%2322c55e'%3Eגל ירוק%3C/text%3E%3C/svg%3E";
             }}
           />
           <div className="text-center space-y-2">
