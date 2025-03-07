@@ -1,3 +1,4 @@
+<lov-code>
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -132,6 +133,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   const renderArrowMarkers = () => {
     return (
       <defs>
+        {/* Arrow for upstream lower line (pointing upward) */}
         <marker 
           id="arrow-up" 
           markerWidth="10" 
@@ -144,6 +146,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           <path d="M0,5 L5,0 L10,5 L5,2.5 Z" fill="#10B981" />
         </marker>
         
+        {/* Arrow for upstream upper line (pointing downward) */}
         <marker 
           id="arrow-down" 
           markerWidth="10" 
@@ -156,6 +159,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           <path d="M0,5 L5,10 L10,5 L5,7.5 Z" fill="#10B981" />
         </marker>
         
+        {/* Arrow for downstream lower line (pointing upward) */}
         <marker 
           id="arrow-up-down" 
           markerWidth="10" 
@@ -168,6 +172,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           <path d="M0,5 L5,0 L10,5 L5,2.5 Z" fill="#3B82F6" />
         </marker>
         
+        {/* Arrow for downstream upper line (pointing downward) */}
         <marker 
           id="arrow-down-down" 
           markerWidth="10" 
@@ -255,6 +260,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 onMouseLeave={handleHideTooltip}
               />
               
+              {/* Add arrow in the middle of the line */}
               <line
                 x1={(originX + xAtCycleEnd) / 2 - 10}
                 y1={(upOriginLowY + upCycleEndY) / 2 - 5}
@@ -294,6 +300,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 onMouseLeave={handleHideTooltip}
               />
               
+              {/* Add arrow in the middle of the line */}
               <line
                 x1={(xAtCycleEnd + destX) / 2 - 10}
                 y1={(upCycleStartY + upDestLowY) / 2 - 5}
@@ -319,6 +326,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#4ADE80"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#arrow-up)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -333,6 +341,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 onMouseLeave={handleHideTooltip}
               />
               
+              {/* Add arrow in the middle of the line */}
               <line
                 x1={midX - 10}
                 y1={midY - 5}
@@ -361,6 +370,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#4ADE80"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#arrow-down)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -375,6 +385,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 onMouseLeave={handleHideTooltip}
               />
               
+              {/* Add arrow in the middle of the line */}
               <line
                 x1={(originX + xAtCycleEnd) / 2 - 10}
                 y1={(upOriginHighY + upCycleEndY) / 2 - 5}
@@ -399,12 +410,13 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#4ADE80"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#arrow-down)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
                       <p>כיוון: עם הזרם</p>
                       <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                      <p>נקודה עליונה - חל�� 2 (מתחילת המחזור)</p>
+                      <p>נקודה עליונה - חלק 2 (מתחילת המחזור)</p>
                       <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
                     </div>
                   );
@@ -413,6 +425,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 onMouseLeave={handleHideTooltip}
               />
               
+              {/* Add arrow in the middle of the line */}
               <line
                 x1={(xAtCycleEnd + destX) / 2 - 10}
                 y1={(upCycleStartY + upDestHighY) / 2 - 5}
@@ -438,6 +451,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#4ADE80"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#arrow-down)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -452,6 +466,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 onMouseLeave={handleHideTooltip}
               />
               
+              {/* Add arrow in the middle of the line */}
               <line
                 x1={midX - 10}
                 y1={midY - 5}
@@ -516,6 +531,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#60A5FA"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#arrow-up-down)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -530,6 +546,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 onMouseLeave={handleHideTooltip}
               />
               
+              {/* Add arrow in the middle of the line - pointing right to left for downstream */}
               <line
                 x1={(destX + xAtCycleEnd) / 2 + 10}
                 y1={(downOriginLowY + downCycleEndY) / 2 - 5}
@@ -552,6 +569,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#60A5FA"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#arrow-up-down)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -566,6 +584,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 onMouseLeave={handleHideTooltip}
               />
               
+              {/* Add arrow in the middle of the line - pointing right to left for downstream */}
               <line
                 x1={(xAtCycleEnd + originX) / 2 + 10}
                 y1={(downCycleStartY + downDestLowY) / 2 - 5}
@@ -591,6 +610,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#60A5FA"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#arrow-up-down)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -605,6 +625,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 onMouseLeave={handleHideTooltip}
               />
               
+              {/* Add arrow in the middle of the line - pointing right to left for downstream */}
               <line
                 x1={midX + 10}
                 y1={midY - 5}
@@ -654,6 +675,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#60A5FA"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#arrow-down-down)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -668,6 +690,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 onMouseLeave={handleHideTooltip}
               />
               
+              {/* Add arrow in the middle of the line - pointing right to left for downstream */}
               <line
                 x1={(destX + xAtCycleEnd) / 2 + 10}
                 y1={(downOriginHighY + downCycleEndY) / 2 - 5}
@@ -690,6 +713,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#60A5FA"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#arrow-down-down)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -704,6 +728,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 onMouseLeave={handleHideTooltip}
               />
               
+              {/* Add arrow in the middle of the line - pointing right to left for downstream */}
               <line
                 x1={(xAtCycleEnd + originX) / 2 + 10}
                 y1={(downCycleStartY + downDestHighY) / 2 - 5}
@@ -729,6 +754,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 stroke="#60A5FA"
                 strokeWidth={2}
                 strokeDasharray="none"
+                markerMid="url(#arrow-down-down)"
                 onMouseEnter={(e) => {
                   const content = (
                     <div>
@@ -743,6 +769,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 onMouseLeave={handleHideTooltip}
               />
               
+              {/* Add arrow in the middle of the line - pointing right to left for downstream */}
               <line
                 x1={midX + 10}
                 y1={midY - 5}
@@ -775,198 +802,4 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             height={dimensions.height}
             className="overflow-visible w-full"
           >
-            {renderArrowMarkers()}
-            {generateYGridLines()}
-            {generateXGridLines()}
-            
-            <line 
-              x1={60} 
-              y1={40} 
-              x2={60} 
-              y2={dimensions.height - 40} 
-              stroke="black" 
-              strokeWidth={1} 
-            />
-            <line 
-              x1={60} 
-              y1={dimensions.height - 40} 
-              x2={dimensions.width - 60} 
-              y2={dimensions.height - 40} 
-              stroke="black" 
-              strokeWidth={1} 
-            />
-
-            {renderDiagonalLines()}
-
-            {intersections.map((intersection, i) => {
-              const offset = mode === 'display' ? 0 : (intersection.offset || 0);
-              
-              console.log(`Rendering intersection ${i+1} (ID: ${intersection.id}):`);
-              console.log(`  Distance: ${intersection.distance}m`);
-              console.log(`  Cycle Time: ${intersection.cycleTime}s`);
-              console.log(`  Offset: ${offset}s`);
-              console.log(`  Green Phases:`, intersection.greenPhases);
-              
-              return intersection.greenPhases.map((phase, j) => {
-                const x = 40 + xScale(intersection.distance);
-                const xOffset = phase.direction === 'upstream' ? -10 : 10;
-                
-                let startTime = (phase.startTime + offset) % intersection.cycleTime;
-                let endTime = (startTime + phase.duration) % intersection.cycleTime;
-                
-                if (endTime === 0) endTime = intersection.cycleTime;
-                
-                const wrappedPhase = endTime < startTime;
-                
-                console.log(`  Phase ${j+1}:`);
-                console.log(`    Direction: ${phase.direction}`);
-                console.log(`    Original Start: ${phase.startTime}s`);
-                console.log(`    Duration: ${phase.duration}s`);
-                console.log(`    Adjusted Start: ${startTime}s`);
-                console.log(`    Adjusted End: ${wrappedPhase ? intersection.cycleTime : endTime}s`);
-                console.log(`    Wrapped: ${wrappedPhase}`);
-                
-                return (
-                  <React.Fragment key={`phase-${i}-${j}`}>
-                    <GreenPhaseBar
-                      x={x + xOffset}
-                      startTime={startTime}
-                      endTime={wrappedPhase ? intersection.cycleTime : endTime}
-                      cycleTime={intersection.cycleTime}
-                      direction={phase.direction}
-                      barWidth={15}
-                      yScale={yScale}
-                      chartHeight={dimensions.height - 40}
-                      onMouseEnter={(e) => {
-                        const content = (
-                          <div>
-                            <p>צומת: {intersection.id}</p>
-                            <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
-                            <p>התחלה: {Math.round(startTime)} שניות</p>
-                            <p>סיום: {Math.round(wrappedPhase ? intersection.cycleTime : endTime)} שניות</p>
-                            <p>היסט: {Math.round(offset)} שניות</p>
-                          </div>
-                        );
-                        handleShowTooltip(e.clientX, e.clientY, content);
-                      }}
-                      onMouseLeave={handleHideTooltip}
-                    />
-                    
-                    {wrappedPhase && (
-                      <GreenPhaseBar
-                        x={x + xOffset}
-                        startTime={0}
-                        endTime={endTime}
-                        cycleTime={intersection.cycleTime}
-                        direction={phase.direction}
-                        barWidth={15}
-                        yScale={yScale}
-                        chartHeight={dimensions.height - 40}
-                        onMouseEnter={(e) => {
-                          const content = (
-                            <div>
-                              <p>צומת: {intersection.id}</p>
-                              <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
-                              <p>התחלה: 0 שניות (המשך)</p>
-                              <p>סיום: {Math.round(endTime)} שניות</p>
-                              <p>היסט: {Math.round(offset)} שניות</p>
-                            </div>
-                          );
-                          handleShowTooltip(e.clientX, e.clientY, content);
-                        }}
-                        onMouseLeave={handleHideTooltip}
-                      />
-                    )}
-                  </React.Fragment>
-                );
-              });
-            })}
-
-            {Array.from({ length: 5 }).map((_, i) => {
-              const value = (maxCycleTime / 4) * i;
-              const y = dimensions.height - 40 - yScale(value);
-              return (
-                <g key={`y-tick-${i}`}>
-                  <line 
-                    x1={55} 
-                    y1={y} 
-                    x2={60} 
-                    y2={y} 
-                    stroke="black" 
-                    strokeWidth={1} 
-                  />
-                  <text 
-                    x={50} 
-                    y={y} 
-                    textAnchor="end" 
-                    fontSize={12}
-                    dominantBaseline="middle"
-                  >
-                    {Math.round(value)}
-                  </text>
-                </g>
-              );
-            })}
-
-            {intersections.map((intersection, i) => {
-              const x = 40 + xScale(intersection.distance);
-              return (
-                <g key={`x-tick-${i}`}>
-                  <line 
-                    x1={x} 
-                    y1={dimensions.height - 40} 
-                    x2={x} 
-                    y2={dimensions.height - 35} 
-                    stroke="black" 
-                    strokeWidth={1} 
-                  />
-                  <text 
-                    x={x} 
-                    y={dimensions.height - 20} 
-                    textAnchor="middle" 
-                    fontSize={12}
-                  >
-                    {intersection.distance}מ'
-                  </text>
-                </g>
-              );
-            })}
-
-            <text 
-              x={dimensions.width / 2} 
-              y={dimensions.height - 5} 
-              textAnchor="middle" 
-              fontSize={14}
-            >
-              מרחק (מטר)
-            </text>
-            <text 
-              x={15} 
-              y={dimensions.height / 2} 
-              textAnchor="middle" 
-              fontSize={14}
-              transform={`rotate(-90 15 ${dimensions.height / 2})`}
-            >
-              זמן (שניות)
-            </text>
-
-            <g transform={`translate(${dimensions.width - 100}, 20)`}>
-              <rect x={0} y={0} width={20} height={10} fill="#A7F3D0" rx={2} />
-              <text x={24} y={8} fontSize={10}>עם הזרם</text>
-              <rect x={0} y={15} width={20} height={10} fill="#93C5FD" rx={2} />
-              <text x={24} y={23} fontSize={10}>נגד הזרם</text>
-            </g>
-          </svg>
-          
-          {tooltipInfo.visible && (
-            <GreenWaveTooltip
-              x={tooltipInfo.x}
-              y={tooltipInfo.y}
-              content={tooltipInfo.content}
-            />
-          )}
-        </div>
-      </CardContent>
-    </>
-  );
-};
+            {renderArrowMarkers
