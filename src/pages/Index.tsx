@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -308,28 +309,29 @@ const Index = () => {
           return;
         }
       }
-      
-      // Also validate individual speeds in loaded data
-      for (const intersection of data.intersections) {
-        // Validate upstream speed if specified
-        if (intersection.upstreamSpeed !== undefined && 
-            (intersection.upstreamSpeed < 0 || 
-             intersection.upstreamSpeed > 120 || 
-             !Number.isInteger(intersection.upstreamSpeed))) {
-          toast.error(`הקובץ שנטען מכיל צומת עם מהירות במעלה הזרם לא חוקית. מהירות חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
-          return;
-        }
-        
-        // Validate downstream speed if specified
-        if (intersection.downstreamSpeed !== undefined && 
-            (intersection.downstreamSpeed < 0 || 
-             intersection.downstreamSpeed > 120 || 
-             !Number.isInteger(intersection.downstreamSpeed))) {
-          toast.error(`הקובץ שנטען מכיל צומת עם מהירות במורד הזרם לא חוקית. מהירות חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
-          return;
-        }
-      }
+    }
     
+    // Also validate individual speeds in loaded data
+    for (const intersection of data.intersections) {
+      // Validate upstream speed if specified
+      if (intersection.upstreamSpeed !== undefined && 
+          (intersection.upstreamSpeed < 0 || 
+           intersection.upstreamSpeed > 120 || 
+           !Number.isInteger(intersection.upstreamSpeed))) {
+        toast.error(`הקובץ שנטען מכיל צומת עם מהירות במעלה הזרם לא חוקית. מהירות חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
+        return;
+      }
+      
+      // Validate downstream speed if specified
+      if (intersection.downstreamSpeed !== undefined && 
+          (intersection.downstreamSpeed < 0 || 
+           intersection.downstreamSpeed > 120 || 
+           !Number.isInteger(intersection.downstreamSpeed))) {
+        toast.error(`הקובץ שנטען מכיל צומת עם מהירות במורד הזרם לא חוקית. מהירות חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
+        return;
+      }
+    }
+  
     setSpeed(data.speed);
     setIntersections(data.intersections);
     setManualOffsets(new Array(data.intersections.length).fill(0));
