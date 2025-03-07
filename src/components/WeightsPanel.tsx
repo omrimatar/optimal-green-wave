@@ -1,8 +1,11 @@
+
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { SlidersHorizontal, RotateCcw } from "lucide-react";
-import { OptimizationWeights } from "@/types/optimization";
+import { OptimizationWeights, normalizeWeights } from "@/types/optimization";
+import { useEffect, useState } from "react";
+
 interface WeightsPanelProps {
   weights: OptimizationWeights;
   showWeights: boolean;
@@ -10,6 +13,7 @@ interface WeightsPanelProps {
   onToggleWeights: () => void;
   onResetWeights: () => void;
 }
+
 export const WeightsPanel = ({
   weights,
   showWeights,
@@ -17,7 +21,33 @@ export const WeightsPanel = ({
   onToggleWeights,
   onResetWeights
 }: WeightsPanelProps) => {
+  const [localWeights, setLocalWeights] = useState<OptimizationWeights>(weights);
   const formatNumber = (num: number) => num.toFixed(1);
+  
+  // Update local weights when props change
+  useEffect(() => {
+    setLocalWeights(weights);
+  }, [weights]);
+  
+  const handleWeightChange = (category: keyof OptimizationWeights, value: number) => {
+    if (category === 'corridor_up' || category === 'corridor_down') {
+      // These values are locked at 0
+      return;
+    }
+    
+    // Normalize weights so they sum to 1
+    const updatedWeights = normalizeWeights(localWeights, category, value);
+    setLocalWeights(updatedWeights);
+    onWeightChange(category, value);
+  };
+  
+  const getDisabled = (category: keyof OptimizationWeights) => {
+    return category === 'corridor_up' || category === 'corridor_down';
+  };
+  
+  // Ensure weights sum to 1
+  const totalWeight = Object.values(localWeights).reduce((sum, val) => sum + val, 0);
+  
   return <>
       <div className="flex gap-2">
         <Button onClick={onToggleWeights} variant="outline" className="flex-1 flex items-center gap-2 justify-center">
@@ -31,43 +61,182 @@ export const WeightsPanel = ({
       </div>
 
       {showWeights && <div className="space-y-6 p-4 border rounded-lg">
+          <div className="mb-2 flex justify-between items-center text-sm">
+            <span>סכום משקולות: {totalWeight.toFixed(2)}</span>
+            <span>יש לוודא שסכום המשקולות הוא 1</span>
+          </div>
+          
           <div className="space-y-4">
             <h3 className="font-semibold">גל ירוק בציר</h3>
             <div className="space-y-2">
-              <Label>במעלה הזרם ({formatNumber(weights.corridor_up)})</Label>
-              <Slider value={[weights.corridor_up * 100]} onValueChange={value => onWeightChange('corridor_up', value[0] / 100)} max={100} step={1} />
-              <Label>במורד הזרם ({formatNumber(weights.corridor_down)})</Label>
-              <Slider value={[weights.corridor_down * 100]} onValueChange={value => onWeightChange('corridor_down', value[0] / 100)} max={100} step={1} />
+              <div className="flex justify-between">
+                <Label>במעלה הזרם ({formatNumber(localWeights.corridor_up)})</Label>
+                <input 
+                  type="number" 
+                  value={localWeights.corridor_up} 
+                  min="0" 
+                  max="1" 
+                  step="0.1"
+                  disabled
+                  className="w-16 text-right border rounded px-2"
+                />
+              </div>
+              <Slider 
+                value={[localWeights.corridor_up * 100]} 
+                onValueChange={value => handleWeightChange('corridor_up', value[0] / 100)} 
+                max={100} 
+                step={1} 
+                disabled={true}
+              />
+              
+              <div className="flex justify-between">
+                <Label>במורד הזרם ({formatNumber(localWeights.corridor_down)})</Label>
+                <input 
+                  type="number" 
+                  value={localWeights.corridor_down} 
+                  min="0" 
+                  max="1" 
+                  step="0.1"
+                  disabled
+                  className="w-16 text-right border rounded px-2"
+                />
+              </div>
+              <Slider 
+                value={[localWeights.corridor_down * 100]} 
+                onValueChange={value => handleWeightChange('corridor_down', value[0] / 100)} 
+                max={100} 
+                step={1}
+                disabled={true}
+              />
             </div>
           </div>
 
           <div className="space-y-4">
             <h3 className="font-semibold">רוחב פס בין צמתים סמוכים</h3>
             <div className="space-y-2">
-              <Label>במעלה הזרם ({formatNumber(weights.overlap_up)})</Label>
-              <Slider value={[weights.overlap_up * 100]} onValueChange={value => onWeightChange('overlap_up', value[0] / 100)} max={100} step={1} />
-              <Label>במורד הזרם ({formatNumber(weights.overlap_down)})</Label>
-              <Slider value={[weights.overlap_down * 100]} onValueChange={value => onWeightChange('overlap_down', value[0] / 100)} max={100} step={1} />
+              <div className="flex justify-between">
+                <Label>במעלה הזרם ({formatNumber(localWeights.overlap_up)})</Label>
+                <input 
+                  type="number" 
+                  value={localWeights.overlap_up} 
+                  min="0" 
+                  max="1" 
+                  step="0.1"
+                  onChange={e => handleWeightChange('overlap_up', Number(e.target.value))}
+                  className="w-16 text-right border rounded px-2"
+                />
+              </div>
+              <Slider 
+                value={[localWeights.overlap_up * 100]} 
+                onValueChange={value => handleWeightChange('overlap_up', value[0] / 100)} 
+                max={100} 
+                step={1} 
+              />
+              
+              <div className="flex justify-between">
+                <Label>במורד הזרם ({formatNumber(localWeights.overlap_down)})</Label>
+                <input 
+                  type="number" 
+                  value={localWeights.overlap_down} 
+                  min="0" 
+                  max="1" 
+                  step="0.1"
+                  onChange={e => handleWeightChange('overlap_down', Number(e.target.value))}
+                  className="w-16 text-right border rounded px-2"
+                />
+              </div>
+              <Slider 
+                value={[localWeights.overlap_down * 100]} 
+                onValueChange={value => handleWeightChange('overlap_down', value[0] / 100)} 
+                max={100} 
+                step={1}
+              />
             </div>
           </div>
 
           <div className="space-y-4">
             <h3 className="font-semibold">עיכוב ממוצע</h3>
             <div className="space-y-2">
-              <Label>במעלה הזרם ({formatNumber(weights.avg_delay_up)})</Label>
-              <Slider value={[weights.avg_delay_up * 100]} onValueChange={value => onWeightChange('avg_delay_up', value[0] / 100)} max={100} step={1} />
-              <Label>במורד הזרם ({formatNumber(weights.avg_delay_down)})</Label>
-              <Slider value={[weights.avg_delay_down * 100]} onValueChange={value => onWeightChange('avg_delay_down', value[0] / 100)} max={100} step={1} />
+              <div className="flex justify-between">
+                <Label>במעלה הזרם ({formatNumber(localWeights.avg_delay_up)})</Label>
+                <input 
+                  type="number" 
+                  value={localWeights.avg_delay_up} 
+                  min="0" 
+                  max="1" 
+                  step="0.1"
+                  onChange={e => handleWeightChange('avg_delay_up', Number(e.target.value))}
+                  className="w-16 text-right border rounded px-2"
+                />
+              </div>
+              <Slider 
+                value={[localWeights.avg_delay_up * 100]} 
+                onValueChange={value => handleWeightChange('avg_delay_up', value[0] / 100)} 
+                max={100} 
+                step={1}
+              />
+              
+              <div className="flex justify-between">
+                <Label>במורד הזרם ({formatNumber(localWeights.avg_delay_down)})</Label>
+                <input 
+                  type="number" 
+                  value={localWeights.avg_delay_down} 
+                  min="0" 
+                  max="1" 
+                  step="0.1"
+                  onChange={e => handleWeightChange('avg_delay_down', Number(e.target.value))}
+                  className="w-16 text-right border rounded px-2"
+                />
+              </div>
+              <Slider 
+                value={[localWeights.avg_delay_down * 100]} 
+                onValueChange={value => handleWeightChange('avg_delay_down', value[0] / 100)} 
+                max={100} 
+                step={1}
+              />
             </div>
           </div>
 
           <div className="space-y-4">
             <h3 className="font-semibold">עיכוב מקסימלי</h3>
             <div className="space-y-2">
-              <Label>במעלה הזרם ({formatNumber(weights.max_delay_up)})</Label>
-              <Slider value={[weights.max_delay_up * 100]} onValueChange={value => onWeightChange('max_delay_up', value[0] / 100)} max={100} step={1} />
-              <Label>במורד הזרם ({formatNumber(weights.max_delay_down)})</Label>
-              <Slider value={[weights.max_delay_down * 100]} onValueChange={value => onWeightChange('max_delay_down', value[0] / 100)} max={100} step={1} />
+              <div className="flex justify-between">
+                <Label>במעלה הזרם ({formatNumber(localWeights.max_delay_up)})</Label>
+                <input 
+                  type="number" 
+                  value={localWeights.max_delay_up} 
+                  min="0" 
+                  max="1" 
+                  step="0.1"
+                  onChange={e => handleWeightChange('max_delay_up', Number(e.target.value))}
+                  className="w-16 text-right border rounded px-2"
+                />
+              </div>
+              <Slider 
+                value={[localWeights.max_delay_up * 100]} 
+                onValueChange={value => handleWeightChange('max_delay_up', value[0] / 100)} 
+                max={100} 
+                step={1}
+              />
+              
+              <div className="flex justify-between">
+                <Label>במורד הזרם ({formatNumber(localWeights.max_delay_down)})</Label>
+                <input 
+                  type="number" 
+                  value={localWeights.max_delay_down} 
+                  min="0" 
+                  max="1" 
+                  step="0.1"
+                  onChange={e => handleWeightChange('max_delay_down', Number(e.target.value))}
+                  className="w-16 text-right border rounded px-2"
+                />
+              </div>
+              <Slider 
+                value={[localWeights.max_delay_down * 100]} 
+                onValueChange={value => handleWeightChange('max_delay_down', value[0] / 100)} 
+                max={100} 
+                step={1}
+              />
             </div>
           </div>
         </div>}
