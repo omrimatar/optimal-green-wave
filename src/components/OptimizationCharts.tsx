@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -46,6 +45,10 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
     negative: {
       baseline: '#ea384c',
       optimized: '#F97316'
+    },
+    radar: {
+      baseline: '#3498DB',
+      optimized: '#E67E22'
     }
   };
 
@@ -139,7 +142,6 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
     chartType === 'butterfly' ? butterflyData :
     comparisonType === 'optimization' ? optimizationData : directionData;
 
-  // Custom label formatter to ensure values are displayed correctly for negative values
   const renderCustomBarLabel = (props: any) => {
     const { x, y, width, height, value } = props;
     const displayValue = Math.abs(Number(value)).toFixed(1);
@@ -158,11 +160,9 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
     );
   };
 
-  // Custom label formatter for butterfly chart
   const renderCustomButterflyLabel = (props: any) => {
     const { x, y, width, height, value } = props;
     const displayValue = Math.abs(Number(value)).toFixed(1);
-    // Position labels on the inside of the bar for better readability
     const xPos = value < 0 ? x + width - 15 : x + 15;
     return (
       <text
@@ -237,15 +237,15 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
               <Radar 
                 name={labels.baseline}
                 dataKey="לפני"
-                stroke={colors.positive.baseline} 
-                fill={colors.positive.baseline} 
+                stroke={colors.radar.baseline} 
+                fill={colors.radar.baseline} 
                 fillOpacity={0.6} 
               />
               <Radar 
                 name={labels.optimized}
                 dataKey="אחרי"
-                stroke={colors.positive.optimized} 
-                fill={colors.positive.optimized} 
+                stroke={colors.radar.optimized} 
+                fill={colors.radar.optimized} 
                 fillOpacity={0.6} 
               />
               <Legend />
@@ -265,7 +265,6 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
 
         const organizedData = Object.values(groupedMetrics).flat();
         
-        // Create custom legend items for the butterfly chart
         const customLegendItems = [
           { value: `${labels.baseline} - מדדים חיוביים`, color: colors.positive.baseline },
           { value: `${labels.baseline} - מדדים שליליים`, color: colors.negative.baseline },
@@ -273,7 +272,6 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
           { value: `${labels.optimized} - מדדים שליליים`, color: colors.negative.optimized },
         ];
 
-        // Custom legend renderer
         const renderCustomLegend = () => (
           <div className="flex flex-wrap justify-center gap-4 mt-2">
             {customLegendItems.map((item, index) => (
@@ -300,7 +298,6 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
                 <Bar 
                   dataKey={labels.baseline} 
                   name={labels.baseline}
-                  // Hide the default legend for these bars
                   legendType="none"
                 >
                   <LabelList dataKey={labels.baseline} content={renderCustomButterflyLabel} />
@@ -318,7 +315,6 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
                 <Bar 
                   dataKey={labels.optimized} 
                   name={labels.optimized}
-                  // Hide the default legend for these bars
                   legendType="none"
                 >
                   <LabelList dataKey={labels.optimized} content={renderCustomButterflyLabel} />
