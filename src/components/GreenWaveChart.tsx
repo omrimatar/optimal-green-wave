@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -297,13 +298,15 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
 
       // Check if upstream bandwidth is positive before drawing upstream lines
       const upstreamBandwidth = pair.up.dest_high - pair.up.dest_low;
+      console.log(`Checking upstream bandwidth for ${pair.from_junction}->${pair.to_junction}: ${upstreamBandwidth}`);
+      
       if (upstreamBandwidth > 0) {
         const upOriginLowY = dimensions.height - 40 - yScale(pair.up.origin_low);
         const upOriginHighY = dimensions.height - 40 - yScale(pair.up.origin_high);
         const upDestLowY = dimensions.height - 40 - yScale(pair.up.dest_low);
         const upDestHighY = dimensions.height - 40 - yScale(pair.up.dest_high);
 
-        console.log(`Upstream bandwidth for ${pair.from_junction}->${pair.to_junction}: ${upstreamBandwidth.toFixed(2)}`);
+        console.log(`Drawing upstream lines for ${pair.from_junction}->${pair.to_junction} with bandwidth: ${upstreamBandwidth.toFixed(2)}`);
 
         if (!handleBoundaryCrossing(originX, upOriginLowY, destX, upDestLowY, 'up', 'low', 'קו תחתון')) {
           const slope = (upDestLowY - upOriginLowY) / (destX - originX);
@@ -367,18 +370,20 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           );
         }
       } else {
-        console.log(`Skipping upstream lines for ${pair.from_junction}->${pair.to_junction} due to zero bandwidth`);
+        console.log(`Skipping upstream lines for ${pair.from_junction}->${pair.to_junction} due to zero or negative bandwidth: ${upstreamBandwidth}`);
       }
 
       // Check if downstream bandwidth is positive before drawing downstream lines
       const downstreamBandwidth = pair.down.dest_high - pair.down.dest_low;
+      console.log(`Checking downstream bandwidth for ${pair.to_junction}->${pair.from_junction}: ${downstreamBandwidth}`);
+      
       if (downstreamBandwidth > 0) {
         const downOriginLowY = dimensions.height - 40 - yScale(pair.down.origin_low);
         const downOriginHighY = dimensions.height - 40 - yScale(pair.down.origin_high);
         const downDestLowY = dimensions.height - 40 - yScale(pair.down.dest_low);
         const downDestHighY = dimensions.height - 40 - yScale(pair.down.dest_high);
         
-        console.log(`Downstream bandwidth for ${pair.to_junction}->${pair.from_junction}: ${downstreamBandwidth.toFixed(2)}`);
+        console.log(`Drawing downstream lines for ${pair.to_junction}->${pair.from_junction} with bandwidth: ${downstreamBandwidth.toFixed(2)}`);
         console.log(`Downstream low line: (${destX}, ${downOriginLowY}) to (${originX}, ${downDestLowY})`);
         
         if (!handleBoundaryCrossing(destX, downOriginLowY, originX, downDestLowY, 'down', 'low', 'קו תחתון')) {
@@ -451,7 +456,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           );
         }
       } else {
-        console.log(`Skipping downstream lines for ${pair.to_junction}->${pair.from_junction} due to zero bandwidth`);
+        console.log(`Skipping downstream lines for ${pair.to_junction}->${pair.from_junction} due to zero or negative bandwidth: ${downstreamBandwidth}`);
       }
 
       return lines;
