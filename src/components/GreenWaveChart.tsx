@@ -1,6 +1,6 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 import { GreenPhaseBar } from './GreenPhaseBar';
 import { GreenWaveTooltip } from './GreenWaveTooltip';
 import { type Intersection } from "@/types/optimization";
@@ -130,6 +130,30 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     return lines;
   };
 
+  const renderArrowhead = (
+    x1: number, 
+    y1: number, 
+    x2: number, 
+    y2: number, 
+    color: string,
+    direction: 'upstream' | 'downstream'
+  ) => {
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+    
+    const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
+    
+    return (
+      <g transform={`translate(${midX}, ${midY}) rotate(${angle})`}>
+        {direction === 'upstream' ? (
+          <ArrowRight size={16} color="#10B981" strokeWidth={2} />
+        ) : (
+          <ArrowLeft size={16} color="#3B82F6" strokeWidth={2} />
+        )}
+      </g>
+    );
+  };
+
   const renderDiagonalLines = () => {
     if (!calculationPerformed || !pairBandPoints || pairBandPoints.length === 0 || !comparisonResults) {
       return null;
@@ -148,7 +172,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       const destX = 40 + xScale(intersections[destIdx].distance);
       const lines = [];
 
-      // Get the API bandwidth values
       const pairIndex = pair.from_junction - 1;
       const upstreamBandwidth = comparisonResults.pair_bandwidth_up?.[pairIndex] || 0;
       const downstreamBandwidth = comparisonResults.pair_bandwidth_down?.[pairIndex] || 0;
@@ -156,238 +179,230 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       console.log(`Rendering diagonal lines for pair ${pair.from_junction}->${pair.to_junction}:`);
       console.log(`Upstream bandwidth: ${upstreamBandwidth}, Downstream bandwidth: ${downstreamBandwidth}`);
       
-      // Check if we need to handle cycle wrapping for this pair
       const cycleTime = Math.max(
         intersections[originIdx].cycleTime || 90,
         intersections[destIdx].cycleTime || 90
       );
       
-      // Handle upstream (with-flow) lines
       if (upstreamBandwidth > 0) {
         const upOriginLowY = dimensions.height - 40 - yScale(pair.up.origin_low);
         const upOriginHighY = dimensions.height - 40 - yScale(pair.up.origin_high);
         const upDestLowY = dimensions.height - 40 - yScale(pair.up.dest_low);
         const upDestHighY = dimensions.height - 40 - yScale(pair.up.dest_high);
         
-        // Check if wrapping is needed
         const upLowWrapsAround = pair.up.dest_low < pair.up.origin_low;
         const upHighWrapsAround = pair.up.dest_high < pair.up.origin_high;
 
         console.log(`Upstream low line: origin=${pair.up.origin_low.toFixed(2)}, dest=${pair.up.dest_low.toFixed(2)}, wraps=${upLowWrapsAround}`);
         console.log(`Upstream high line: origin=${pair.up.origin_high.toFixed(2)}, dest=${pair.up.dest_high.toFixed(2)}, wraps=${upHighWrapsAround}`);
         
-        // Draw lower line (upstream)
         if (upLowWrapsAround) {
-          // Draw first part: from origin to cycle end
           const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
-          // Calculate slope for the first segment
           const slope = (upCycleEndY - upOriginLowY) / (destX - originX);
-          // Calculate intersection with cycle end line
           const xAtCycleEnd = originX + (upCycleEndY - upOriginLowY) / slope;
           
           lines.push(
-            <line
-              key={`up-low-part1-${index}`}
-              x1={originX}
-              y1={upOriginLowY}
-              x2={xAtCycleEnd}
-              y2={upCycleEndY}
-              stroke="#4ADE80"
-              strokeWidth={2}
-              strokeDasharray="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: עם הזרם</p>
-                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                    <p>נקודה תחתונה - חלק 1 (עד סוף המחזור)</p>
-                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
+            <React.Fragment key={`up-low-part1-${index}`}>
+              <line
+                x1={originX}
+                y1={upOriginLowY}
+                x2={xAtCycleEnd}
+                y2={upCycleEndY}
+                stroke="#4ADE80"
+                strokeWidth={2}
+                strokeDasharray="none"
+                onMouseEnter={(e) => {
+                  const content = (
+                    <div>
+                      <p>כיוון: עם הזרם</p>
+                      <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                      <p>נקודה תחתונה - חלק 1 (עד סוף המחזור)</p>
+                      <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                    </div>
+                  );
+                  handleShowTooltip(e.clientX, e.clientY, content);
+                }}
+                onMouseLeave={handleHideTooltip}
+              />
+              {renderArrowhead(originX, upOriginLowY, xAtCycleEnd, upCycleEndY, "#4ADE80", "upstream")}
+            </React.Fragment>
           );
           
-          // Draw second part: from cycle start to destination
           const upCycleStartY = dimensions.height - 40 - yScale(0);
           
           lines.push(
-            <line
-              key={`up-low-part2-${index}`}
-              x1={xAtCycleEnd}
-              y1={upCycleStartY}
-              x2={destX}
-              y2={upDestLowY}
-              stroke="#4ADE80"
-              strokeWidth={2}
-              strokeDasharray="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: עם הזרם</p>
-                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                    <p>נקודה תחתונה - חלק 2 (מתחילת המחזור)</p>
-                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
+            <React.Fragment key={`up-low-part2-${index}`}>
+              <line
+                x1={xAtCycleEnd}
+                y1={upCycleStartY}
+                x2={destX}
+                y2={upDestLowY}
+                stroke="#4ADE80"
+                strokeWidth={2}
+                strokeDasharray="none"
+                onMouseEnter={(e) => {
+                  const content = (
+                    <div>
+                      <p>כיוון: עם הזרם</p>
+                      <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                      <p>נקודה תחתונה - חלק 2 (מתחילת המחזור)</p>
+                      <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                    </div>
+                  );
+                  handleShowTooltip(e.clientX, e.clientY, content);
+                }}
+                onMouseLeave={handleHideTooltip}
+              />
+              {renderArrowhead(xAtCycleEnd, upCycleStartY, destX, upDestLowY, "#4ADE80", "upstream")}
+            </React.Fragment>
           );
         } else {
-          // No wrapping needed, draw a single line
           const slope = (upDestLowY - upOriginLowY) / (destX - originX);
           
           lines.push(
-            <line
-              key={`up-low-${index}`}
-              x1={originX}
-              y1={upOriginLowY}
-              x2={destX}
-              y2={upDestLowY}
-              stroke="#4ADE80"
-              strokeWidth={2}
-              strokeDasharray="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: עם הזרם</p>
-                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                    <p>נקודה תחתונה</p>
-                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
+            <React.Fragment key={`up-low-${index}`}>
+              <line
+                x1={originX}
+                y1={upOriginLowY}
+                x2={destX}
+                y2={upDestLowY}
+                stroke="#4ADE80"
+                strokeWidth={2}
+                strokeDasharray="none"
+                onMouseEnter={(e) => {
+                  const content = (
+                    <div>
+                      <p>כיוון: עם הזרם</p>
+                      <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                      <p>נקודה תחתונה</p>
+                      <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                    </div>
+                  );
+                  handleShowTooltip(e.clientX, e.clientY, content);
+                }}
+                onMouseLeave={handleHideTooltip}
+              />
+              {renderArrowhead(originX, upOriginLowY, destX, upDestLowY, "#4ADE80", "upstream")}
+            </React.Fragment>
           );
         }
         
-        // Draw upper line (upstream)
         if (upHighWrapsAround) {
-          // Draw first part: from origin to cycle end
           const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
           const slope = (upCycleEndY - upOriginHighY) / (destX - originX);
           const xAtCycleEnd = originX + (upCycleEndY - upOriginHighY) / slope;
           
           lines.push(
-            <line
-              key={`up-high-part1-${index}`}
-              x1={originX}
-              y1={upOriginHighY}
-              x2={xAtCycleEnd}
-              y2={upCycleEndY}
-              stroke="#4ADE80"
-              strokeWidth={2}
-              strokeDasharray="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: עם הזרם</p>
-                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                    <p>נקודה עליונה - חלק 1 (עד סוף המחזור)</p>
-                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
+            <React.Fragment key={`up-high-part1-${index}`}>
+              <line
+                x1={originX}
+                y1={upOriginHighY}
+                x2={xAtCycleEnd}
+                y2={upCycleEndY}
+                stroke="#4ADE80"
+                strokeWidth={2}
+                strokeDasharray="none"
+                onMouseEnter={(e) => {
+                  const content = (
+                    <div>
+                      <p>כיוון: עם הזרם</p>
+                      <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                      <p>נקודה עליונה - חלק 1 (עד סוף המחזור)</p>
+                      <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                    </div>
+                  );
+                  handleShowTooltip(e.clientX, e.clientY, content);
+                }}
+                onMouseLeave={handleHideTooltip}
+              />
+              {renderArrowhead(originX, upOriginHighY, xAtCycleEnd, upCycleEndY, "#4ADE80", "upstream")}
+            </React.Fragment>
           );
           
-          // Draw second part: from cycle start to destination
           const upCycleStartY = dimensions.height - 40 - yScale(0);
           
           lines.push(
-            <line
-              key={`up-high-part2-${index}`}
-              x1={xAtCycleEnd}
-              y1={upCycleStartY}
-              x2={destX}
-              y2={upDestHighY}
-              stroke="#4ADE80"
-              strokeWidth={2}
-              strokeDasharray="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: עם הזרם</p>
-                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                    <p>נקודה עליונה - חלק 2 (מתחילת המחזור)</p>
-                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
+            <React.Fragment key={`up-high-part2-${index}`}>
+              <line
+                x1={xAtCycleEnd}
+                y1={upCycleStartY}
+                x2={destX}
+                y2={upDestHighY}
+                stroke="#4ADE80"
+                strokeWidth={2}
+                strokeDasharray="none"
+                onMouseEnter={(e) => {
+                  const content = (
+                    <div>
+                      <p>כיוון: עם הזרם</p>
+                      <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                      <p>נקודה עליונה - חלק 2 (מתחילת המחזור)</p>
+                      <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                    </div>
+                  );
+                  handleShowTooltip(e.clientX, e.clientY, content);
+                }}
+                onMouseLeave={handleHideTooltip}
+              />
+              {renderArrowhead(xAtCycleEnd, upCycleStartY, destX, upDestHighY, "#4ADE80", "upstream")}
+            </React.Fragment>
           );
         } else {
-          // No wrapping needed, draw a single line
           const slope = (upDestHighY - upOriginHighY) / (destX - originX);
           
           lines.push(
-            <line
-              key={`up-high-${index}`}
-              x1={originX}
-              y1={upOriginHighY}
-              x2={destX}
-              y2={upDestHighY}
-              stroke="#4ADE80"
-              strokeWidth={2}
-              strokeDasharray="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: עם הזרם</p>
-                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                    <p>נקודה עליונה</p>
-                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
+            <React.Fragment key={`up-high-${index}`}>
+              <line
+                x1={originX}
+                y1={upOriginHighY}
+                x2={destX}
+                y2={upDestHighY}
+                stroke="#4ADE80"
+                strokeWidth={2}
+                strokeDasharray="none"
+                onMouseEnter={(e) => {
+                  const content = (
+                    <div>
+                      <p>כיוון: עם הזרם</p>
+                      <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                      <p>נקודה עליונה</p>
+                      <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                    </div>
+                  );
+                  handleShowTooltip(e.clientX, e.clientY, content);
+                }}
+                onMouseLeave={handleHideTooltip}
+              />
+              {renderArrowhead(originX, upOriginHighY, destX, upDestHighY, "#4ADE80", "upstream")}
+            </React.Fragment>
           );
         }
       } else {
         console.log(`Skipping upstream lines for ${pair.from_junction}->${pair.to_junction} due to zero or negative bandwidth: ${upstreamBandwidth}`);
       }
 
-      // Handle downstream (against-flow) lines
       if (downstreamBandwidth > 0) {
         const downOriginLowY = dimensions.height - 40 - yScale(pair.down.origin_low);
         const downOriginHighY = dimensions.height - 40 - yScale(pair.down.origin_high);
         const downDestLowY = dimensions.height - 40 - yScale(pair.down.dest_low);
         const downDestHighY = dimensions.height - 40 - yScale(pair.down.dest_high);
         
-        // Check if wrapping is needed
         const downLowWrapsAround = pair.down.dest_low < pair.down.origin_low;
         const downHighWrapsAround = pair.down.dest_high < pair.down.origin_high;
         
         console.log(`Downstream low line: origin=${pair.down.origin_low.toFixed(2)}, dest=${pair.down.dest_low.toFixed(2)}, wraps=${downLowWrapsAround}`);
         console.log(`Downstream high line: origin=${pair.down.origin_high.toFixed(2)}, dest=${pair.down.dest_high.toFixed(2)}, wraps=${downHighWrapsAround}`);
         
-        // Draw lower line (downstream)
         if (downLowWrapsAround) {
-          // NEW CALCULATION: Calculate the wrapped time difference properly
           const totalTimeDiff = cycleTime - pair.down.origin_low + pair.down.dest_low;
           
-          // Calculate the proportion of the distance that corresponds to the segment until cycle end
           const timeToCycleEnd = cycleTime - pair.down.origin_low;
           const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
           
-          // Calculate the x-coordinate at the cycle time boundary based on this proportion
           const distanceToTravel = originX - destX;
           const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
           const xAtCycleEnd = destX + distanceToCycleEnd;
           
-          // Calculate Y values
           const downCycleEndY = dimensions.height - 40 - yScale(cycleTime);
           const downCycleStartY = dimensions.height - 40 - yScale(0);
           
@@ -404,100 +419,98 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             downDestLowY
           });
           
-          // Draw first part: from origin to cycle end
           lines.push(
-            <line
-              key={`down-low-part1-${index}`}
-              x1={destX}
-              y1={downOriginLowY}
-              x2={xAtCycleEnd}
-              y2={downCycleEndY}
-              stroke="#60A5FA"
-              strokeWidth={2}
-              strokeDasharray="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: נגד הזרם</p>
-                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                    <p>נקודה תחתונה - חלק 1 (עד סוף המחזור)</p>
-                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
+            <React.Fragment key={`down-low-part1-${index}`}>
+              <line
+                x1={destX}
+                y1={downOriginLowY}
+                x2={xAtCycleEnd}
+                y2={downCycleEndY}
+                stroke="#60A5FA"
+                strokeWidth={2}
+                strokeDasharray="none"
+                onMouseEnter={(e) => {
+                  const content = (
+                    <div>
+                      <p>כיוון: נגד הזרם</p>
+                      <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                      <p>נקודה תחתונה - חלק 1 (עד סוף המחזור)</p>
+                      <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                    </div>
+                  );
+                  handleShowTooltip(e.clientX, e.clientY, content);
+                }}
+                onMouseLeave={handleHideTooltip}
+              />
+              {renderArrowhead(destX, downOriginLowY, xAtCycleEnd, downCycleEndY, "#60A5FA", "downstream")}
+            </React.Fragment>
           );
           
-          // Draw second part: from cycle start to destination
           lines.push(
-            <line
-              key={`down-low-part2-${index}`}
-              x1={xAtCycleEnd}
-              y1={downCycleStartY}
-              x2={originX}
-              y2={downDestLowY}
-              stroke="#60A5FA"
-              strokeWidth={2}
-              strokeDasharray="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: נגד הזרם</p>
-                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                    <p>נקודה תחתונה - חלק 2 (מתחילת המחזור)</p>
-                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
+            <React.Fragment key={`down-low-part2-${index}`}>
+              <line
+                x1={xAtCycleEnd}
+                y1={downCycleStartY}
+                x2={originX}
+                y2={downDestLowY}
+                stroke="#60A5FA"
+                strokeWidth={2}
+                strokeDasharray="none"
+                onMouseEnter={(e) => {
+                  const content = (
+                    <div>
+                      <p>כיוון: נגד הזרם</p>
+                      <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                      <p>נקודה תחתונה - חלק 2 (מתחילת המחזור)</p>
+                      <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                    </div>
+                  );
+                  handleShowTooltip(e.clientX, e.clientY, content);
+                }}
+                onMouseLeave={handleHideTooltip}
+              />
+              {renderArrowhead(xAtCycleEnd, downCycleStartY, originX, downDestLowY, "#60A5FA", "downstream")}
+            </React.Fragment>
           );
         } else {
-          // No wrapping needed, draw a single line
           lines.push(
-            <line
-              key={`down-low-${index}`}
-              x1={destX}
-              y1={downOriginLowY}
-              x2={originX}
-              y2={downDestLowY}
-              stroke="#60A5FA"
-              strokeWidth={2}
-              strokeDasharray="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: נגד הזרם</p>
-                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                    <p>נקודה תחתונה</p>
-                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
+            <React.Fragment key={`down-low-${index}`}>
+              <line
+                x1={destX}
+                y1={downOriginLowY}
+                x2={originX}
+                y2={downDestLowY}
+                stroke="#60A5FA"
+                strokeWidth={2}
+                strokeDasharray="none"
+                onMouseEnter={(e) => {
+                  const content = (
+                    <div>
+                      <p>כיוון: נגד הזרם</p>
+                      <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                      <p>נקודה תחתונה</p>
+                      <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                    </div>
+                  );
+                  handleShowTooltip(e.clientX, e.clientY, content);
+                }}
+                onMouseLeave={handleHideTooltip}
+              />
+              {renderArrowhead(destX, downOriginLowY, originX, downDestLowY, "#60A5FA", "downstream")}
+            </React.Fragment>
           );
         }
         
-        // Draw upper line (downstream)
         if (downHighWrapsAround) {
-          // NEW CALCULATION: Calculate the wrapped time difference properly
           const totalTimeDiff = cycleTime - pair.down.origin_high + pair.down.dest_high;
           
-          // Calculate the proportion of the distance that corresponds to the segment until cycle end
           const timeToCycleEnd = cycleTime - pair.down.origin_high;
           const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
           
-          // Calculate the x-coordinate at the cycle time boundary based on this proportion
           const distanceToTravel = originX - destX;
           const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
           const xAtCycleEnd = destX + distanceToCycleEnd;
           
-          // Calculate Y values
           const downCycleEndY = dimensions.height - 40 - yScale(cycleTime);
           const downCycleStartY = dimensions.height - 40 - yScale(0);
           
@@ -514,82 +527,85 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             downDestHighY
           });
           
-          // Draw first part: from origin to cycle end
           lines.push(
-            <line
-              key={`down-high-part1-${index}`}
-              x1={destX}
-              y1={downOriginHighY}
-              x2={xAtCycleEnd}
-              y2={downCycleEndY}
-              stroke="#60A5FA"
-              strokeWidth={2}
-              strokeDasharray="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: נגד הזרם</p>
-                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                    <p>נקודה עליונה - חלק 1 (עד סוף המחזור)</p>
-                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
+            <React.Fragment key={`down-high-part1-${index}`}>
+              <line
+                x1={destX}
+                y1={downOriginHighY}
+                x2={xAtCycleEnd}
+                y2={downCycleEndY}
+                stroke="#60A5FA"
+                strokeWidth={2}
+                strokeDasharray="none"
+                onMouseEnter={(e) => {
+                  const content = (
+                    <div>
+                      <p>כיוון: נגד הזרם</p>
+                      <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                      <p>נקודה עליונה - חלק 1 (עד סוף המחזור)</p>
+                      <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                    </div>
+                  );
+                  handleShowTooltip(e.clientX, e.clientY, content);
+                }}
+                onMouseLeave={handleHideTooltip}
+              />
+              {renderArrowhead(destX, downOriginHighY, xAtCycleEnd, downCycleEndY, "#60A5FA", "downstream")}
+            </React.Fragment>
           );
           
-          // Draw second part: from cycle start to destination
           lines.push(
-            <line
-              key={`down-high-part2-${index}`}
-              x1={xAtCycleEnd}
-              y1={downCycleStartY}
-              x2={originX}
-              y2={downDestHighY}
-              stroke="#60A5FA"
-              strokeWidth={2}
-              strokeDasharray="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: נגד הזרם</p>
-                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                    <p>נקודה עליונה - חלק 2 (מתחילת המחזור)</p>
-                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
+            <React.Fragment key={`down-high-part2-${index}`}>
+              <line
+                x1={xAtCycleEnd}
+                y1={downCycleStartY}
+                x2={originX}
+                y2={downDestHighY}
+                stroke="#60A5FA"
+                strokeWidth={2}
+                strokeDasharray="none"
+                onMouseEnter={(e) => {
+                  const content = (
+                    <div>
+                      <p>כיוון: נגד הזרם</p>
+                      <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                      <p>נקודה עליונה - חלק 2 (מתחילת המחזור)</p>
+                      <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                    </div>
+                  );
+                  handleShowTooltip(e.clientX, e.clientY, content);
+                }}
+                onMouseLeave={handleHideTooltip}
+              />
+              {renderArrowhead(xAtCycleEnd, downCycleStartY, originX, downDestHighY, "#60A5FA", "downstream")}
+            </React.Fragment>
           );
         } else {
-          // No wrapping needed, draw a single line
           lines.push(
-            <line
-              key={`down-high-${index}`}
-              x1={destX}
-              y1={downOriginHighY}
-              x2={originX}
-              y2={downDestHighY}
-              stroke="#60A5FA"
-              strokeWidth={2}
-              strokeDasharray="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: נגד הזרם</p>
-                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                    <p>נקודה עליונה</p>
-                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
+            <React.Fragment key={`down-high-${index}`}>
+              <line
+                x1={destX}
+                y1={downOriginHighY}
+                x2={originX}
+                y2={downDestHighY}
+                stroke="#60A5FA"
+                strokeWidth={2}
+                strokeDasharray="none"
+                onMouseEnter={(e) => {
+                  const content = (
+                    <div>
+                      <p>כיוון: נגד הזרם</p>
+                      <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                      <p>נקודה עליונה</p>
+                      <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                    </div>
+                  );
+                  handleShowTooltip(e.clientX, e.clientY, content);
+                }}
+                onMouseLeave={handleHideTooltip}
+              />
+              {renderArrowhead(destX, downOriginHighY, originX, downDestHighY, "#60A5FA", "downstream")}
+            </React.Fragment>
           );
         }
       } else {
@@ -806,4 +822,3 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     </>
   );
 };
-
