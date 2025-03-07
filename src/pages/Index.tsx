@@ -12,6 +12,7 @@ import { FileActions } from '@/components/FileActions';
 import { ResultsPanel } from '@/components/ResultsPanel';
 import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights } from '@/types/optimization';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
 const Index = () => {
   const [intersections, setIntersections] = useState<Intersection[]>([{
     id: 1,
@@ -51,6 +52,7 @@ const Index = () => {
   const [showWeights, setShowWeights] = useState(false);
   const [manualOffsets, setManualOffsets] = useState<number[]>([0, 0]);
   const [showManualDialog, setShowManualDialog] = useState(false);
+
   const handleSpeedChange = (value: string) => {
     const numValue = parseInt(value);
     if (isNaN(numValue) || numValue < 0 || numValue > 120 || !Number.isInteger(numValue)) {
@@ -58,12 +60,14 @@ const Index = () => {
       return;
     }
     setSpeed(numValue);
+
     const updatedIntersections = intersections.map(intersection => ({
       ...intersection,
       upstreamSpeed: numValue,
       downstreamSpeed: numValue
     }));
     setIntersections(updatedIntersections);
+
     if (mode === 'display') {
       handleShowExisting();
     } else if (mode === 'calculate') {
@@ -72,6 +76,7 @@ const Index = () => {
       handleManualCalculate();
     }
   };
+
   const handleAddIntersection = () => {
     const newId = Math.max(...intersections.map(i => i.id)) + 1;
     const lastIntersection = intersections[intersections.length - 1];
@@ -103,6 +108,7 @@ const Index = () => {
       handleManualCalculate();
     }
   };
+
   const handleManualCalculate = async () => {
     try {
       const currentOffsets = [...manualOffsets];
@@ -127,6 +133,7 @@ const Index = () => {
       toast.error("שגיאה בחישוב הגל הירוק במצב ידני");
     }
   };
+
   const handleCalculate = async () => {
     try {
       if (speed < 0 || speed > 120 || !Number.isInteger(speed)) {
@@ -142,10 +149,12 @@ const Index = () => {
           toast.error(`צומת ${intersection.id}: זמן מחזור חייב להיות מספר שלם בין 0 ל-300 שניות`);
           return;
         }
+
         if (intersection.upstreamSpeed !== undefined && (intersection.upstreamSpeed < 0 || intersection.upstreamSpeed > 120 || !Number.isInteger(intersection.upstreamSpeed))) {
           toast.error(`צומת ${intersection.id}: מהירות במעלה הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
         }
+
         if (intersection.downstreamSpeed !== undefined && (intersection.downstreamSpeed < 0 || intersection.downstreamSpeed > 120 || !Number.isInteger(intersection.downstreamSpeed))) {
           toast.error(`צומת ${intersection.id}: מהירות במורד הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
@@ -175,6 +184,7 @@ const Index = () => {
       toast.error("שגיאה בחישוב הגל הירוק");
     }
   };
+
   const handleShowExisting = async () => {
     try {
       if (speed < 0 || speed > 120 || !Number.isInteger(speed)) {
@@ -190,10 +200,12 @@ const Index = () => {
           toast.error(`צומת ${intersection.id}: זמן מחזור חייב להיות מספר שלם בין 0 ל-300 שניות`);
           return;
         }
+
         if (intersection.upstreamSpeed !== undefined && (intersection.upstreamSpeed < 0 || intersection.upstreamSpeed > 120 || !Number.isInteger(intersection.upstreamSpeed))) {
           toast.error(`צומת ${intersection.id}: מהירות במעלה הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
         }
+
         if (intersection.downstreamSpeed !== undefined && (intersection.downstreamSpeed < 0 || intersection.downstreamSpeed > 120 || !Number.isInteger(intersection.downstreamSpeed))) {
           toast.error(`צומת ${intersection.id}: מהירות במורד הזרם חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
           return;
@@ -213,6 +225,7 @@ const Index = () => {
       toast.error("שגיאה בהצגת הגל הירוק הקיים");
     }
   };
+
   const updateWeight = (category: keyof OptimizationWeights, value: number) => {
     const updatedWeights = {
       ...weights
@@ -220,6 +233,7 @@ const Index = () => {
     updatedWeights[category] = value;
     setWeights(updatedWeights);
   };
+
   const handleLoadInput = (data: {
     speed: number;
     intersections: Intersection[];
@@ -248,11 +262,13 @@ const Index = () => {
         }
       }
     }
+
     for (const intersection of data.intersections) {
       if (intersection.upstreamSpeed !== undefined && (intersection.upstreamSpeed < 0 || intersection.upstreamSpeed > 120 || !Number.isInteger(intersection.upstreamSpeed))) {
         toast.error(`הקובץ שנטען מכיל צומת עם מהירות במעלה הזרם לא חוקית. מהירות חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
         return;
       }
+
       if (intersection.downstreamSpeed !== undefined && (intersection.downstreamSpeed < 0 || intersection.downstreamSpeed > 120 || !Number.isInteger(intersection.downstreamSpeed))) {
         toast.error(`הקובץ שנטען מכיל צומת עם מהירות במורד הזרם לא חוקית. מהירות חייבת להיות מספר שלם בין 0 ל-120 קמ"ש`);
         return;
@@ -270,20 +286,25 @@ const Index = () => {
       handleManualCalculate();
     }
   };
+
   const handleResetWeights = () => {
     setWeights(DEFAULT_WEIGHTS);
     setResults(null);
     setMode('calculate');
     toast.success("המשקולות אופסו לברירת המחדל");
   };
+
   console.log("Current results state:", results);
-  return <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
+
+  return (
+    <div className="min-h-screen p-8 bg-gradient-to-br from-green-50 to-blue-50">
       <div className="max-w-[1600px] mx-auto space-y-8 animate-fade-up">
         <div className="flex flex-col items-center justify-center space-y-4">
-          <img alt="מחשבון גל ירוק" className="h-24 w-auto object-contain" onError={e => {
-          console.error("Failed to load logo image");
-          e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f9ff'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='14' text-anchor='middle' alignment-baseline='middle' fill='%2322c55e'%3Eגל ירוק%3C/text%3E%3C/svg%3E";
-        }} src="https://github.com/omrimatar/optimal-green-wave/blob/main/%D7%9C%D7%95%D7%92%D7%95%20%D7%92%D7%9C%20%D7%99%D7%A8%D7%95%D7%A7%20(5).png" />
+          <img 
+            src="/logo.png" 
+            alt="מחשבון גל ירוק" 
+            className="h-24 w-auto object-contain" 
+          />
           <div className="text-center space-y-2">
             <h1 className="text-4xl font-bold text-gray-900">מחשבון גל ירוק</h1>
             <p className="text-lg text-gray-600">כלי לתכנון אופטימלי של תזמוני רמזורים</p>
@@ -379,8 +400,17 @@ const Index = () => {
           </div>
         </Card>
 
-        {results && <ResultsPanel results={results} mode={mode} originalIntersections={intersections} speed={speed} />}
+        {results && (
+          <ResultsPanel 
+            results={results} 
+            mode={mode}
+            originalIntersections={intersections}
+            speed={speed}
+          />
+        )}
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
