@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -38,7 +37,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     content: null
   });
   const [isMobile, setIsMobile] = useState(false);
-  const [leftmostPositionX, setLeftmostPositionX] = useState(40);  // Default left padding
+  const [leftmostPositionX, setLeftmostPositionX] = useState(80);  // Increased default left padding from 40 to 80
 
   useEffect(() => {
     setIsMobile(isMobileDevice());
@@ -62,11 +61,11 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   useEffect(() => {
     if (intersections.length > 0) {
       // Find the minimum X position (for the leftmost phase)
-      // Default base X position with padding
-      const baseX = 40;
+      // Default base X position with increased padding
+      const baseX = 80; // Increased from 40 to 80
       // For the leftmost intersection (usually the first one), calculate its upstream phase position
       const x = baseX + xScale(intersections[0].distance) - 10; // -10 for upstream offset
-      setLeftmostPositionX(Math.max(x, 30)); // Ensure it's not too close to the edge
+      setLeftmostPositionX(Math.max(x, 60)); // Increased minimum from 30 to 60
       console.log("Leftmost position set to:", x);
     }
   }, [intersections, dimensions.width]);
@@ -133,7 +132,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     
     const lines = [];
     for (let i = 0; i < intersections.length; i++) {
-      const x = 40 + xScale(intersections[i].distance);
+      const x = 80 + xScale(intersections[i].distance); // Changed from 40 to 80
       lines.push(
         <line 
           key={`x-grid-${i}`}
@@ -164,8 +163,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         return null;
       }
 
-      const originX = 40 + xScale(intersections[originIdx].distance);
-      const destX = 40 + xScale(intersections[destIdx].distance);
+      const originX = 80 + xScale(intersections[originIdx].distance);
+      const destX = 80 + xScale(intersections[destIdx].distance);
       const lines = [];
 
       const pairIndex = pair.from_junction - 1;
@@ -684,8 +683,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               console.log(`  Green Phases:`, intersection.greenPhases);
               
               return intersection.greenPhases.map((phase, j) => {
-                // Calculate x position with initial padding
-                const x = 40 + xScale(intersection.distance);
+                // Calculate x position with increased initial padding
+                const x = 80 + xScale(intersection.distance); // Changed from 40 to 80
                 
                 // Always place upstream (עם הזרם) phases to the left and downstream (נגד הזרם) phases to the right
                 // Ensure they appear correctly even when x is 0 or very small
@@ -792,7 +791,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             })}
 
             {intersections.map((intersection, i) => {
-              const x = 40 + xScale(intersection.distance);
+              const x = 80 + xScale(intersection.distance); // Changed from 40 to 80
               return (
                 <g key={`x-tick-${i}`}>
                   <line 
@@ -849,3 +848,4 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     </>
   );
 };
+
