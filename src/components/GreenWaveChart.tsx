@@ -155,6 +155,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       
       console.log(`Rendering diagonal lines for pair ${pair.from_junction}->${pair.to_junction}:`);
       console.log(`Upstream bandwidth: ${upstreamBandwidth}, Downstream bandwidth: ${downstreamBandwidth}`);
+      console.log(`Upstream data: origin_low=${pair.up.origin_low}, origin_high=${pair.up.origin_high}, dest_low=${pair.up.dest_low}, dest_high=${pair.up.dest_high}`);
+      console.log(`Downstream data: origin_low=${pair.down.origin_low}, origin_high=${pair.down.origin_high}, dest_low=${pair.down.dest_low}, dest_high=${pair.down.dest_high}`);
       
       // Check if we need to handle cycle wrapping for this pair
       const cycleTime = Math.max(
@@ -273,6 +275,18 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
           const slope = (upCycleEndY - upOriginHighY) / (destX - originX);
           const xAtCycleEnd = originX + (upCycleEndY - upOriginHighY) / slope;
+          
+          console.log(`Upstream high wrap calculation:`, {
+            pair: `${pair.from_junction}->${pair.to_junction}`,
+            origin_high: pair.up.origin_high,
+            dest_high: pair.up.dest_high,
+            originX,
+            destX,
+            upOriginHighY,
+            upCycleEndY,
+            slope,
+            xAtCycleEnd
+          });
           
           lines.push(
             <line
