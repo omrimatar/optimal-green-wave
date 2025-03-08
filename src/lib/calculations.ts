@@ -16,10 +16,10 @@ export async function calculateGreenWave(
 }> {
   // המרת הנתונים לפורמט הנדרש
   const networkData: NetworkData = {
-    intersections: intersections.map((intersection, index) => {
+    intersections: intersections.map(intersection => {
       // Get the effective speeds (use intersection-specific speed if defined, otherwise use global speed)
-      const currentUpstreamSpeed = intersection.upstreamSpeed !== undefined ? intersection.upstreamSpeed : speed;
-      const currentDownstreamSpeed = intersection.downstreamSpeed !== undefined ? intersection.downstreamSpeed : speed;
+      const upstreamSpeed = intersection.upstreamSpeed !== undefined ? intersection.upstreamSpeed : speed;
+      const downstreamSpeed = intersection.downstreamSpeed !== undefined ? intersection.downstreamSpeed : speed;
       
       // Extract and combine green phases
       const upPhases = intersection.greenPhases
@@ -27,7 +27,7 @@ export async function calculateGreenWave(
         .map(phase => ({
           start: phase.startTime,
           duration: phase.duration,
-          speed: currentUpstreamSpeed  // Use the appropriate upstream speed
+          speed: upstreamSpeed  // Use the appropriate upstream speed
         }));
       
       const downPhases = intersection.greenPhases
@@ -35,7 +35,7 @@ export async function calculateGreenWave(
         .map(phase => ({
           start: phase.startTime,
           duration: phase.duration,
-          speed: currentDownstreamSpeed  // Use the appropriate downstream speed
+          speed: downstreamSpeed  // Use the appropriate downstream speed
         }));
 
       return {
@@ -44,10 +44,7 @@ export async function calculateGreenWave(
         green_up: upPhases,
         green_down: downPhases,
         cycle_up: intersection.cycleTime,
-        cycle_down: intersection.cycleTime,
-        // Add specific speed properties to communicate clearly to the optimization
-        upstream_speed: currentUpstreamSpeed,
-        downstream_speed: currentDownstreamSpeed
+        cycle_down: intersection.cycleTime
       };
     }),
     travel: {
@@ -65,36 +62,26 @@ export async function calculateGreenWave(
   // קריאה לפונקציית האופטימיזציה
   const results = await greenWaveOptimization(networkData, weights || DEFAULT_WEIGHTS, manualOffsets);
   
-  // Ensure distances and speeds are properly preserved in the results
+  // Ensure distances are properly preserved in the results
   const actualDistances = intersections.map(i => i.distance);
-  const upstreamSpeeds = intersections.map(i => i.upstreamSpeed || speed);
-  const downstreamSpeeds = intersections.map(i => i.downstreamSpeed || speed);
   
-  // Add the actual distances and speeds to all result objects
+  // Add the actual distances to all result objects
   if (results.baseline_results) {
     results.baseline_results.distances = actualDistances;
-    results.baseline_results.speed = speed; // Global design speed
-    results.baseline_results.upstream_speeds = upstreamSpeeds;
-    results.baseline_results.downstream_speeds = downstreamSpeeds;
+    results.baseline_results.speed = speed; // Add global design speed
   }
   
   if (results.optimized_results) {
     results.optimized_results.distances = actualDistances;
-    results.optimized_results.speed = speed; // Global design speed
-    results.optimized_results.upstream_speeds = upstreamSpeeds;
-    results.optimized_results.downstream_speeds = downstreamSpeeds;
+    results.optimized_results.speed = speed; // Add global design speed
   }
   
   if (results.manual_results) {
     results.manual_results.distances = actualDistances;
-    results.manual_results.speed = speed; // Global design speed
-    results.manual_results.upstream_speeds = upstreamSpeeds;
-    results.manual_results.downstream_speeds = downstreamSpeeds;
+    results.manual_results.speed = speed; // Add global design speed
   }
   
   console.log("Received results from optimization with distances:", actualDistances);
-  console.log("Received results with upstream speeds:", upstreamSpeeds);
-  console.log("Received results with downstream speeds:", downstreamSpeeds);
   
   return results;
 }

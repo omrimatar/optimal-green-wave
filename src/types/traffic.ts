@@ -12,8 +12,6 @@ export interface LambdaIntersection {
   green_up: LambdaGreenPhase[];
   green_down: LambdaGreenPhase[];
   cycle: number;
-  upstream_speed?: number;
-  downstream_speed?: number;
 }
 
 export interface LambdaData {
@@ -112,10 +110,6 @@ export interface RunResult {
   green_down?: Array<{start: number; duration: number; speed?: number}[]>;
   speed?: number;
   
-  // Add speed properties for each intersection
-  upstream_speeds?: number[];
-  downstream_speeds?: number[];
-  
   status: string;
   objective_value: number;
 }
@@ -139,8 +133,6 @@ export interface Intersection {
   green_down: GreenPhase[];
   cycle_up?: number;
   cycle_down?: number;
-  upstream_speed?: number;
-  downstream_speed?: number;
 }
 
 export interface Travel {

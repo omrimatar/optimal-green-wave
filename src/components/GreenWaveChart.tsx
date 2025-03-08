@@ -156,18 +156,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       console.log(`Rendering diagonal lines for pair ${pair.from_junction}->${pair.to_junction}:`);
       console.log(`Upstream bandwidth: ${upstreamBandwidth}, Downstream bandwidth: ${downstreamBandwidth}`);
       
-      // Get the proper speeds for this intersection pair
-      const upstreamSpeed = comparisonResults.upstream_speeds?.[destIdx] !== undefined 
-        ? comparisonResults.upstream_speeds[destIdx] 
-        : (intersections[destIdx].upstreamSpeed || speed);
-        
-      const downstreamSpeed = comparisonResults.downstream_speeds?.[originIdx] !== undefined 
-        ? comparisonResults.downstream_speeds[originIdx] 
-        : (intersections[originIdx].downstreamSpeed || speed);
-      
-      console.log(`Using upstream speed (from ${pair.from_junction} to ${pair.to_junction}): ${upstreamSpeed} km/h`);
-      console.log(`Using downstream speed (from ${pair.to_junction} to ${pair.from_junction}): ${downstreamSpeed} km/h`);
-      
       // Check if we need to handle cycle wrapping for this pair
       const cycleTime = Math.max(
         intersections[originIdx].cycleTime || 90,
@@ -214,7 +202,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
                     <p>נקודה תחתונה - חלק 1 (עד סוף המחזור)</p>
                     <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                    <p>מהירות: {upstreamSpeed} קמ"ש</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
@@ -243,7 +230,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
                     <p>נקודה תחתונה - חלק 2 (מתחילת המחזור)</p>
                     <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                    <p>מהירות: {upstreamSpeed} קמ"ש</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
@@ -272,7 +258,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
                     <p>נקודה תחתונה</p>
                     <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                    <p>מהירות: {upstreamSpeed} קמ"ש</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
@@ -306,7 +291,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
                     <p>נקודה עליונה - חלק 1 (עד סוף המחזור)</p>
                     <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                    <p>מהירות: {upstreamSpeed} קמ"ש</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
@@ -335,7 +319,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
                     <p>נקודה עליונה - חלק 2 (מתחילת המחזור)</p>
                     <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                    <p>מהירות: {upstreamSpeed} קמ"ש</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
@@ -364,7 +347,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
                     <p>נקודה עליונה</p>
                     <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                    <p>מהירות: {upstreamSpeed} קמ"ש</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
@@ -440,7 +422,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
                     <p>נקודה תחתונה - חלק 1 (עד סוף המחזור)</p>
                     <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                    <p>מהירות: {downstreamSpeed} קמ"ש</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
@@ -467,7 +448,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
                     <p>נקודה תחתונה - חלק 2 (מתחילת המחזור)</p>
                     <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                    <p>מהירות: {downstreamSpeed} קמ"ש</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
@@ -494,7 +474,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
                     <p>נקודה תחתונה</p>
                     <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                    <p>מהירות: {downstreamSpeed} קמ"ש</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
@@ -553,7 +532,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
                     <p>נקודה עליונה - חלק 1 (עד סוף המחזור)</p>
                     <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                    <p>מהירות: {downstreamSpeed} קמ"ש</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
@@ -580,7 +558,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
                     <p>נקודה עליונה - חלק 2 (מתחילת המחזור)</p>
                     <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                    <p>מהירות: {downstreamSpeed} קמ"ש</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
@@ -607,7 +584,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
                     <p>נקודה עליונה</p>
                     <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                    <p>מהירות: {downstreamSpeed} קמ"ש</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
