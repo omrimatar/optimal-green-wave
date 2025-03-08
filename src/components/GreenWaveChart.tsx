@@ -155,8 +155,18 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       
       console.log(`Rendering diagonal lines for pair ${pair.from_junction}->${pair.to_junction}:`);
       console.log(`Upstream bandwidth: ${upstreamBandwidth}, Downstream bandwidth: ${downstreamBandwidth}`);
-      console.log(`Upstream data: origin_low=${pair.up.origin_low}, origin_high=${pair.up.origin_high}, dest_low=${pair.up.dest_low}, dest_high=${pair.up.dest_high}`);
-      console.log(`Downstream data: origin_low=${pair.down.origin_low}, origin_high=${pair.down.origin_high}, dest_low=${pair.down.dest_low}, dest_high=${pair.down.dest_high}`);
+      console.log(`Upstream data: origin_low=${pair.up.origin_low.toFixed(2)}, origin_high=${pair.up.origin_high.toFixed(2)}, dest_low=${pair.up.dest_low.toFixed(2)}, dest_high=${pair.up.dest_high.toFixed(2)}`);
+      console.log(`Downstream data: origin_low=${pair.down.origin_low.toFixed(2)}, origin_high=${pair.down.origin_high.toFixed(2)}, dest_low=${pair.down.dest_low.toFixed(2)}, dest_high=${pair.down.dest_high.toFixed(2)}`);
+      
+      // Enhanced diagnostic log for junction 4->5
+      if (pair.from_junction === 4 && pair.to_junction === 5) {
+        console.log(`CRITICAL PAIR 4->5: Detected values:`);
+        console.log(`  origin_high: ${pair.up.origin_high}, dest_high: ${pair.up.dest_high}`);
+        console.log(`  Wrapping needed: ${pair.up.dest_high < pair.up.origin_high}`);
+        console.log(`  Time difference: ${pair.up.dest_high < pair.up.origin_high ? 
+          (90 - pair.up.origin_high + pair.up.dest_high) : 
+          (pair.up.dest_high - pair.up.origin_high)}`);
+      }
       
       // Check if we need to handle cycle wrapping for this pair
       const cycleTime = Math.max(
@@ -180,13 +190,36 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         
         // Draw lower line (upstream)
         if (upLowWrapsAround) {
-          // Draw first part: from origin to cycle end
-          const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
-          // Calculate slope for the first segment
-          const slope = (upCycleEndY - upOriginLowY) / (destX - originX);
-          // Calculate intersection with cycle end line
-          const xAtCycleEnd = originX + (upCycleEndY - upOriginLowY) / slope;
+          // IMPROVED CALCULATION: Calculate the wrapped time difference properly
+          const totalTimeDiff = cycleTime - pair.up.origin_low + pair.up.dest_low;
           
+          // Calculate the proportion of the distance that corresponds to the segment until cycle end
+          const timeToCycleEnd = cycleTime - pair.up.origin_low;
+          const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
+          
+          // Calculate the x-coordinate at the cycle time boundary based on this proportion
+          const distanceToTravel = destX - originX;
+          const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
+          const xAtCycleEnd = originX + distanceToCycleEnd;
+          
+          // Calculate Y values
+          const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
+          const upCycleStartY = dimensions.height - 40 - yScale(0);
+          
+          console.log(`Upstream low wrap calculation:`, {
+            totalTimeDiff,
+            timeToCycleEnd,
+            proportionToCycleEnd,
+            distanceToTravel,
+            distanceToCycleEnd,
+            xAtCycleEnd,
+            upOriginLowY,
+            upCycleEndY,
+            upCycleStartY,
+            upDestLowY
+          });
+          
+          // Draw first part: from origin to cycle end
           lines.push(
             <line
               key={`up-low-part1-${index}`}
@@ -213,8 +246,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           );
           
           // Draw second part: from cycle start to destination
-          const upCycleStartY = dimensions.height - 40 - yScale(0);
-          
           lines.push(
             <line
               key={`up-low-part2-${index}`}
@@ -241,8 +272,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           );
         } else {
           // No wrapping needed, draw a single line
-          const slope = (upDestLowY - upOriginLowY) / (destX - originX);
-          
           lines.push(
             <line
               key={`up-low-${index}`}
@@ -271,23 +300,41 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         
         // Draw upper line (upstream)
         if (upHighWrapsAround) {
-          // Draw first part: from origin to cycle end
+          // IMPROVED CALCULATION: Calculate the wrapped time difference properly
+          const totalTimeDiff = cycleTime - pair.up.origin_high + pair.up.dest_high;
+          
+          // Calculate the proportion of the distance that corresponds to the segment until cycle end
+          const timeToCycleEnd = cycleTime - pair.up.origin_high;
+          const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
+          
+          // Calculate the x-coordinate at the cycle time boundary based on this proportion
+          const distanceToTravel = destX - originX;
+          const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
+          const xAtCycleEnd = originX + distanceToCycleEnd;
+          
+          // Calculate Y values
           const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
-          const slope = (upCycleEndY - upOriginHighY) / (destX - originX);
-          const xAtCycleEnd = originX + (upCycleEndY - upOriginHighY) / slope;
+          const upCycleStartY = dimensions.height - 40 - yScale(0);
           
           console.log(`Upstream high wrap calculation:`, {
             pair: `${pair.from_junction}->${pair.to_junction}`,
             origin_high: pair.up.origin_high,
             dest_high: pair.up.dest_high,
+            totalTimeDiff,
+            timeToCycleEnd,
+            proportionToCycleEnd,
+            distanceToTravel,
+            distanceToCycleEnd,
             originX,
             destX,
+            xAtCycleEnd,
             upOriginHighY,
             upCycleEndY,
-            slope,
-            xAtCycleEnd
+            upCycleStartY,
+            upDestHighY
           });
           
+          // Draw first part: from origin to cycle end
           lines.push(
             <line
               key={`up-high-part1-${index}`}
@@ -314,8 +361,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           );
           
           // Draw second part: from cycle start to destination
-          const upCycleStartY = dimensions.height - 40 - yScale(0);
-          
           lines.push(
             <line
               key={`up-high-part2-${index}`}
@@ -342,8 +387,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           );
         } else {
           // No wrapping needed, draw a single line
-          const slope = (upDestHighY - upOriginHighY) / (destX - originX);
-          
           lines.push(
             <line
               key={`up-high-${index}`}
@@ -389,7 +432,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         
         // Draw lower line (downstream)
         if (downLowWrapsAround) {
-          // NEW CALCULATION: Calculate the wrapped time difference properly
+          // IMPROVED CALCULATION: Calculate the wrapped time difference properly
           const totalTimeDiff = cycleTime - pair.down.origin_low + pair.down.dest_low;
           
           // Calculate the proportion of the distance that corresponds to the segment until cycle end
@@ -499,7 +542,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         
         // Draw upper line (downstream)
         if (downHighWrapsAround) {
-          // NEW CALCULATION: Calculate the wrapped time difference properly
+          // IMPROVED CALCULATION: Calculate the wrapped time difference properly
           const totalTimeDiff = cycleTime - pair.down.origin_high + pair.down.dest_high;
           
           // Calculate the proportion of the distance that corresponds to the segment until cycle end
