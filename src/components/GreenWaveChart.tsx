@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -669,8 +670,14 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               console.log(`  Green Phases:`, intersection.greenPhases);
               
               return intersection.greenPhases.map((phase, j) => {
-                const x = (isMobile ? 40 : 40) + xScale(intersection.distance);
+                // Calculate x position with initial padding
+                const x = 40 + xScale(intersection.distance);
+                
+                // Always place upstream (עם הזרם) phases to the left and downstream (נגד הזרם) phases to the right
+                // Ensure they appear correctly even when x is 0 or very small
                 const xOffset = phase.direction === 'upstream' ? -10 : 10;
+                
+                console.log(`Phase ${j+1} direction: ${phase.direction}, xOffset: ${xOffset}`);
                 
                 let startTime = (phase.startTime + offset) % intersection.cycleTime;
                 let endTime = (startTime + phase.duration) % intersection.cycleTime;
@@ -686,6 +693,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 console.log(`    Adjusted Start: ${startTime}s`);
                 console.log(`    Adjusted End: ${wrappedPhase ? intersection.cycleTime : endTime}s`);
                 console.log(`    Wrapped: ${wrappedPhase}`);
+                console.log(`    X position: ${x + xOffset}`);
                 
                 return (
                   <React.Fragment key={`phase-${i}-${j}`}>
