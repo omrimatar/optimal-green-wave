@@ -38,6 +38,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   });
   const [isMobile, setIsMobile] = useState(false);
 
+  const leftPadding = isMobile ? 60 : 80;
+  const originX = leftPadding + 25;
+
   useEffect(() => {
     setIsMobile(isMobileDevice());
     
@@ -46,7 +49,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     console.log("GreenWaveChart speed:", speed);
     console.log("GreenWaveChart pairBandPoints:", pairBandPoints);
     console.log("GreenWaveChart comparisonResults:", comparisonResults);
-  }, [intersections, mode, speed, pairBandPoints, comparisonResults]);
+    console.log("Left padding:", leftPadding);
+    console.log("Origin X:", originX);
+  }, [intersections, mode, speed, pairBandPoints, comparisonResults, leftPadding, originX]);
 
   const maxDistance = Math.max(...intersections.map(i => i.distance));
   const maxCycleTime = Math.max(...intersections.map(i => i.cycleTime));
@@ -100,7 +105,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       lines.push(
         <line 
           key={`y-grid-${t}`}
-          x1={40} 
+          x1={leftPadding} 
           y1={y} 
           x2={dimensions.width - 40} 
           y2={y} 
@@ -118,7 +123,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     
     const lines = [];
     for (let i = 0; i < intersections.length; i++) {
-      const x = 40 + xScale(intersections[i].distance);
+      const x = originX + xScale(intersections[i].distance);
       lines.push(
         <line 
           key={`x-grid-${i}`}
@@ -149,8 +154,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         return null;
       }
 
-      const originX = 40 + xScale(intersections[originIdx].distance);
-      const destX = 40 + xScale(intersections[destIdx].distance);
+      const originX = leftPadding + 25 + xScale(intersections[originIdx].distance);
+      const destX = leftPadding + 25 + xScale(intersections[destIdx].distance);
       const lines = [];
 
       const pairIndex = pair.from_junction - 1;
@@ -641,15 +646,15 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             {generateXGridLines()}
             
             <line 
-              x1={isMobile ? 40 : 60} 
+              x1={leftPadding} 
               y1={isMobile ? 30 : 40} 
-              x2={isMobile ? 40 : 60} 
+              x2={leftPadding} 
               y2={dimensions.height - (isMobile ? 30 : 40)} 
               stroke="black" 
               strokeWidth={1} 
             />
             <line 
-              x1={isMobile ? 40 : 60} 
+              x1={leftPadding} 
               y1={dimensions.height - (isMobile ? 30 : 40)} 
               x2={dimensions.width - (isMobile ? 40 : 60)} 
               y2={dimensions.height - (isMobile ? 30 : 40)} 
@@ -669,7 +674,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               console.log(`  Green Phases:`, intersection.greenPhases);
               
               return intersection.greenPhases.map((phase, j) => {
-                const x = (isMobile ? 40 : 40) + xScale(intersection.distance);
+                const x = originX + xScale(intersection.distance);
                 const xOffset = phase.direction === 'upstream' ? -10 : 10;
                 
                 let startTime = (phase.startTime + offset) % intersection.cycleTime;
@@ -749,15 +754,15 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               return (
                 <g key={`y-tick-${i}`}>
                   <line 
-                    x1={isMobile ? 35 : 55} 
+                    x1={leftPadding - 5} 
                     y1={y} 
-                    x2={isMobile ? 40 : 60} 
+                    x2={leftPadding} 
                     y2={y} 
                     stroke="black" 
                     strokeWidth={1} 
                   />
                   <text 
-                    x={isMobile ? 30 : 50} 
+                    x={leftPadding - 10} 
                     y={y} 
                     textAnchor="end" 
                     fontSize={isMobile ? 10 : 12}
@@ -770,7 +775,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             })}
 
             {intersections.map((intersection, i) => {
-              const x = (isMobile ? 40 : 40) + xScale(intersection.distance);
+              const x = originX + xScale(intersection.distance);
               return (
                 <g key={`x-tick-${i}`}>
                   <line 
