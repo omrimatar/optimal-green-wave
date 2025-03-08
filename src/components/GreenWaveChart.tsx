@@ -1,10 +1,10 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
 import { GreenWaveTooltip } from './GreenWaveTooltip';
 import { type Intersection } from "@/types/optimization";
 import { type PairBandPoint, type RunResult } from "@/types/traffic";
+import { isMobileDevice, getMobileScale } from '@/lib/traffic';
 
 interface GreenWaveChartProps {
   intersections: Intersection[];
@@ -36,8 +36,11 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     y: 0,
     content: null
   });
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    setIsMobile(isMobileDevice());
+    
     console.log("GreenWaveChart received intersections:", intersections);
     console.log("GreenWaveChart mode:", mode);
     console.log("GreenWaveChart speed:", speed);
@@ -53,14 +56,16 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     console.log("Computed maxCycleTime:", maxCycleTime);
   }, [maxDistance, maxCycleTime]);
 
-  const xScale = (value: number) => (value / maxDistance) * (dimensions.width - 120);
-  const yScale = (value: number) => (value / maxCycleTime) * (dimensions.height - 80);
+  const xScale = (value: number) => (value / maxDistance) * (dimensions.width - (isMobile ? 80 : 120));
+  const yScale = (value: number) => (value / maxCycleTime) * (dimensions.height - (isMobile ? 60 : 80));
 
   useEffect(() => {
     const handleResize = () => {
       if (chartRef.current) {
         const width = chartRef.current.clientWidth;
-        const height = Math.min(600, Math.max(500, width * 0.5)); // Responsive height, but not too tall
+        const heightRatio = isMobileDevice() ? 0.7 : 0.5;
+        const height = Math.min(600, Math.max(300, width * heightRatio));
+        
         setDimensions({
           width: width,
           height: height
@@ -148,7 +153,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       const destX = 40 + xScale(intersections[destIdx].distance);
       const lines = [];
 
-      // Get the API bandwidth values
       const pairIndex = pair.from_junction - 1;
       const upstreamBandwidth = comparisonResults.pair_bandwidth_up?.[pairIndex] || 0;
       const downstreamBandwidth = comparisonResults.pair_bandwidth_down?.[pairIndex] || 0;
@@ -158,51 +162,31 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       console.log(`Upstream data: origin_low=${pair.up.origin_low.toFixed(2)}, origin_high=${pair.up.origin_high.toFixed(2)}, dest_low=${pair.up.dest_low.toFixed(2)}, dest_high=${pair.up.dest_high.toFixed(2)}`);
       console.log(`Downstream data: origin_low=${pair.down.origin_low.toFixed(2)}, origin_high=${pair.down.origin_high.toFixed(2)}, dest_low=${pair.down.dest_low.toFixed(2)}, dest_high=${pair.down.dest_high.toFixed(2)}`);
       
-      // Enhanced diagnostic log for junction 4->5
-      if (pair.from_junction === 4 && pair.to_junction === 5) {
-        console.log(`CRITICAL PAIR 4->5: Detected values:`);
-        console.log(`  origin_high: ${pair.up.origin_high}, dest_high: ${pair.up.dest_high}`);
-        console.log(`  Wrapping needed: ${pair.up.dest_high < pair.up.origin_high}`);
-        console.log(`  Time difference: ${pair.up.dest_high < pair.up.origin_high ? 
-          (90 - pair.up.origin_high + pair.up.dest_high) : 
-          (pair.up.dest_high - pair.up.origin_high)}`);
-      }
-      
-      // Check if we need to handle cycle wrapping for this pair
       const cycleTime = Math.max(
         intersections[originIdx].cycleTime || 90,
         intersections[destIdx].cycleTime || 90
       );
       
-      // Handle upstream (with-flow) lines
       if (upstreamBandwidth > 0) {
         const upOriginLowY = dimensions.height - 40 - yScale(pair.up.origin_low);
         const upOriginHighY = dimensions.height - 40 - yScale(pair.up.origin_high);
         const upDestLowY = dimensions.height - 40 - yScale(pair.up.dest_low);
         const upDestHighY = dimensions.height - 40 - yScale(pair.up.dest_high);
         
-        // Check if wrapping is needed
         const upLowWrapsAround = pair.up.dest_low < pair.up.origin_low;
         const upHighWrapsAround = pair.up.dest_high < pair.up.origin_high;
 
         console.log(`Upstream low line: origin=${pair.up.origin_low.toFixed(2)}, dest=${pair.up.dest_low.toFixed(2)}, wraps=${upLowWrapsAround}`);
         console.log(`Upstream high line: origin=${pair.up.origin_high.toFixed(2)}, dest=${pair.up.dest_high.toFixed(2)}, wraps=${upHighWrapsAround}`);
         
-        // Draw lower line (upstream)
         if (upLowWrapsAround) {
-          // IMPROVED CALCULATION: Calculate the wrapped time difference properly
           const totalTimeDiff = cycleTime - pair.up.origin_low + pair.up.dest_low;
-          
-          // Calculate the proportion of the distance that corresponds to the segment until cycle end
           const timeToCycleEnd = cycleTime - pair.up.origin_low;
           const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
-          
-          // Calculate the x-coordinate at the cycle time boundary based on this proportion
           const distanceToTravel = destX - originX;
           const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
           const xAtCycleEnd = originX + distanceToCycleEnd;
           
-          // Calculate Y values
           const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
           const upCycleStartY = dimensions.height - 40 - yScale(0);
           
@@ -219,7 +203,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             upDestLowY
           });
           
-          // Draw first part: from origin to cycle end
           lines.push(
             <line
               key={`up-low-part1-${index}`}
@@ -245,7 +228,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             />
           );
           
-          // Draw second part: from cycle start to destination
           lines.push(
             <line
               key={`up-low-part2-${index}`}
@@ -271,7 +253,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             />
           );
         } else {
-          // No wrapping needed, draw a single line
           lines.push(
             <line
               key={`up-low-${index}`}
@@ -298,21 +279,14 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           );
         }
         
-        // Draw upper line (upstream)
         if (upHighWrapsAround) {
-          // IMPROVED CALCULATION: Calculate the wrapped time difference properly
           const totalTimeDiff = cycleTime - pair.up.origin_high + pair.up.dest_high;
-          
-          // Calculate the proportion of the distance that corresponds to the segment until cycle end
           const timeToCycleEnd = cycleTime - pair.up.origin_high;
           const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
-          
-          // Calculate the x-coordinate at the cycle time boundary based on this proportion
           const distanceToTravel = destX - originX;
           const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
           const xAtCycleEnd = originX + distanceToCycleEnd;
           
-          // Calculate Y values
           const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
           const upCycleStartY = dimensions.height - 40 - yScale(0);
           
@@ -334,7 +308,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             upDestHighY
           });
           
-          // Draw first part: from origin to cycle end
           lines.push(
             <line
               key={`up-high-part1-${index}`}
@@ -360,7 +333,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             />
           );
           
-          // Draw second part: from cycle start to destination
           lines.push(
             <line
               key={`up-high-part2-${index}`}
@@ -386,7 +358,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             />
           );
         } else {
-          // No wrapping needed, draw a single line
           lines.push(
             <line
               key={`up-high-${index}`}
@@ -416,35 +387,26 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         console.log(`Skipping upstream lines for ${pair.from_junction}->${pair.to_junction} due to zero or negative bandwidth: ${upstreamBandwidth}`);
       }
 
-      // Handle downstream (against-flow) lines
       if (downstreamBandwidth > 0) {
         const downOriginLowY = dimensions.height - 40 - yScale(pair.down.origin_low);
         const downOriginHighY = dimensions.height - 40 - yScale(pair.down.origin_high);
         const downDestLowY = dimensions.height - 40 - yScale(pair.down.dest_low);
         const downDestHighY = dimensions.height - 40 - yScale(pair.down.dest_high);
         
-        // Check if wrapping is needed
         const downLowWrapsAround = pair.down.dest_low < pair.down.origin_low;
         const downHighWrapsAround = pair.down.dest_high < pair.down.origin_high;
         
         console.log(`Downstream low line: origin=${pair.down.origin_low.toFixed(2)}, dest=${pair.down.dest_low.toFixed(2)}, wraps=${downLowWrapsAround}`);
         console.log(`Downstream high line: origin=${pair.down.origin_high.toFixed(2)}, dest=${pair.down.dest_high.toFixed(2)}, wraps=${downHighWrapsAround}`);
         
-        // Draw lower line (downstream)
         if (downLowWrapsAround) {
-          // IMPROVED CALCULATION: Calculate the wrapped time difference properly
           const totalTimeDiff = cycleTime - pair.down.origin_low + pair.down.dest_low;
-          
-          // Calculate the proportion of the distance that corresponds to the segment until cycle end
           const timeToCycleEnd = cycleTime - pair.down.origin_low;
           const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
-          
-          // Calculate the x-coordinate at the cycle time boundary based on this proportion
           const distanceToTravel = originX - destX;
           const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
           const xAtCycleEnd = destX + distanceToCycleEnd;
           
-          // Calculate Y values
           const downCycleEndY = dimensions.height - 40 - yScale(cycleTime);
           const downCycleStartY = dimensions.height - 40 - yScale(0);
           
@@ -461,7 +423,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             downDestLowY
           });
           
-          // Draw first part: from origin to cycle end
           lines.push(
             <line
               key={`down-low-part1-${index}`}
@@ -487,7 +448,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             />
           );
           
-          // Draw second part: from cycle start to destination
           lines.push(
             <line
               key={`down-low-part2-${index}`}
@@ -513,7 +473,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             />
           );
         } else {
-          // No wrapping needed, draw a single line
           lines.push(
             <line
               key={`down-low-${index}`}
@@ -540,21 +499,14 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           );
         }
         
-        // Draw upper line (downstream)
         if (downHighWrapsAround) {
-          // IMPROVED CALCULATION: Calculate the wrapped time difference properly
           const totalTimeDiff = cycleTime - pair.down.origin_high + pair.down.dest_high;
-          
-          // Calculate the proportion of the distance that corresponds to the segment until cycle end
           const timeToCycleEnd = cycleTime - pair.down.origin_high;
           const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
-          
-          // Calculate the x-coordinate at the cycle time boundary based on this proportion
           const distanceToTravel = originX - destX;
           const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
           const xAtCycleEnd = destX + distanceToCycleEnd;
           
-          // Calculate Y values
           const downCycleEndY = dimensions.height - 40 - yScale(cycleTime);
           const downCycleStartY = dimensions.height - 40 - yScale(0);
           
@@ -571,7 +523,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             downDestHighY
           });
           
-          // Draw first part: from origin to cycle end
           lines.push(
             <line
               key={`down-high-part1-${index}`}
@@ -597,7 +548,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             />
           );
           
-          // Draw second part: from cycle start to destination
           lines.push(
             <line
               key={`down-high-part2-${index}`}
@@ -623,7 +573,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             />
           );
         } else {
-          // No wrapping needed, draw a single line
           lines.push(
             <line
               key={`down-high-${index}`}
@@ -659,52 +608,51 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
 
   return (
     <>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>תרשים גל ירוק - {mode === 'manual' ? 'מצב ידני' : mode === 'calculate' ? 'אופטימיזציה' : 'מצב קיים'}</CardTitle>
+      <CardHeader className="flex flex-col sm:flex-row items-center justify-between p-3 md:p-6">
+        <CardTitle className="text-base md:text-lg mb-2 sm:mb-0">תרשים גל ירוק - {mode === 'manual' ? 'מצב ידני' : mode === 'calculate' ? 'אופטימיזציה' : 'מצב קיים'}</CardTitle>
         
-        {/* Legend moved to the header */}
-        <div className="flex items-center space-x-4 rtl:space-x-reverse">
+        <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 sm:gap-4 text-xs">
           <div className="flex items-center">
-            <div className="w-5 h-2.5 bg-[#A7F3D0] rounded-sm ml-2 rtl:mr-2"></div>
+            <div className="w-4 h-2 md:w-5 md:h-2.5 bg-[#A7F3D0] rounded-sm ml-1 md:ml-2 rtl:mr-2"></div>
             <span className="text-xs">עם הזרם</span>
           </div>
           <div className="flex items-center">
-            <div className="w-5 h-2.5 bg-[#93C5FD] rounded-sm ml-2 rtl:mr-2"></div>
+            <div className="w-4 h-2 md:w-5 md:h-2.5 bg-[#93C5FD] rounded-sm ml-1 md:ml-2 rtl:mr-2"></div>
             <span className="text-xs">נגד הזרם</span>
           </div>
           <div className="flex items-center">
-            <div className="w-5 border-t-2 border-[#4ADE80] ml-2 rtl:mr-2"></div>
+            <div className="w-4 md:w-5 border-t-2 border-[#4ADE80] ml-1 md:ml-2 rtl:mr-2"></div>
             <span className="text-xs">רוחב פס עם הזרם</span>
           </div>
           <div className="flex items-center">
-            <div className="w-5 border-t-2 border-[#60A5FA] ml-2 rtl:mr-2"></div>
+            <div className="w-4 md:w-5 border-t-2 border-[#60A5FA] ml-1 md:ml-2 rtl:mr-2"></div>
             <span className="text-xs">רוחב פס נגד הזרם</span>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="relative w-full" ref={chartRef}>
+      <CardContent className="p-2 md:p-6">
+        <div className="relative w-full overflow-x-auto mobile-scroll" ref={chartRef}>
           <svg 
             width={dimensions.width} 
             height={dimensions.height}
-            className="overflow-visible w-full"
+            className="overflow-visible w-full min-w-[500px]"
           >
             {generateYGridLines()}
             {generateXGridLines()}
             
             <line 
-              x1={60} 
-              y1={40} 
-              x2={60} 
-              y2={dimensions.height - 40} 
+              x1={isMobile ? 40 : 60} 
+              y1={isMobile ? 30 : 40} 
+              x2={isMobile ? 40 : 60} 
+              y2={dimensions.height - (isMobile ? 30 : 40)} 
               stroke="black" 
               strokeWidth={1} 
             />
             <line 
-              x1={60} 
-              y1={dimensions.height - 40} 
-              x2={dimensions.width - 60} 
-              y2={dimensions.height - 40} 
+              x1={isMobile ? 40 : 60} 
+              y1={dimensions.height - (isMobile ? 30 : 40)} 
+              x2={dimensions.width - (isMobile ? 40 : 60)} 
+              y2={dimensions.height - (isMobile ? 30 : 40)} 
               stroke="black" 
               strokeWidth={1} 
             />
@@ -721,7 +669,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               console.log(`  Green Phases:`, intersection.greenPhases);
               
               return intersection.greenPhases.map((phase, j) => {
-                const x = 40 + xScale(intersection.distance);
+                const x = (isMobile ? 40 : 40) + xScale(intersection.distance);
                 const xOffset = phase.direction === 'upstream' ? -10 : 10;
                 
                 let startTime = (phase.startTime + offset) % intersection.cycleTime;
@@ -797,22 +745,22 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
 
             {Array.from({ length: 5 }).map((_, i) => {
               const value = (maxCycleTime / 4) * i;
-              const y = dimensions.height - 40 - yScale(value);
+              const y = dimensions.height - (isMobile ? 30 : 40) - yScale(value);
               return (
                 <g key={`y-tick-${i}`}>
                   <line 
-                    x1={55} 
+                    x1={isMobile ? 35 : 55} 
                     y1={y} 
-                    x2={60} 
+                    x2={isMobile ? 40 : 60} 
                     y2={y} 
                     stroke="black" 
                     strokeWidth={1} 
                   />
                   <text 
-                    x={50} 
+                    x={isMobile ? 30 : 50} 
                     y={y} 
                     textAnchor="end" 
-                    fontSize={12}
+                    fontSize={isMobile ? 10 : 12}
                     dominantBaseline="middle"
                   >
                     {Math.round(value)}
@@ -822,24 +770,26 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             })}
 
             {intersections.map((intersection, i) => {
-              const x = 40 + xScale(intersection.distance);
+              const x = (isMobile ? 40 : 40) + xScale(intersection.distance);
               return (
                 <g key={`x-tick-${i}`}>
                   <line 
                     x1={x} 
-                    y1={dimensions.height - 40} 
+                    y1={dimensions.height - (isMobile ? 30 : 40)} 
                     x2={x} 
-                    y2={dimensions.height - 35} 
+                    y2={dimensions.height - (isMobile ? 25 : 35)} 
                     stroke="black" 
                     strokeWidth={1} 
                   />
                   <text 
                     x={x} 
-                    y={dimensions.height - 20} 
+                    y={dimensions.height - (isMobile ? 15 : 20)} 
                     textAnchor="middle" 
-                    fontSize={12}
+                    fontSize={isMobile ? 9 : 12}
                   >
-                    {intersection.distance}
+                    {isMobile && intersection.distance > 999 
+                      ? `${(intersection.distance/1000).toFixed(1)}K` 
+                      : intersection.distance}
                   </text>
                 </g>
               );
@@ -847,23 +797,21 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
 
             <text 
               x={dimensions.width / 2} 
-              y={dimensions.height - 5} 
+              y={dimensions.height - (isMobile ? 3 : 5)} 
               textAnchor="middle" 
-              fontSize={14}
+              fontSize={isMobile ? 12 : 14}
             >
               מרחק (מטר)
             </text>
             <text 
-              x={15} 
+              x={isMobile ? 10 : 15} 
               y={dimensions.height / 2} 
               textAnchor="middle" 
-              fontSize={14}
-              transform={`rotate(-90 15 ${dimensions.height / 2})`}
+              fontSize={isMobile ? 12 : 14}
+              transform={`rotate(-90 ${isMobile ? 10 : 15} ${dimensions.height / 2})`}
             >
               זמן (שניות)
             </text>
-
-            {/* Removed the SVG legend as it's now in the CardHeader */}
           </svg>
           
           {tooltipInfo.visible && (
@@ -871,6 +819,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               x={tooltipInfo.x}
               y={tooltipInfo.y}
               content={tooltipInfo.content}
+              isMobile={isMobile}
             />
           )}
         </div>
