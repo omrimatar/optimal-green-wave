@@ -69,7 +69,7 @@ export const WeightsPanel = ({
 
       {showWeights && <div className="space-y-6 p-4 border rounded-lg">
           <div className="mb-2 flex justify-between items-center text-sm">
-            <span>סכום משקולות: {totalWeight.toFixed(2)}</span>
+            
             <span>
         </span>
           </div>
