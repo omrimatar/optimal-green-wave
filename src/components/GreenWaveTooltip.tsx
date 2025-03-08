@@ -5,12 +5,13 @@ interface GreenWaveTooltipProps {
   x: number;
   y: number;
   content: React.ReactNode;
+  isMobile?: boolean;
 }
 
-export const GreenWaveTooltip: React.FC<GreenWaveTooltipProps> = ({ x, y, content }) => {
+export const GreenWaveTooltip: React.FC<GreenWaveTooltipProps> = ({ x, y, content, isMobile = false }) => {
   // Calculate position to ensure tooltip stays within viewport
-  const adjustedX = Math.min(x, window.innerWidth - 200);
-  const adjustedY = Math.min(y, window.innerHeight - 200);
+  const adjustedX = Math.min(x, window.innerWidth - (isMobile ? 150 : 200));
+  const adjustedY = Math.min(y, window.innerHeight - (isMobile ? 150 : 200));
 
   return (
     <div
@@ -18,9 +19,10 @@ export const GreenWaveTooltip: React.FC<GreenWaveTooltipProps> = ({ x, y, conten
       style={{
         left: adjustedX + 10,
         top: adjustedY + 10,
-        minWidth: '150px',
-        maxWidth: '250px',
-        direction: 'rtl'
+        minWidth: isMobile ? '120px' : '150px',
+        maxWidth: isMobile ? '200px' : '250px',
+        direction: 'rtl',
+        fontSize: isMobile ? '0.85rem' : '1rem'
       }}
     >
       {content}

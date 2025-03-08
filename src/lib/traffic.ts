@@ -16,7 +16,7 @@ export const isMobileDevice = () => {
   );
 };
 
-// פונקציית עזר להתאמה למובייל
+// פונקציית עזר להתאמה למובייל ולמסכים שונים
 export const getMobileScale = () => {
   if (typeof window === "undefined") return 1;
   const width = window.innerWidth;
@@ -24,4 +24,15 @@ export const getMobileScale = () => {
   if (width <= 480) return 0.8;
   if (width <= 768) return 0.9;
   return 1;
+};
+
+// פונקציות עזר נוספות לתצוגה רספונסיבית
+export const getResponsiveFontSize = (baseSize: number) => {
+  const scale = getMobileScale();
+  return Math.max(baseSize * scale, 9); // מינימום גודל פונט 9px
+};
+
+export const getResponsiveSpacing = (baseSpacing: number) => {
+  const scale = getMobileScale();
+  return Math.max(baseSpacing * scale, 2); // מינימום מרווח 2px
 };
