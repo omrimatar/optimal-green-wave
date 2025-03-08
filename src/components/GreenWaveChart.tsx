@@ -37,7 +37,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     content: null
   });
   const [isMobile, setIsMobile] = useState(false);
-  const [leftmostPositionX, setLeftmostPositionX] = useState(80);  // Increased default left padding from 40 to 80
 
   useEffect(() => {
     setIsMobile(isMobileDevice());
@@ -56,19 +55,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     console.log("Computed maxDistance:", maxDistance);
     console.log("Computed maxCycleTime:", maxCycleTime);
   }, [maxDistance, maxCycleTime]);
-
-  // Calculate leftmost position based on first intersection
-  useEffect(() => {
-    if (intersections.length > 0) {
-      // Find the minimum X position (for the leftmost phase)
-      // Default base X position with increased padding
-      const baseX = 80; // Increased from 40 to 80
-      // For the leftmost intersection (usually the first one), calculate its upstream phase position
-      const x = baseX + xScale(intersections[0].distance) - 10; // -10 for upstream offset
-      setLeftmostPositionX(Math.max(x, 60)); // Increased minimum from 30 to 60
-      console.log("Leftmost position set to:", x);
-    }
-  }, [intersections, dimensions.width]);
 
   const xScale = (value: number) => (value / maxDistance) * (dimensions.width - (isMobile ? 80 : 120));
   const yScale = (value: number) => (value / maxCycleTime) * (dimensions.height - (isMobile ? 60 : 80));
@@ -114,7 +100,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       lines.push(
         <line 
           key={`y-grid-${t}`}
-          x1={leftmostPositionX} 
+          x1={40} 
           y1={y} 
           x2={dimensions.width - 40} 
           y2={y} 
@@ -132,7 +118,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     
     const lines = [];
     for (let i = 0; i < intersections.length; i++) {
-      const x = 80 + xScale(intersections[i].distance); // Changed from 40 to 80
+      const x = 40 + xScale(intersections[i].distance);
       lines.push(
         <line 
           key={`x-grid-${i}`}
@@ -163,8 +149,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         return null;
       }
 
-      const originX = 80 + xScale(intersections[originIdx].distance);
-      const destX = 80 + xScale(intersections[destIdx].distance);
+      const originX = 40 + xScale(intersections[originIdx].distance);
+      const destX = 40 + xScale(intersections[destIdx].distance);
       const lines = [];
 
       const pairIndex = pair.from_junction - 1;
@@ -655,15 +641,15 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             {generateXGridLines()}
             
             <line 
-              x1={leftmostPositionX} 
+              x1={isMobile ? 40 : 60} 
               y1={isMobile ? 30 : 40} 
-              x2={leftmostPositionX} 
+              x2={isMobile ? 40 : 60} 
               y2={dimensions.height - (isMobile ? 30 : 40)} 
               stroke="black" 
               strokeWidth={1} 
             />
             <line 
-              x1={leftmostPositionX} 
+              x1={isMobile ? 40 : 60} 
               y1={dimensions.height - (isMobile ? 30 : 40)} 
               x2={dimensions.width - (isMobile ? 40 : 60)} 
               y2={dimensions.height - (isMobile ? 30 : 40)} 
@@ -683,14 +669,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               console.log(`  Green Phases:`, intersection.greenPhases);
               
               return intersection.greenPhases.map((phase, j) => {
-                // Calculate x position with increased initial padding
-                const x = 80 + xScale(intersection.distance); // Changed from 40 to 80
-                
-                // Always place upstream (עם הזרם) phases to the left and downstream (נגד הזרם) phases to the right
-                // Ensure they appear correctly even when x is 0 or very small
+                const x = (isMobile ? 40 : 40) + xScale(intersection.distance);
                 const xOffset = phase.direction === 'upstream' ? -10 : 10;
-                
-                console.log(`Phase ${j+1} direction: ${phase.direction}, xOffset: ${xOffset}`);
                 
                 let startTime = (phase.startTime + offset) % intersection.cycleTime;
                 let endTime = (startTime + phase.duration) % intersection.cycleTime;
@@ -706,7 +686,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 console.log(`    Adjusted Start: ${startTime}s`);
                 console.log(`    Adjusted End: ${wrappedPhase ? intersection.cycleTime : endTime}s`);
                 console.log(`    Wrapped: ${wrappedPhase}`);
-                console.log(`    X position: ${x + xOffset}`);
                 
                 return (
                   <React.Fragment key={`phase-${i}-${j}`}>
@@ -770,15 +749,15 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               return (
                 <g key={`y-tick-${i}`}>
                   <line 
-                    x1={leftmostPositionX - 5} 
+                    x1={isMobile ? 35 : 55} 
                     y1={y} 
-                    x2={leftmostPositionX} 
+                    x2={isMobile ? 40 : 60} 
                     y2={y} 
                     stroke="black" 
                     strokeWidth={1} 
                   />
                   <text 
-                    x={leftmostPositionX - 8} 
+                    x={isMobile ? 30 : 50} 
                     y={y} 
                     textAnchor="end" 
                     fontSize={isMobile ? 10 : 12}
@@ -791,7 +770,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             })}
 
             {intersections.map((intersection, i) => {
-              const x = 80 + xScale(intersection.distance); // Changed from 40 to 80
+              const x = (isMobile ? 40 : 40) + xScale(intersection.distance);
               return (
                 <g key={`x-tick-${i}`}>
                   <line 
@@ -825,11 +804,11 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               מרחק (מטר)
             </text>
             <text 
-              x={leftmostPositionX - 25} 
+              x={isMobile ? 10 : 15} 
               y={dimensions.height / 2} 
               textAnchor="middle" 
               fontSize={isMobile ? 12 : 14}
-              transform={`rotate(-90 ${leftmostPositionX - 25} ${dimensions.height / 2})`}
+              transform={`rotate(-90 ${isMobile ? 10 : 15} ${dimensions.height / 2})`}
             >
               זמן (שניות)
             </text>
@@ -848,4 +827,3 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     </>
   );
 };
-
