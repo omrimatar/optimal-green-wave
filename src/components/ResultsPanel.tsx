@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { MetricsTable } from "./MetricsTable";
 import { OptimizationCharts } from "./OptimizationCharts";
@@ -89,6 +90,18 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
       comparisonResults.cycle_times[idx] : 
       90;
     
+    const upstreamSpeed = comparisonResults.upstream_speeds && comparisonResults.upstream_speeds[idx] !== undefined ? 
+      comparisonResults.upstream_speeds[idx] : 
+      (originalIntersections && originalIntersections[idx] && originalIntersections[idx].upstreamSpeed !== undefined ? 
+        originalIntersections[idx].upstreamSpeed : 
+        speed);
+    
+    const downstreamSpeed = comparisonResults.downstream_speeds && comparisonResults.downstream_speeds[idx] !== undefined ? 
+      comparisonResults.downstream_speeds[idx] : 
+      (originalIntersections && originalIntersections[idx] && originalIntersections[idx].downstreamSpeed !== undefined ? 
+        originalIntersections[idx].downstreamSpeed : 
+        speed);
+    
     const greenPhases: GreenPhase[] = [];
     
     if (comparisonResults.green_up && comparisonResults.green_up[idx]) {
@@ -122,16 +135,6 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
         duration: Math.floor(cycleTime / 2)
       });
     }
-    
-    const upstreamSpeed = originalIntersections && originalIntersections[idx] && 
-                         originalIntersections[idx].upstreamSpeed !== undefined ? 
-                         originalIntersections[idx].upstreamSpeed : 
-                         speed;
-    
-    const downstreamSpeed = originalIntersections && originalIntersections[idx] && 
-                            originalIntersections[idx].downstreamSpeed !== undefined ? 
-                            originalIntersections[idx].downstreamSpeed : 
-                            speed;
     
     console.log(`ResultsPanel created intersection ${idx+1}:`, {
       id: idx + 1,

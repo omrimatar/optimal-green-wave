@@ -32,8 +32,14 @@ export async function greenWaveOptimization(
       throw new Error('Missing required data for optimization');
     }
 
-    // Extract actual distances from input data for later reference
+    // Extract actual distances and speeds from input data for later reference
     const actualDistances = data.intersections.map(intersection => intersection.distance);
+    const upstreamSpeeds = data.intersections.map(intersection => 
+      intersection.upstream_speed || data.travel.up.speed
+    );
+    const downstreamSpeeds = data.intersections.map(intersection => 
+      intersection.downstream_speed || data.travel.down.speed
+    );
 
     // Prepare data for AWS Lambda function
     const requestBody: LambdaRequest = {
@@ -45,14 +51,16 @@ export async function greenWaveOptimization(
           green_up: intersection.green_up.map(phase => ({
             start: phase.start,
             duration: phase.duration,
-            speed: phase.speed || data.travel.up.speed // Use phase-specific speed if available
+            speed: phase.speed || intersection.upstream_speed || data.travel.up.speed // Use phase-specific or intersection-specific speed
           })),
           green_down: intersection.green_down.map(phase => ({
             start: phase.start,
             duration: phase.duration,
-            speed: phase.speed || data.travel.down.speed // Use phase-specific speed if available
+            speed: phase.speed || intersection.downstream_speed || data.travel.down.speed // Use phase-specific or intersection-specific speed
           })),
-          cycle: intersection.cycle_up || intersection.cycle_down || 90
+          cycle: intersection.cycle_up || intersection.cycle_down || 90,
+          upstream_speed: intersection.upstream_speed || data.travel.up.speed,
+          downstream_speed: intersection.downstream_speed || data.travel.down.speed
         }))
       },
       weights: {
@@ -83,14 +91,14 @@ export async function greenWaveOptimization(
 
     console.log('Received results from Lambda:', lambdaResults);
 
-    // Process the results and add the actual distances to each result object
+    // Process the results and add the actual distances and speeds to each result object
     const results = {
-      baseline_results: enhanceResults(lambdaResults.baseline_results, actualDistances),
-      optimized_results: enhanceResults(lambdaResults.optimization_results, actualDistances),
-      manual_results: manualOffsets ? enhanceResults(lambdaResults.optimization_results, actualDistances) : undefined
+      baseline_results: enhanceResults(lambdaResults.baseline_results, actualDistances, upstreamSpeeds, downstreamSpeeds),
+      optimized_results: enhanceResults(lambdaResults.optimization_results, actualDistances, upstreamSpeeds, downstreamSpeeds),
+      manual_results: manualOffsets ? enhanceResults(lambdaResults.optimization_results, actualDistances, upstreamSpeeds, downstreamSpeeds) : undefined
     };
 
-    console.log('Final processed results with distances:', results);
+    console.log('Final processed results with distances and speeds:', results);
     return results;
   } catch (error) {
     console.error('Error in greenWaveOptimization:', error);
@@ -101,7 +109,12 @@ export async function greenWaveOptimization(
 /**
  * Enhances results with additional properties needed by UI components
  */
-function enhanceResults(result: RunResult, actualDistances?: number[]): RunResult {
+function enhanceResults(
+  result: RunResult, 
+  actualDistances?: number[],
+  upstreamSpeeds?: number[],
+  downstreamSpeeds?: number[]
+): RunResult {
   return {
     ...result,
     // Ensure properties needed by UI components are present
@@ -109,7 +122,9 @@ function enhanceResults(result: RunResult, actualDistances?: number[]): RunResul
     corridorBW_down: result.corridor_bandwidth_down || 0,
     local_up: result.pair_bandwidth_up || [],
     local_down: result.pair_bandwidth_down || [],
-    // Add the actual distances to the result
-    distances: actualDistances || result.distances
+    // Add the actual distances and speeds to the result
+    distances: actualDistances || result.distances,
+    upstream_speeds: upstreamSpeeds || result.upstream_speeds,
+    downstream_speeds: downstreamSpeeds || result.downstream_speeds
   };
 }
