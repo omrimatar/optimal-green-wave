@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -109,23 +108,23 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
     })) || [])
   ];
 
-  // Create direction-only data for single view mode
+  const dataForSingleView = mode === 'display' ? baseline : optimized;
+
   const directionOnlyData = [
     {
       metric: 'רוחב מסדרון',
-      'מעלה הזרם': Number((viewMode === 'comparison' ? optimized : mode === 'display' ? baseline : optimized).corridor_bandwidth_up || 0).toFixed(1),
-      'מורד הזרם': Number((viewMode === 'comparison' ? optimized : mode === 'display' ? baseline : optimized).corridor_bandwidth_down || 0).toFixed(1),
+      'מעלה הזרם': Number((dataForSingleView).corridor_bandwidth_up || 0).toFixed(1),
+      'מורד הזרם': Number((dataForSingleView).corridor_bandwidth_down || 0).toFixed(1),
       category: 'positive'
     },
-    ...((viewMode === 'comparison' ? optimized : mode === 'display' ? baseline : optimized).avg_delay_up?.map((_, index) => ({
+    ...((dataForSingleView).avg_delay_up?.map((_, index) => ({
       metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
-      'מעלה הזרם': -Number((viewMode === 'comparison' ? optimized : mode === 'display' ? baseline : optimized).avg_delay_up?.[index].toFixed(1)),
-      'מורד הזרם': -Number((viewMode === 'comparison' ? optimized : mode === 'display' ? baseline : optimized).avg_delay_down?.[index].toFixed(1)),
+      'מעלה הזרם': -Number((dataForSingleView).avg_delay_up?.[index].toFixed(1)),
+      'מורד הזרם': -Number((dataForSingleView).avg_delay_down?.[index].toFixed(1)),
       category: 'negative'
     })) || [])
   ];
 
-  // Create butterfly data for direction comparison
   const butterflyDirectionData = directionOnlyData.map(item => ({
     metric: item.metric,
     'מעלה הזרם': typeof item['מעלה הזרם'] === 'number' ? 
@@ -169,7 +168,6 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
     }
   ];
 
-  // Choose the appropriate data based on chart type and view mode
   const currentData = 
     chartType === 'radar' ? radarData : 
     chartType === 'butterfly' ? 
@@ -445,7 +443,7 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
               onClick={() => setViewMode(viewMode === 'comparison' ? 'single' : 'comparison')}
             >
               <ArrowLeftRight className="h-4 w-4 mr-1" />
-              {viewMode === 'comparison' ? 'הצג כיוונים בלבד' : 'הצג השוואה'}
+              {viewMode === 'comparison' ? 'השוואה בין כיוונים' : 'השוואה בין מצבים'}
             </Button>
             
             {chartType === 'bar' && viewMode === 'comparison' && (
