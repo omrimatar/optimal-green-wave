@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -373,8 +372,8 @@ const Index = () => {
             <div className="flex flex-wrap gap-2 md:gap-4">
               <Button variant="outline" onClick={handleShowExisting} className="flex items-center gap-1 md:gap-2 bg-orange-500 hover:bg-orange-600 text-white text-xs md:text-sm">
                 <Play size={14} className="md:w-4 md:h-4" />
-                <span className="hidden sm:inline">השוואה גרפית-ידני</span>
-                <span className="sm:hidden">גרף ידני</span>
+                <span className="hidden sm:inline">צייר גל ירוק קיים</span>
+                <span className="sm:hidden">גל קיים</span>
               </Button>
 
               <Dialog open={showManualDialog} onOpenChange={setShowManualDialog}>

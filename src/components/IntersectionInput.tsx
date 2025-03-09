@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,7 +6,6 @@ import { ArrowUp, ArrowDown, Trash2 } from "lucide-react";
 import { type Intersection } from "@/types/optimization";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface IntersectionInputProps {
   intersection: Intersection;
@@ -27,7 +25,6 @@ export const IntersectionInput = ({
   // Add local state to track if the distance input is being edited
   const [isEditingDistance, setIsEditingDistance] = useState(false);
   const [tempDistance, setTempDistance] = useState<string>(intersection.distance.toString());
-  const [useHalfCycleTime, setUseHalfCycleTime] = useState(false);
   
   // Add effect to update speeds when defaultSpeed changes
   useEffect(() => {
@@ -134,12 +131,6 @@ export const IntersectionInput = ({
     });
   };
 
-  const handleHalfCycleTimeChange = (checked: boolean) => {
-    setUseHalfCycleTime(checked);
-    // We don't directly update the actual cycleTime prop here
-    // The actual value will be computed when needed (e.g., in calculation functions)
-  };
-
   const handleCycleTimeChange = (value: string) => {
     const numValue = parseInt(value);
     if (isNaN(numValue) || numValue < 0 || numValue > 300 || !Number.isInteger(numValue)) {
@@ -178,9 +169,6 @@ export const IntersectionInput = ({
   const upstreamSpeed = intersection.upstreamSpeed !== undefined ? intersection.upstreamSpeed : defaultSpeed;
   const downstreamSpeed = intersection.downstreamSpeed !== undefined ? intersection.downstreamSpeed : defaultSpeed;
 
-  // Get effective cycle time
-  const effectiveCycleTime = useHalfCycleTime ? intersection.cycleTime / 2 : intersection.cycleTime;
-
   return (
     <Card className="p-4 space-y-4">
       <div className="flex justify-between items-center">
@@ -213,31 +201,11 @@ export const IntersectionInput = ({
 
         <div>
           <Label>זמן מחזור (שניות)</Label>
-          <div className="flex flex-col space-y-2">
-            <Input
-              type="number"
-              value={intersection.cycleTime}
-              onChange={e => handleCycleTimeChange(e.target.value)}
-            />
-            <div className="flex items-center space-x-2 rtl:space-x-reverse">
-              <Checkbox 
-                id={`halfCycleTime-${intersection.id}`} 
-                checked={useHalfCycleTime}
-                onCheckedChange={handleHalfCycleTimeChange}
-              />
-              <Label 
-                htmlFor={`halfCycleTime-${intersection.id}`}
-                className="text-sm font-normal cursor-pointer"
-              >
-                חצי זמן מחזור
-              </Label>
-            </div>
-            {useHalfCycleTime && (
-              <div className="text-xs text-muted-foreground">
-                זמן מחזור בפועל: {effectiveCycleTime} שניות
-              </div>
-            )}
-          </div>
+          <Input
+            type="number"
+            value={intersection.cycleTime}
+            onChange={e => handleCycleTimeChange(e.target.value)}
+          />
         </div>
       </div>
 
