@@ -40,6 +40,16 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
 
   const labels = getLabels();
 
+  const getChartTitle = () => {
+    if (mode === 'display') {
+      return 'השוואה גרפית-ידני';
+    } else if (mode === 'manual') {
+      return 'השוואה גרפית - מצב ידני';
+    } else {
+      return 'השוואה גרפית - אופטימיזציה';
+    }
+  };
+
   const colors = {
     positive: {
       baseline: '#0EA5E9',
@@ -422,7 +432,7 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
     <Card className="mb-8">
       <CardHeader>
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
-          <CardTitle>השוואה גרפית - {mode === 'manual' ? 'מצב ידני' : 'אופטימיזציה'}</CardTitle>
+          <CardTitle>{getChartTitle()}</CardTitle>
           <div className="flex flex-col gap-2 sm:flex-row">
             <ToggleGroup type="single" value={chartType} onValueChange={(value) => value && setChartType(value as ChartType)}>
               <ToggleGroupItem value="bar" aria-label="תרשים עמודות">

@@ -140,19 +140,6 @@ export const IntersectionInput = ({
     // The actual value will be computed when needed (e.g., in calculation functions)
   };
 
-  const handleCycleTimeChange = (value: string) => {
-    const numValue = parseInt(value);
-    if (isNaN(numValue) || numValue < 0 || numValue > 300 || !Number.isInteger(numValue)) {
-      toast.error("זמן מחזור חייב להיות מספר שלם בין 0 ל-300 שניות");
-      return;
-    }
-    
-    onChange({
-      ...intersection,
-      cycleTime: numValue
-    });
-  };
-
   const handleSpeedChange = (direction: 'upstream' | 'downstream', value: string) => {
     const numValue = parseInt(value);
     
@@ -212,13 +199,8 @@ export const IntersectionInput = ({
         </div>
 
         <div>
-          <Label>זמן מחזור (שניות)</Label>
+          <Label>זמן מחזור</Label>
           <div className="flex flex-col space-y-2">
-            <Input
-              type="number"
-              value={intersection.cycleTime}
-              onChange={e => handleCycleTimeChange(e.target.value)}
-            />
             <div className="flex items-center space-x-2 rtl:space-x-reverse">
               <Checkbox 
                 id={`halfCycleTime-${intersection.id}`} 
@@ -232,11 +214,9 @@ export const IntersectionInput = ({
                 חצי זמן מחזור
               </Label>
             </div>
-            {useHalfCycleTime && (
-              <div className="text-xs text-muted-foreground">
-                זמן מחזור בפועל: {effectiveCycleTime} שניות
-              </div>
-            )}
+            <div className="text-xs text-muted-foreground">
+              זמן מחזור בפועל: {effectiveCycleTime} שניות
+            </div>
           </div>
         </div>
       </div>

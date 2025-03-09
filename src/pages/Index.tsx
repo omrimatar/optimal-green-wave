@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -46,6 +45,7 @@ const Index = () => {
     upstreamSpeed: 50,
     downstreamSpeed: 50
   }]);
+  const [globalCycleTime, setGlobalCycleTime] = useState(90);
   const [speed, setSpeed] = useState(50);
   const [results, setResults] = useState<any>(null);
   const [mode, setMode] = useState<'display' | 'calculate' | 'manual'>('calculate');
@@ -55,10 +55,31 @@ const Index = () => {
   const [showManualDialog, setShowManualDialog] = useState(false);
   const [calculationPerformed, setCalculationPerformed] = useState(false);
 
+  useEffect(() => {
+    if (intersections.length > 0) {
+      const updatedIntersections = intersections.map(intersection => ({
+        ...intersection,
+        cycleTime: globalCycleTime
+      }));
+      setIntersections(updatedIntersections);
+    }
+  }, [globalCycleTime]);
+
   const clearResults = () => {
     setResults(null);
     setMode('calculate');
     setCalculationPerformed(false);
+  };
+
+  const handleGlobalCycleTimeChange = (value: string) => {
+    const numValue = parseInt(value);
+    if (isNaN(numValue) || numValue < 0 || numValue > 300 || !Number.isInteger(numValue)) {
+      toast.error("זמן מחז��ר חייב להיות מספר שלם בין 0 ל-300 שניות");
+      return;
+    }
+    
+    setGlobalCycleTime(numValue);
+    clearResults();
   };
 
   const handleSpeedChange = (value: string) => {
@@ -88,15 +109,15 @@ const Index = () => {
     const newIntersection: Intersection = {
       id: newId,
       distance: newDistance,
-      cycleTime: 90,
+      cycleTime: globalCycleTime,
       greenPhases: [{
         direction: 'upstream' as const,
         startTime: 0,
-        duration: 45
+        duration: Math.floor(globalCycleTime / 2)
       }, {
         direction: 'downstream' as const,
-        startTime: 45,
-        duration: 45
+        startTime: Math.floor(globalCycleTime / 2),
+        duration: Math.floor(globalCycleTime / 2)
       }],
       upstreamSpeed: speed,
       downstreamSpeed: speed
@@ -297,6 +318,9 @@ const Index = () => {
     setSpeed(data.speed);
     setIntersections(data.intersections);
     setManualOffsets(new Array(data.intersections.length).fill(0));
+    if (data.intersections.length > 0) {
+      setGlobalCycleTime(data.intersections[0].cycleTime);
+    }
     clearResults();
     toast.success("הקובץ נטען בהצלחה");
   };
@@ -322,6 +346,19 @@ const Index = () => {
         <Card className="p-3 md:p-6 glassmorphism">
           <div className="space-y-4 md:space-y-6">
             <FileActions speed={speed} intersections={intersections} onLoadInput={handleLoadInput} />
+
+            <div>
+              <Label htmlFor="globalCycleTime">זמן מחזור (שניות)</Label>
+              <Input 
+                id="globalCycleTime" 
+                type="number" 
+                value={globalCycleTime} 
+                min={0} 
+                max={300} 
+                onChange={e => handleGlobalCycleTimeChange(e.target.value)} 
+                className="w-full" 
+              />
+            </div>
 
             <div>
               <Label htmlFor="speed">מהירות ברירת מחדל (קמ"ש)</Label>
@@ -373,8 +410,8 @@ const Index = () => {
             <div className="flex flex-wrap gap-2 md:gap-4">
               <Button variant="outline" onClick={handleShowExisting} className="flex items-center gap-1 md:gap-2 bg-orange-500 hover:bg-orange-600 text-white text-xs md:text-sm">
                 <Play size={14} className="md:w-4 md:h-4" />
-                <span className="hidden sm:inline">השוואה גרפית-ידני</span>
-                <span className="sm:hidden">גרף ידני</span>
+                <span className="hidden sm:inline">צייר מצב קיים</span>
+                <span className="sm:hidden">צייר</span>
               </Button>
 
               <Dialog open={showManualDialog} onOpenChange={setShowManualDialog}>
