@@ -8,7 +8,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
-import { ChartBar, Radar as RadarIcon, SplitSquareVertical, Compare } from "lucide-react";
+import { ChartBar, Radar as RadarIcon, SplitSquareVertical, ArrowLeftRight } from "lucide-react";
 import type { RunResult } from "@/types/traffic";
 
 interface OptimizationChartsProps {
@@ -128,8 +128,12 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
   // Create butterfly data for direction comparison
   const butterflyDirectionData = directionOnlyData.map(item => ({
     metric: item.metric,
-    'מעלה הזרם': typeof item['מעלה הזרם'] === 'number' ? Math.abs(Number(item['מעלה הזרם'])) : Math.abs(parseFloat(item['מעלה הזרם'])),
-    'מורד הזרם': typeof item['מורד הזרם'] === 'number' ? -Math.abs(Number(item['מורד הזרם'])) : -Math.abs(parseFloat(item['מורד הזרם'])),
+    'מעלה הזרם': typeof item['מעלה הזרם'] === 'number' ? 
+      Math.abs(Number(item['מעלה הזרם'])) : 
+      Math.abs(parseFloat(String(item['מעלה הזרם']))),
+    'מורד הזרם': typeof item['מורד הזרם'] === 'number' ? 
+      -Math.abs(Number(item['מורד הזרם'])) : 
+      -Math.abs(parseFloat(String(item['מורד הזרם']))),
     category: item.category
   }));
 
@@ -297,16 +301,16 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
         );
 
       case 'butterfly':
-        const groupedMetrics = (viewMode === 'comparison' ? butterflyData : butterflyDirectionData).reduce((acc, item) => {
-          const baseMetricName = item.metric.replace(/\d+-\d+$/, '').trim();
-          if (!acc[baseMetricName]) {
-            acc[baseMetricName] = [];
-          }
-          acc[baseMetricName].push(item);
-          return acc;
-        }, {} as Record<string, typeof butterflyData>);
-
-        const organizedData = Object.values(groupedMetrics).flat();
+        const groupedMetrics = viewMode === 'comparison' 
+          ? Object.values(butterflyData.reduce<Record<string, typeof butterflyData>>((acc, item) => {
+              const baseMetricName = item.metric.replace(/\d+-\d+$/, '').trim();
+              if (!acc[baseMetricName]) {
+                acc[baseMetricName] = [];
+              }
+              acc[baseMetricName].push(item);
+              return acc;
+            }, {})).flat()
+          : butterflyDirectionData;
         
         const customLegendItems = viewMode === 'comparison' ? [
           { value: `${labels.baseline} - מדדים חיוביים`, color: colors.positive.baseline },
@@ -335,7 +339,7 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
         return (
           <div>
             <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={organizedData} layout="vertical">
+              <BarChart data={groupedMetrics} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" domain={['auto', 'auto']} />
                 <YAxis type="category" dataKey="metric" width={150} />
@@ -349,7 +353,7 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
                       legendType="none"
                     >
                       <LabelList dataKey={labels.baseline} content={renderCustomButterflyLabel} />
-                      {organizedData.map((entry, index) => (
+                      {groupedMetrics.map((entry, index) => (
                         <Cell
                           key={`cell-baseline-${index}`}
                           fill={
@@ -366,7 +370,7 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
                       legendType="none"
                     >
                       <LabelList dataKey={labels.optimized} content={renderCustomButterflyLabel} />
-                      {organizedData.map((entry, index) => (
+                      {groupedMetrics.map((entry, index) => (
                         <Cell
                           key={`cell-optimized-${index}`}
                           fill={
@@ -386,7 +390,7 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
                       legendType="none"
                     >
                       <LabelList dataKey="מעלה הזרם" content={renderCustomButterflyLabel} />
-                      {organizedData.map((entry, index) => (
+                      {groupedMetrics.map((entry, index) => (
                         <Cell
                           key={`cell-upstream-${index}`}
                           fill={colors.positive.optimized}
@@ -399,7 +403,7 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
                       legendType="none"
                     >
                       <LabelList dataKey="מורד הזרם" content={renderCustomButterflyLabel} />
-                      {organizedData.map((entry, index) => (
+                      {groupedMetrics.map((entry, index) => (
                         <Cell
                           key={`cell-downstream-${index}`}
                           fill={colors.negative.optimized}
@@ -440,7 +444,7 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
               className="flex items-center gap-1"
               onClick={() => setViewMode(viewMode === 'comparison' ? 'single' : 'comparison')}
             >
-              <Compare className="h-4 w-4 mr-1" />
+              <ArrowLeftRight className="h-4 w-4 mr-1" />
               {viewMode === 'comparison' ? 'הצג כיוונים בלבד' : 'הצג השוואה'}
             </Button>
             
