@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -6,7 +7,8 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ChartBar, Radar as RadarIcon, SplitSquareVertical } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ChartBar, Radar as RadarIcon, SplitSquareVertical, Compare } from "lucide-react";
 import type { RunResult } from "@/types/traffic";
 
 interface OptimizationChartsProps {
@@ -17,10 +19,12 @@ interface OptimizationChartsProps {
 
 type ChartType = 'bar' | 'radar' | 'butterfly';
 type ComparisonType = 'optimization' | 'direction';
+type ViewMode = 'comparison' | 'single';
 
 export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationChartsProps) => {
-  const [chartType, setChartType] = useState<ChartType>('bar');
+  const [chartType, setChartType] = useState<ChartType>('butterfly');
   const [comparisonType, setComparisonType] = useState<ComparisonType>('optimization');
+  const [viewMode, setViewMode] = useState<ViewMode>('comparison');
 
   const getLabels = () => {
     if (mode === 'manual') {
@@ -105,6 +109,30 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
     })) || [])
   ];
 
+  // Create direction-only data for single view mode
+  const directionOnlyData = [
+    {
+      metric: 'רוחב מסדרון',
+      'מעלה הזרם': Number((viewMode === 'comparison' ? optimized : mode === 'display' ? baseline : optimized).corridor_bandwidth_up || 0).toFixed(1),
+      'מורד הזרם': Number((viewMode === 'comparison' ? optimized : mode === 'display' ? baseline : optimized).corridor_bandwidth_down || 0).toFixed(1),
+      category: 'positive'
+    },
+    ...((viewMode === 'comparison' ? optimized : mode === 'display' ? baseline : optimized).avg_delay_up?.map((_, index) => ({
+      metric: `עיכוב ממוצע ${index + 1}-${index + 2}`,
+      'מעלה הזרם': -Number((viewMode === 'comparison' ? optimized : mode === 'display' ? baseline : optimized).avg_delay_up?.[index].toFixed(1)),
+      'מורד הזרם': -Number((viewMode === 'comparison' ? optimized : mode === 'display' ? baseline : optimized).avg_delay_down?.[index].toFixed(1)),
+      category: 'negative'
+    })) || [])
+  ];
+
+  // Create butterfly data for direction comparison
+  const butterflyDirectionData = directionOnlyData.map(item => ({
+    metric: item.metric,
+    'מעלה הזרם': typeof item['מעלה הזרם'] === 'number' ? Math.abs(Number(item['מעלה הזרם'])) : Math.abs(parseFloat(item['מעלה הזרם'])),
+    'מורד הזרם': typeof item['מורד הזרם'] === 'number' ? -Math.abs(Number(item['מורד הזרם'])) : -Math.abs(parseFloat(item['מורד הזרם'])),
+    category: item.category
+  }));
+
   const calculateAverage = (arr: number[] = []): number => {
     if (arr.length === 0) return 0;
     return arr.reduce((sum, val) => sum + val, 0) / arr.length;
@@ -137,10 +165,14 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
     }
   ];
 
+  // Choose the appropriate data based on chart type and view mode
   const currentData = 
     chartType === 'radar' ? radarData : 
-    chartType === 'butterfly' ? butterflyData :
-    comparisonType === 'optimization' ? optimizationData : directionData;
+    chartType === 'butterfly' ? 
+      (viewMode === 'comparison' ? butterflyData : butterflyDirectionData) : 
+      viewMode === 'comparison' ? 
+        (comparisonType === 'optimization' ? optimizationData : directionData) : 
+        directionOnlyData;
 
   const renderCustomBarLabel = (props: any) => {
     const { x, y, width, height, value } = props;
@@ -190,36 +222,47 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
               <YAxis />
               <Tooltip />
               <Legend />
-              {comparisonType === 'optimization' ? (
-                <>
-                  <Bar 
-                    dataKey={labels.baseline} 
-                    fill={colors.positive.baseline}
-                    name={`${labels.baseline}`}
-                  >
-                    <LabelList dataKey={labels.baseline} content={renderCustomBarLabel} />
-                  </Bar>
-                  <Bar 
-                    dataKey={labels.optimized} 
-                    fill={colors.positive.optimized}
-                    name={`${labels.optimized}`}
-                  >
-                    <LabelList dataKey={labels.optimized} content={renderCustomBarLabel} />
-                  </Bar>
-                </>
+              {viewMode === 'comparison' ? (
+                comparisonType === 'optimization' ? (
+                  <>
+                    <Bar 
+                      dataKey={labels.baseline} 
+                      fill={colors.positive.baseline}
+                      name={`${labels.baseline}`}
+                    >
+                      <LabelList dataKey={labels.baseline} content={renderCustomBarLabel} />
+                    </Bar>
+                    <Bar 
+                      dataKey={labels.optimized} 
+                      fill={colors.positive.optimized}
+                      name={`${labels.optimized}`}
+                    >
+                      <LabelList dataKey={labels.optimized} content={renderCustomBarLabel} />
+                    </Bar>
+                  </>
+                ) : (
+                  <>
+                    <Bar dataKey="מעלה הזרם - בסיס" fill={colors.positive.baseline}>
+                      <LabelList dataKey="מעלה הזרם - בסיס" content={renderCustomBarLabel} />
+                    </Bar>
+                    <Bar dataKey="מעלה הזרם - אופטימיזציה" fill={colors.positive.optimized}>
+                      <LabelList dataKey="מעלה הזרם - אופטימיזציה" content={renderCustomBarLabel} />
+                    </Bar>
+                    <Bar dataKey="מורד הזרם - בסיס" fill={colors.negative.baseline}>
+                      <LabelList dataKey="מורד הזרם - בסיס" content={renderCustomBarLabel} />
+                    </Bar>
+                    <Bar dataKey="מורד הזרם - אופטימיזציה" fill={colors.negative.optimized}>
+                      <LabelList dataKey="מורד הזרם - אופטימיזציה" content={renderCustomBarLabel} />
+                    </Bar>
+                  </>
+                )
               ) : (
                 <>
-                  <Bar dataKey="מעלה הזרם - בסיס" fill={colors.positive.baseline}>
-                    <LabelList dataKey="מעלה הזרם - בסיס" content={renderCustomBarLabel} />
+                  <Bar dataKey="מעלה הזרם" fill={colors.positive.optimized}>
+                    <LabelList dataKey="מעלה הזרם" content={renderCustomBarLabel} />
                   </Bar>
-                  <Bar dataKey="מעלה הזרם - אופטימיזציה" fill={colors.positive.optimized}>
-                    <LabelList dataKey="מעלה הזרם - אופטימיזציה" content={renderCustomBarLabel} />
-                  </Bar>
-                  <Bar dataKey="מורד הזרם - בסיס" fill={colors.negative.baseline}>
-                    <LabelList dataKey="מורד הזרם - בסיס" content={renderCustomBarLabel} />
-                  </Bar>
-                  <Bar dataKey="מורד הזרם - אופטימיזציה" fill={colors.negative.optimized}>
-                    <LabelList dataKey="מורד הזרם - אופטימיזציה" content={renderCustomBarLabel} />
+                  <Bar dataKey="מורד הזרם" fill={colors.negative.optimized}>
+                    <LabelList dataKey="מורד הזרם" content={renderCustomBarLabel} />
                   </Bar>
                 </>
               )}
@@ -254,7 +297,7 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
         );
 
       case 'butterfly':
-        const groupedMetrics = butterflyData.reduce((acc, item) => {
+        const groupedMetrics = (viewMode === 'comparison' ? butterflyData : butterflyDirectionData).reduce((acc, item) => {
           const baseMetricName = item.metric.replace(/\d+-\d+$/, '').trim();
           if (!acc[baseMetricName]) {
             acc[baseMetricName] = [];
@@ -265,11 +308,14 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
 
         const organizedData = Object.values(groupedMetrics).flat();
         
-        const customLegendItems = [
+        const customLegendItems = viewMode === 'comparison' ? [
           { value: `${labels.baseline} - מדדים חיוביים`, color: colors.positive.baseline },
           { value: `${labels.baseline} - מדדים שליליים`, color: colors.negative.baseline },
           { value: `${labels.optimized} - מדדים חיוביים`, color: colors.positive.optimized },
           { value: `${labels.optimized} - מדדים שליליים`, color: colors.negative.optimized },
+        ] : [
+          { value: `מעלה הזרם - מדדים חיוביים`, color: colors.positive.optimized },
+          { value: `מורד הזרם - מדדים שליליים`, color: colors.negative.optimized },
         ];
 
         const renderCustomLegend = () => (
@@ -295,40 +341,73 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
                 <YAxis type="category" dataKey="metric" width={150} />
                 <Tooltip formatter={(value, name) => [Math.abs(Number(value)), name]} />
                 <ReferenceLine x={0} stroke="#000" />
-                <Bar 
-                  dataKey={labels.baseline} 
-                  name={labels.baseline}
-                  legendType="none"
-                >
-                  <LabelList dataKey={labels.baseline} content={renderCustomButterflyLabel} />
-                  {organizedData.map((entry, index) => (
-                    <Cell
-                      key={`cell-baseline-${index}`}
-                      fill={
-                        entry.category === 'negative'
-                          ? colors.negative.baseline
-                          : colors.positive.baseline
-                      }
-                    />
-                  ))}
-                </Bar>
-                <Bar 
-                  dataKey={labels.optimized} 
-                  name={labels.optimized}
-                  legendType="none"
-                >
-                  <LabelList dataKey={labels.optimized} content={renderCustomButterflyLabel} />
-                  {organizedData.map((entry, index) => (
-                    <Cell
-                      key={`cell-optimized-${index}`}
-                      fill={
-                        entry.category === 'negative'
-                          ? colors.negative.optimized
-                          : colors.positive.optimized
-                      }
-                    />
-                  ))}
-                </Bar>
+                {viewMode === 'comparison' ? (
+                  <>
+                    <Bar 
+                      dataKey={labels.baseline} 
+                      name={labels.baseline}
+                      legendType="none"
+                    >
+                      <LabelList dataKey={labels.baseline} content={renderCustomButterflyLabel} />
+                      {organizedData.map((entry, index) => (
+                        <Cell
+                          key={`cell-baseline-${index}`}
+                          fill={
+                            entry.category === 'negative'
+                              ? colors.negative.baseline
+                              : colors.positive.baseline
+                          }
+                        />
+                      ))}
+                    </Bar>
+                    <Bar 
+                      dataKey={labels.optimized} 
+                      name={labels.optimized}
+                      legendType="none"
+                    >
+                      <LabelList dataKey={labels.optimized} content={renderCustomButterflyLabel} />
+                      {organizedData.map((entry, index) => (
+                        <Cell
+                          key={`cell-optimized-${index}`}
+                          fill={
+                            entry.category === 'negative'
+                              ? colors.negative.optimized
+                              : colors.positive.optimized
+                          }
+                        />
+                      ))}
+                    </Bar>
+                  </>
+                ) : (
+                  <>
+                    <Bar 
+                      dataKey="מעלה הזרם" 
+                      name="מעלה הזרם"
+                      legendType="none"
+                    >
+                      <LabelList dataKey="מעלה הזרם" content={renderCustomButterflyLabel} />
+                      {organizedData.map((entry, index) => (
+                        <Cell
+                          key={`cell-upstream-${index}`}
+                          fill={colors.positive.optimized}
+                        />
+                      ))}
+                    </Bar>
+                    <Bar 
+                      dataKey="מורד הזרם" 
+                      name="מורד הזרם"
+                      legendType="none"
+                    >
+                      <LabelList dataKey="מורד הזרם" content={renderCustomButterflyLabel} />
+                      {organizedData.map((entry, index) => (
+                        <Cell
+                          key={`cell-downstream-${index}`}
+                          fill={colors.negative.optimized}
+                        />
+                      ))}
+                    </Bar>
+                  </>
+                )}
               </BarChart>
             </ResponsiveContainer>
             {renderCustomLegend()}
@@ -354,7 +433,18 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
                 <SplitSquareVertical className="h-4 w-4" />
               </ToggleGroupItem>
             </ToggleGroup>
-            {chartType !== 'radar' && chartType !== 'butterfly' && (
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-1"
+              onClick={() => setViewMode(viewMode === 'comparison' ? 'single' : 'comparison')}
+            >
+              <Compare className="h-4 w-4 mr-1" />
+              {viewMode === 'comparison' ? 'הצג כיוונים בלבד' : 'הצג השוואה'}
+            </Button>
+            
+            {chartType === 'bar' && viewMode === 'comparison' && (
               <ToggleGroup type="single" value={comparisonType} onValueChange={(value) => value && setComparisonType(value as ComparisonType)}>
                 <ToggleGroupItem value="optimization" aria-label="השוואת אופטימיזציה">
                   אופטימיזציה
