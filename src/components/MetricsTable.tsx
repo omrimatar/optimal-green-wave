@@ -73,10 +73,10 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
         <Table dir="rtl">
           <TableHeader>
             <TableRow>
-              <TableHead>מדד</TableHead>
-              <TableHead>{labels.baseline}</TableHead>
-              <TableHead>{labels.optimized}</TableHead>
-              <TableHead>שיפור</TableHead>
+              <TableHead className="text-right">מדד</TableHead>
+              <TableHead className="text-right">{labels.baseline}</TableHead>
+              <TableHead className="text-right">{labels.optimized}</TableHead>
+              <TableHead className="text-right">שיפור</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
