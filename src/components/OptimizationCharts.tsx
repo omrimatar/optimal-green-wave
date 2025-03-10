@@ -9,7 +9,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
 import { ChartBar, Radar as RadarIcon, SplitSquareVertical, ArrowLeftRight } from "lucide-react";
 import type { RunResult } from "@/types/traffic";
-import { useLanguage } from "@/context/language";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface OptimizationChartsProps {
   baseline: RunResult;
