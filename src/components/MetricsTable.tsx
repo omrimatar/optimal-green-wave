@@ -12,7 +12,7 @@ interface MetricsTableProps {
 }
 
 export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const getLabels = () => {
     if (mode === 'manual') {
@@ -73,7 +73,7 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Table dir={t.language === 'he' ? "rtl" : "ltr"}>
+        <Table dir={language === 'he' ? "rtl" : "ltr"}>
           <TableHeader>
             <TableRow>
               <TableHead className="text-right">{t('metric')}</TableHead>
