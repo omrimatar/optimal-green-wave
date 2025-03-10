@@ -1,4 +1,3 @@
-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +61,8 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
   const optimizedMaxDelayUp = Array.isArray(optimized.max_delay_up) ? optimized.max_delay_up : [];
   const optimizedMaxDelayDown = Array.isArray(optimized.max_delay_down) ? optimized.max_delay_down : [];
 
+  const textAlign = language === 'he' ? "text-right" : "text-left";
+
   return (
     <Card className="w-full table-fade-in">
       <CardHeader>
@@ -76,10 +77,10 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
         <Table dir={language === 'he' ? "rtl" : "ltr"}>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-right">{t('metric')}</TableHead>
-              <TableHead className="text-right">{labels.baseline}</TableHead>
-              <TableHead className="text-right">{labels.optimized}</TableHead>
-              <TableHead className="text-right">{t('improvement')}</TableHead>
+              <TableHead className={textAlign}>{t('metric')}</TableHead>
+              <TableHead className={textAlign}>{labels.baseline}</TableHead>
+              <TableHead className={textAlign}>{labels.optimized}</TableHead>
+              <TableHead className={textAlign}>{t('improvement')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

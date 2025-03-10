@@ -9,6 +9,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
 import { ChartBar, Radar as RadarIcon, SplitSquareVertical, ArrowLeftRight } from "lucide-react";
 import type { RunResult } from "@/types/traffic";
+import { useLanguage } from "@/context/language";
 
 interface OptimizationChartsProps {
   baseline: RunResult;
@@ -344,13 +345,20 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
           </div>
         );
         
+        const { language } = useLanguage();
+        
         return (
           <div>
             <ResponsiveContainer width="100%" height={400}>
               <BarChart data={groupedMetrics} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" domain={['auto', 'auto']} />
-                <YAxis type="category" dataKey="metric" width={150} />
+                <YAxis 
+                  type="category" 
+                  dataKey="metric" 
+                  width={150}
+                  hide={language !== 'he'}
+                />
                 <Tooltip formatter={(value, name) => [Math.abs(Number(value)), name]} />
                 <ReferenceLine x={0} stroke="#000" />
                 {viewMode === 'comparison' ? (
