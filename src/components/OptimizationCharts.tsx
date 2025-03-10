@@ -401,7 +401,7 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
                       {groupedMetrics.map((entry, index) => (
                         <Cell
                           key={`cell-upstream-${index}`}
-                          fill={colors.positive.optimized}
+                          fill={entry.category === 'positive' ? colors.positive.optimized : colors.negative.optimized}
                         />
                       ))}
                     </Bar>
@@ -414,7 +414,7 @@ export const OptimizationCharts = ({ baseline, optimized, mode }: OptimizationCh
                       {groupedMetrics.map((entry, index) => (
                         <Cell
                           key={`cell-downstream-${index}`}
-                          fill={colors.negative.optimized}
+                          fill={entry.category === 'positive' ? colors.positive.baseline : colors.negative.baseline}
                         />
                       ))}
                     </Bar>
