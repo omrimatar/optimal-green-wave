@@ -10,10 +10,13 @@ import { ArrowRight, Hand, Play, Plus } from 'lucide-react';
 import { WeightsPanel } from '@/components/WeightsPanel';
 import { FileActions } from '@/components/FileActions';
 import { ResultsPanel } from '@/components/ResultsPanel';
+import { LanguageToggle } from '@/components/LanguageToggle';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights, normalizeWeights } from '@/types/optimization';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const Index = () => {
+  const { t, language } = useLanguage();
   const [intersections, setIntersections] = useState<Intersection[]>([{
     id: 1,
     distance: 0,
@@ -333,13 +336,18 @@ const Index = () => {
 
   console.log("Current results state:", results);
 
-  return <div className="min-h-screen p-4 md:p-8 bg-gradient-to-br from-green-50 to-blue-50">
+  return (
+    <div className="min-h-screen p-4 md:p-8 bg-gradient-to-br from-green-50 to-blue-50" dir={language === 'he' ? 'rtl' : 'ltr'}>
       <div className="max-w-[1600px] mx-auto space-y-4 md:space-y-8 animate-fade-up">
+        <div className="flex justify-end mb-4">
+          <LanguageToggle />
+        </div>
+        
         <div className="flex flex-col items-center justify-center space-y-2 md:space-y-4">
-          <img alt="מחשבון גל ירוק" src="/lovable-uploads/efa3c3e2-c92f-42c7-8cc6-a4096430a863.png" className="h-16 md:h-24 w-auto object-cover" />
+          <img alt={t('app_title')} src="/lovable-uploads/efa3c3e2-c92f-42c7-8cc6-a4096430a863.png" className="h-16 md:h-24 w-auto object-cover" />
           <div className="text-center space-y-1 md:space-y-2">
-            <h1 className="text-2xl md:text-4xl font-bold text-gray-900">מחשבון גל ירוק</h1>
-            <p className="text-base md:text-lg text-gray-600">כלי לתכנון אופטימלי של תזמוני רמזורים</p>
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-900">{t('app_title')}</h1>
+            <p className="text-base md:text-lg text-gray-600">{t('app_subtitle')}</p>
           </div>
         </div>
 
@@ -348,7 +356,7 @@ const Index = () => {
             <FileActions speed={speed} intersections={intersections} onLoadInput={handleLoadInput} />
 
             <div>
-              <Label htmlFor="globalCycleTime">זמן מחזור (שניות)</Label>
+              <Label htmlFor="globalCycleTime">{t('cycle_time')}</Label>
               <Input 
                 id="globalCycleTime" 
                 type="number" 
@@ -361,7 +369,7 @@ const Index = () => {
             </div>
 
             <div>
-              <Label htmlFor="speed">מהירות ברירת מחדל (קמ"ש)</Label>
+              <Label htmlFor="speed">{t('default_speed')}</Label>
               <Input id="speed" type="number" value={speed} min={0} max={120} onChange={e => handleSpeedChange(e.target.value)} className="w-full" />
             </div>
 
@@ -375,97 +383,117 @@ const Index = () => {
 
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <Label>צמתים</Label>
+                <Label>{t('intersections')}</Label>
                 <Button variant="outline" size="sm" onClick={handleAddIntersection} className="flex items-center gap-2">
                   <Plus size={16} />
-                  <span className="hidden sm:inline">הוסף צומת</span>
-                  <span className="sm:hidden">הוסף</span>
+                  <span className="hidden sm:inline">{t('add_intersection')}</span>
+                  <span className="sm:hidden">{t('add')}</span>
                 </Button>
               </div>
               
-              {intersections.map((intersection, index) => <IntersectionInput key={intersection.id} intersection={intersection} defaultSpeed={speed} allIntersections={intersections} onChange={updated => {
-              const newIntersections = [...intersections];
-              newIntersections[index] = updated;
-              setIntersections(newIntersections);
-              setCalculationPerformed(false);
-              if (mode === 'display') {
-                handleShowExisting();
-              }
-            }} onDelete={() => {
-              if (intersections.length > 2) {
-                setIntersections(intersections.filter(i => i.id !== intersection.id));
-                setManualOffsets(prev => {
-                  const newOffsets = [...prev];
-                  newOffsets.splice(index, 1);
-                  return newOffsets;
-                });
-                setCalculationPerformed(false);
-                if (mode === 'display') {
-                  handleShowExisting();
-                }
-              }
-            }} />)}
+              {intersections.map((intersection, index) => (
+                <IntersectionInput 
+                  key={intersection.id} 
+                  intersection={intersection} 
+                  defaultSpeed={speed} 
+                  allIntersections={intersections} 
+                  onChange={updated => {
+                    const newIntersections = [...intersections];
+                    newIntersections[index] = updated;
+                    setIntersections(newIntersections);
+                    setCalculationPerformed(false);
+                    if (mode === 'display') {
+                      handleShowExisting();
+                    }
+                  }} 
+                  onDelete={() => {
+                    if (intersections.length > 2) {
+                      setIntersections(intersections.filter(i => i.id !== intersection.id));
+                      setManualOffsets(prev => {
+                        const newOffsets = [...prev];
+                        newOffsets.splice(index, 1);
+                        return newOffsets;
+                      });
+                      setCalculationPerformed(false);
+                      if (mode === 'display') {
+                        handleShowExisting();
+                      }
+                    }
+                  }} 
+                />
+              ))}
             </div>
 
             <div className="flex flex-wrap gap-2 md:gap-4">
               <Button variant="outline" onClick={handleShowExisting} className="flex items-center gap-1 md:gap-2 bg-orange-500 hover:bg-orange-600 text-white text-xs md:text-sm">
                 <Play size={14} className="md:w-4 md:h-4" />
-                <span className="hidden sm:inline">צייר מצב קיים</span>
-                <span className="sm:hidden">צייר</span>
+                <span className="hidden sm:inline">{t('draw_existing')}</span>
+                <span className="sm:hidden">{t('draw_existing')}</span>
               </Button>
 
               <Dialog open={showManualDialog} onOpenChange={setShowManualDialog}>
                 <DialogTrigger asChild>
                   <Button variant="outline" className="flex items-center gap-1 md:gap-2 bg-purple-500 hover:bg-purple-600 text-white text-xs md:text-sm">
                     <Hand size={14} className="md:w-4 md:h-4" />
-                    <span className="hidden sm:inline">חישוב ידני</span>
-                    <span className="sm:hidden">ידני</span>
+                    <span className="hidden sm:inline">{t('manual_calculation')}</span>
+                    <span className="sm:hidden">{t('manual')}</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-[95vw] md:max-w-lg">
+                <DialogContent className="max-w-[95vw] md:max-w-lg" dir={language === 'he' ? 'rtl' : 'ltr'}>
                   <DialogHeader>
-                      <DialogTitle>הזנת היסטים ידנית</DialogTitle>
-                      <DialogDescription>
-                        הזן את ערכי ה-offset עבור כל צומת (בשניות).
-                        שים לב שה-offset של הצומת הראשון תמיד יהיה 0.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
-                      {intersections.map((intersection, index) => <div key={intersection.id} className="grid grid-cols-3 md:grid-cols-4 items-center gap-2 md:gap-4">
-                          <Label htmlFor={`offset-${index}`} className="text-right text-sm">
-                            צומת {index + 1}
-                          </Label>
-                          <Input id={`offset-${index}`} type="number" value={manualOffsets[index] || 0} onChange={e => {
-                      const newOffsets = [...manualOffsets];
-                      newOffsets[index] = Number(e.target.value);
-                      setManualOffsets(newOffsets);
-                    }} disabled={index === 0} className="col-span-2 md:col-span-3" />
-                        </div>)}
-                    </div>
-                    <DialogFooter>
-                      <Button onClick={handleManualCalculate}>חשב</Button>
-                    </DialogFooter>
+                    <DialogTitle>{t('manual_offsets')}</DialogTitle>
+                    <DialogDescription>
+                      {t('offsets_description')}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+                    {intersections.map((intersection, index) => (
+                      <div key={intersection.id} className="grid grid-cols-3 md:grid-cols-4 items-center gap-2 md:gap-4">
+                        <Label htmlFor={`offset-${index}`} className={language === 'he' ? "text-right text-sm" : "text-left text-sm"}>
+                          {t('intersection')} {index + 1}
+                        </Label>
+                        <Input 
+                          id={`offset-${index}`} 
+                          type="number" 
+                          value={manualOffsets[index] || 0} 
+                          onChange={e => {
+                            const newOffsets = [...manualOffsets];
+                            newOffsets[index] = Number(e.target.value);
+                            setManualOffsets(newOffsets);
+                          }} 
+                          disabled={index === 0} 
+                          className="col-span-2 md:col-span-3" 
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <DialogFooter className={language === 'he' ? "" : "flex-row-reverse"}>
+                    <Button onClick={handleManualCalculate}>{t('calculate')}</Button>
+                  </DialogFooter>
                 </DialogContent>
               </Dialog>
 
               <Button onClick={handleCalculate} className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white text-xs md:text-sm">
-                <span className="sm:hidden">חשב</span>
-                <span className="hidden sm:inline">חשב גל ירוק</span>
-                <ArrowRight className="mr-2 w-3 h-3 md:w-4 md:h-4" size={16} />
+                <span className="sm:hidden">{t('calculate')}</span>
+                <span className="hidden sm:inline">{t('calculate_green_wave')}</span>
+                <ArrowRight className={`${language === 'he' ? "mr-2" : "ml-2"} w-3 h-3 md:w-4 md:h-4`} size={16} />
               </Button>
             </div>
           </div>
         </Card>
 
-        {results && <ResultsPanel 
-          results={results} 
-          mode={mode} 
-          originalIntersections={intersections} 
-          speed={speed} 
-          calculationPerformed={calculationPerformed}
-        />}
+        {results && (
+          <ResultsPanel 
+            results={results} 
+            mode={mode} 
+            originalIntersections={intersections} 
+            speed={speed} 
+            calculationPerformed={calculationPerformed}
+          />
+        )}
       </div>
-    </div>;
+    </div>
+  );
 };
 
 export default Index;

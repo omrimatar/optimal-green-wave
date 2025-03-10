@@ -8,6 +8,7 @@ import { type Intersection } from "@/types/optimization";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface IntersectionInputProps {
   intersection: Intersection;
@@ -24,6 +25,7 @@ export const IntersectionInput = ({
   allIntersections, 
   defaultSpeed 
 }: IntersectionInputProps) => {
+  const { t } = useLanguage();
   // Add local state to track if the distance input is being edited
   const [isEditingDistance, setIsEditingDistance] = useState(false);
   const [tempDistance, setTempDistance] = useState<string>(intersection.distance.toString());
@@ -44,12 +46,12 @@ export const IntersectionInput = ({
     
     if (field === 'startTime') {
       if (value < 0 || value > cycleTime || !Number.isInteger(value)) {
-        toast.error(`זמן התחלה חייב להיות מספר שלם בין 0 ל-${cycleTime}`);
+        toast.error(`${t('start_time')} must be an integer between 0 and ${cycleTime}`);
         return;
       }
     } else if (field === 'duration') {
       if (value < 1 || value > cycleTime || !Number.isInteger(value)) {
-        toast.error(`משך חייב להיות מספר שלם בין 1 ל-${cycleTime}`);
+        toast.error(`${t('duration')} must be an integer between 1 and ${cycleTime}`);
         return;
       }
     }
@@ -101,7 +103,7 @@ export const IntersectionInput = ({
     
     const numValue = parseInt(tempDistance);
     if (isNaN(numValue) || numValue < 0 || numValue > 10000 || !Number.isInteger(numValue)) {
-      toast.error("מרחק חייב להיות מספר שלם בין 0 ל-10000 מטר");
+      toast.error(`${t('distance')} must be an integer between 0 and 10000 meters`);
       setTempDistance(intersection.distance.toString());
       return;
     }
@@ -113,7 +115,7 @@ export const IntersectionInput = ({
     if (currentIndex > 0) {
       const prevIntersection = allIntersections[currentIndex - 1];
       if (numValue < prevIntersection.distance) {
-        toast.error(`מרחק חייב להיות גדול או שווה למרחק הצומת הקודם (${prevIntersection.distance})`);
+        toast.error(`${t('distance')} must be greater than or equal to the previous intersection (${prevIntersection.distance})`);
         setTempDistance(intersection.distance.toString());
         return;
       }
@@ -122,7 +124,7 @@ export const IntersectionInput = ({
     if (currentIndex < allIntersections.length - 1) {
       const nextIntersection = allIntersections[currentIndex + 1];
       if (numValue > nextIntersection.distance) {
-        toast.error(`מרחק חייב להיות קטן או שווה למרחק הצומת הבא (${nextIntersection.distance})`);
+        toast.error(`${t('distance')} must be less than or equal to the next intersection (${nextIntersection.distance})`);
         setTempDistance(intersection.distance.toString());
         return;
       }
@@ -144,7 +146,7 @@ export const IntersectionInput = ({
     const numValue = parseInt(value);
     
     if (isNaN(numValue) || numValue < 0 || numValue > 120 || !Number.isInteger(numValue)) {
-      toast.error("מהירות חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
+      toast.error(`${direction === 'upstream' ? t('upstream_speed') : t('downstream_speed')} must be an integer between 0 and 120 km/h`);
       return;
     }
     
@@ -171,7 +173,7 @@ export const IntersectionInput = ({
   return (
     <Card className="p-4 space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="font-medium">צומת {intersection.id}</h3>
+        <h3 className="font-medium">{t('intersection')} {intersection.id}</h3>
         <Button 
           variant="ghost" 
           size="sm"
@@ -184,7 +186,7 @@ export const IntersectionInput = ({
       
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <Label>מרחק (מטר)</Label>
+          <Label>{t('distance')}</Label>
           <Input
             type="number"
             value={isEditingDistance ? tempDistance : intersection.distance}
@@ -199,7 +201,7 @@ export const IntersectionInput = ({
         </div>
 
         <div>
-          <Label>זמן מחזור</Label>
+          <Label>{t('cycle_time')}</Label>
           <div className="flex flex-col space-y-2">
             <div className="flex items-center space-x-2 rtl:space-x-reverse">
               <Checkbox 
@@ -211,11 +213,11 @@ export const IntersectionInput = ({
                 htmlFor={`halfCycleTime-${intersection.id}`}
                 className="text-sm font-normal cursor-pointer"
               >
-                חצי זמן מחזור
+                {t('half_cycle_time')}
               </Label>
             </div>
             <div className="text-xs text-muted-foreground">
-              זמן מחזור בפועל: {effectiveCycleTime} שניות
+              {t('effective_cycle_time')}: {effectiveCycleTime} {t('seconds')}
             </div>
           </div>
         </div>
@@ -224,7 +226,7 @@ export const IntersectionInput = ({
       {/* Speed inputs */}
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <Label>מהירות במעלה הזרם (קמ"ש)</Label>
+          <Label>{t('upstream_speed')}</Label>
           <Input
             type="number"
             value={upstreamSpeed}
@@ -234,7 +236,7 @@ export const IntersectionInput = ({
         </div>
 
         <div>
-          <Label>מהירות במורד הזרם (קמ"ש)</Label>
+          <Label>{t('downstream_speed')}</Label>
           <Input
             type="number"
             value={downstreamSpeed}
@@ -246,7 +248,7 @@ export const IntersectionInput = ({
 
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h4 className="font-medium">פאזות ירוקות</h4>
+          <h4 className="font-medium">{t('green_phases')}</h4>
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -255,7 +257,7 @@ export const IntersectionInput = ({
               className="flex items-center gap-1"
             >
               <ArrowUp size={14} />
-              הוסף מופע במעלה
+              {t('add_upstream_phase')}
             </Button>
             <Button
               variant="outline"
@@ -264,7 +266,7 @@ export const IntersectionInput = ({
               className="flex items-center gap-1"
             >
               <ArrowDown size={14} />
-              הוסף מופע במורד
+              {t('add_downstream_phase')}
             </Button>
           </div>
         </div>
@@ -272,7 +274,7 @@ export const IntersectionInput = ({
         {intersection.greenPhases.map((phase, index) => (
           <div key={index} className="space-y-2 border rounded p-3">
             <div className="flex justify-between items-center">
-              <Label>פאזה ירוקה {phase.direction === 'upstream' ? 'במעלה הזרם' : 'במורד הזרם'}</Label>
+              <Label>{phase.direction === 'upstream' ? t('upstream_phase') : t('downstream_phase')}</Label>
               {intersection.greenPhases.length > 1 && (
                 <Button
                   variant="ghost"
@@ -286,7 +288,7 @@ export const IntersectionInput = ({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-sm">זמן התחלה</Label>
+                <Label className="text-sm">{t('start_time')}</Label>
                 <Input
                   type="number"
                   value={phase.startTime}
@@ -296,7 +298,7 @@ export const IntersectionInput = ({
                 />
               </div>
               <div>
-                <Label className="text-sm">משך</Label>
+                <Label className="text-sm">{t('duration')}</Label>
                 <Input
                   type="number"
                   value={phase.duration}

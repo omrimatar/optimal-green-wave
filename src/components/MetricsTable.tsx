@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { RunResult } from "@/types/traffic";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface MetricsTableProps {
   baseline: RunResult;
@@ -11,16 +12,18 @@ interface MetricsTableProps {
 }
 
 export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) => {
+  const { t } = useLanguage();
+
   const getLabels = () => {
     if (mode === 'manual') {
       return {
-        baseline: 'מצב התחלתי',
-        optimized: 'מצב ידני'
+        baseline: t('initial_state'),
+        optimized: t('manual_state')
       };
     }
     return {
-      baseline: 'בסיס',
-      optimized: 'אופטימיזציה'
+      baseline: t('baseline'),
+      optimized: t('optimized')
     };
   };
 
@@ -63,26 +66,26 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
     <Card className="w-full table-fade-in">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          {mode === 'manual' ? 'תוצאות החישוב הידני' : 'תוצאות האופטימיזציה'}
+          {mode === 'manual' ? t('manual_results') : t('optimization_results')}
           <Badge variant="outline" className="mr-2">
-            {optimized.status === "Optimal" ? "אופטימלי" : optimized.status}
+            {optimized.status === "Optimal" ? t('optimal') : optimized.status}
           </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Table dir="rtl">
+        <Table dir={t.language === 'he' ? "rtl" : "ltr"}>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-right">מדד</TableHead>
+              <TableHead className="text-right">{t('metric')}</TableHead>
               <TableHead className="text-right">{labels.baseline}</TableHead>
               <TableHead className="text-right">{labels.optimized}</TableHead>
-              <TableHead className="text-right">שיפור</TableHead>
+              <TableHead className="text-right">{t('improvement')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {offsets.map((offset, index) => (
               <TableRow key={`offset-${index}`}>
-                <TableCell>היסט צומת {index + 1}</TableCell>
+                <TableCell>{t('intersection_offset')} {index + 1}</TableCell>
                 <TableCell>{offset.toFixed(2)}</TableCell>
                 <TableCell>{(optimizedOffsets[index] || 0).toFixed(2)}</TableCell>
                 <TableCell>-</TableCell>
@@ -91,7 +94,7 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
 
             {pairBandwidthUp.map((value, index) => (
               <TableRow key={`pair-bw-up-${index}`}>
-                <TableCell>רוחב פס מקומי למעלה {index + 1}-{index + 2}</TableCell>
+                <TableCell>{t('upstream_local_bandwidth')} {index + 1}-{index + 2}</TableCell>
                 <TableCell>{value === null ? "N/A" : value.toFixed(2)}</TableCell>
                 <TableCell>
                   {optimizedPairBandwidthUp[index] === null ? "N/A" : optimizedPairBandwidthUp[index].toFixed(2)}
@@ -104,7 +107,7 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
 
             {pairBandwidthDown.map((value, index) => (
               <TableRow key={`pair-bw-down-${index}`}>
-                <TableCell>רוחב פס מקומי למטה {index + 2}-{index + 1}</TableCell>
+                <TableCell>{t('downstream_local_bandwidth')} {index + 2}-{index + 1}</TableCell>
                 <TableCell>{value === null ? "N/A" : value.toFixed(2)}</TableCell>
                 <TableCell>
                   {optimizedPairBandwidthDown[index] === null ? "N/A" : optimizedPairBandwidthDown[index].toFixed(2)}
@@ -116,7 +119,7 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
             ))}
 
             <TableRow>
-              <TableCell>רוחב פס בציר למעלה</TableCell>
+              <TableCell>{t('upstream_corridor_bandwidth')}</TableCell>
               <TableCell>{baseline.corridor_bandwidth_up === null ? "N/A" : baseline.corridor_bandwidth_up.toFixed(2)}</TableCell>
               <TableCell>{optimized.corridor_bandwidth_up === null ? "N/A" : optimized.corridor_bandwidth_up.toFixed(2)}</TableCell>
               <TableCell>
@@ -125,7 +128,7 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
             </TableRow>
 
             <TableRow>
-              <TableCell>רוחב פס בציר למטה</TableCell>
+              <TableCell>{t('downstream_corridor_bandwidth')}</TableCell>
               <TableCell>{baseline.corridor_bandwidth_down === null ? "N/A" : baseline.corridor_bandwidth_down.toFixed(2)}</TableCell>
               <TableCell>{optimized.corridor_bandwidth_down === null ? "N/A" : optimized.corridor_bandwidth_down.toFixed(2)}</TableCell>
               <TableCell>
@@ -135,7 +138,7 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
 
             {avgDelayUp.map((delay, index) => (
               <TableRow key={`delay-up-${index}`}>
-                <TableCell>עיכוב ממוצע למעלה צמתים {index + 1}-{index + 2}</TableCell>
+                <TableCell>{t('upstream_avg_delay')} {index + 1}-{index + 2}</TableCell>
                 <TableCell>{delay === null ? "N/A" : delay.toFixed(2)}</TableCell>
                 <TableCell>
                   {optimizedAvgDelayUp[index] === null ? "N/A" : optimizedAvgDelayUp[index].toFixed(2)}
@@ -148,7 +151,7 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
 
             {avgDelayDown.map((delay, index) => (
               <TableRow key={`delay-down-${index}`}>
-                <TableCell>עיכוב ממוצע למטה צמתים {index + 2}-{index + 1}</TableCell>
+                <TableCell>{t('downstream_avg_delay')} {index + 2}-{index + 1}</TableCell>
                 <TableCell>{delay === null ? "N/A" : delay.toFixed(2)}</TableCell>
                 <TableCell>
                   {optimizedAvgDelayDown[index] === null ? "N/A" : optimizedAvgDelayDown[index].toFixed(2)}
@@ -161,7 +164,7 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
 
             {maxDelayUp.map((delay, index) => (
               <TableRow key={`max-delay-up-${index}`}>
-                <TableCell>עיכוב מקסימלי למעלה צמתים {index + 1}-{index + 2}</TableCell>
+                <TableCell>{t('upstream_max_delay')} {index + 1}-{index + 2}</TableCell>
                 <TableCell>{delay === null ? "N/A" : delay.toFixed(2)}</TableCell>
                 <TableCell>
                   {optimizedMaxDelayUp[index] === null ? "N/A" : optimizedMaxDelayUp[index].toFixed(2)}
@@ -174,7 +177,7 @@ export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) =
 
             {maxDelayDown.map((delay, index) => (
               <TableRow key={`max-delay-down-${index}`}>
-                <TableCell>עיכוב מקסימלי למטה צמתים {index + 2}-{index + 1}</TableCell>
+                <TableCell>{t('downstream_max_delay')} {index + 2}-{index + 1}</TableCell>
                 <TableCell>{delay === null ? "N/A" : delay.toFixed(2)}</TableCell>
                 <TableCell>
                   {optimizedMaxDelayDown[index] === null ? "N/A" : optimizedMaxDelayDown[index].toFixed(2)}
