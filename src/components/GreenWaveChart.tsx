@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -215,9 +216,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={upOriginLowY}
               x2={xAtCycleEnd}
               y2={upCycleEndY}
-              stroke="#4ADE80"
+              stroke="#4ADE80CC"
               strokeWidth={2}
-              strokeDasharray="none"
+              strokeDasharray="6 3"
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -240,9 +241,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={upCycleStartY}
               x2={destX}
               y2={upDestLowY}
-              stroke="#4ADE80"
+              stroke="#4ADE80CC"
               strokeWidth={2}
-              strokeDasharray="none"
+              strokeDasharray="6 3"
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -265,9 +266,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={upOriginLowY}
               x2={destX}
               y2={upDestLowY}
-              stroke="#4ADE80"
+              stroke="#4ADE80CC"
               strokeWidth={2}
-              strokeDasharray="none"
+              strokeDasharray="6 3"
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -320,9 +321,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={upOriginHighY}
               x2={xAtCycleEnd}
               y2={upCycleEndY}
-              stroke="#4ADE80"
+              stroke="#4ADE80CC"
               strokeWidth={2}
-              strokeDasharray="none"
+              strokeDasharray="6 3"
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -345,9 +346,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={upCycleStartY}
               x2={destX}
               y2={upDestHighY}
-              stroke="#4ADE80"
+              stroke="#4ADE80CC"
               strokeWidth={2}
-              strokeDasharray="none"
+              strokeDasharray="6 3"
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -370,9 +371,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={upOriginHighY}
               x2={destX}
               y2={upDestHighY}
-              stroke="#4ADE80"
+              stroke="#4ADE80CC"
               strokeWidth={2}
-              strokeDasharray="none"
+              strokeDasharray="6 3"
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -435,9 +436,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={downOriginLowY}
               x2={xAtCycleEnd}
               y2={downCycleEndY}
-              stroke="#60A5FA"
+              stroke="#60A5FACC"
               strokeWidth={2}
-              strokeDasharray="none"
+              strokeDasharray="6 3"
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -460,9 +461,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={downCycleStartY}
               x2={originX}
               y2={downDestLowY}
-              stroke="#60A5FA"
+              stroke="#60A5FACC"
               strokeWidth={2}
-              strokeDasharray="none"
+              strokeDasharray="6 3"
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -485,9 +486,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={downOriginLowY}
               x2={originX}
               y2={downDestLowY}
-              stroke="#60A5FA"
+              stroke="#60A5FACC"
               strokeWidth={2}
-              strokeDasharray="none"
+              strokeDasharray="6 3"
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -535,9 +536,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={downOriginHighY}
               x2={xAtCycleEnd}
               y2={downCycleEndY}
-              stroke="#60A5FA"
+              stroke="#60A5FACC"
               strokeWidth={2}
-              strokeDasharray="none"
+              strokeDasharray="6 3"
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -560,9 +561,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={downCycleStartY}
               x2={originX}
               y2={downDestHighY}
-              stroke="#60A5FA"
+              stroke="#60A5FACC"
               strokeWidth={2}
-              strokeDasharray="none"
+              strokeDasharray="6 3"
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -585,9 +586,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={downOriginHighY}
               x2={originX}
               y2={downDestHighY}
-              stroke="#60A5FA"
+              stroke="#60A5FACC"
               strokeWidth={2}
-              strokeDasharray="none"
+              strokeDasharray="6 3"
               onMouseEnter={(e) => {
                 const content = (
                   <div>
