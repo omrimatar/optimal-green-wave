@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -908,7 +909,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     strokeWidth={1} 
                   />
                   <text 
-                    x={leftPadding - 10} 
+                    x={leftPadding - (isMobile ? 12 : 15)} 
                     y={y} 
                     textAnchor="end" 
                     fontSize={isMobile ? 10 : 12}
