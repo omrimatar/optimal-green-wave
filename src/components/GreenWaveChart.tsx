@@ -40,6 +40,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
 
   const leftPadding = isMobile ? 60 : 80;
   const originX = leftPadding + 25;
+  const rightPadding = isMobile ? 80 : 110;
 
   useEffect(() => {
     setIsMobile(isMobileDevice());
@@ -51,7 +52,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     console.log("GreenWaveChart comparisonResults:", comparisonResults);
     console.log("Left padding:", leftPadding);
     console.log("Origin X:", originX);
-  }, [intersections, mode, speed, pairBandPoints, comparisonResults, leftPadding, originX]);
+    console.log("Right padding:", rightPadding);
+  }, [intersections, mode, speed, pairBandPoints, comparisonResults, leftPadding, originX, rightPadding]);
 
   const maxDistance = Math.max(...intersections.map(i => i.distance));
   const maxCycleTime = Math.max(...intersections.map(i => i.cycleTime));
@@ -61,7 +63,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     console.log("Computed maxCycleTime:", maxCycleTime);
   }, [maxDistance, maxCycleTime]);
 
-  const xScale = (value: number) => (value / maxDistance) * (dimensions.width - (isMobile ? 80 : 120));
+  const xScale = (value: number) => (value / maxDistance) * (dimensions.width - leftPadding - rightPadding);
   const yScale = (value: number) => (value / maxCycleTime) * (dimensions.height - (isMobile ? 60 : 80));
 
   useEffect(() => {
@@ -107,7 +109,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           key={`y-grid-${t}`}
           x1={leftPadding} 
           y1={y} 
-          x2={dimensions.width - 40} 
+          x2={dimensions.width - rightPadding} 
           y2={y} 
           stroke="#e5e7eb" 
           strokeWidth={1}
@@ -121,11 +123,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   const generateXGridLines = () => {
     const interval = 100;
     const lines = [];
-    const maxDistance = Math.max(...intersections.map(i => i.distance));
     
     for (let d = 0; d <= maxDistance; d += interval) {
       const x = originX + xScale(d);
-      if (x <= dimensions.width - 40) {
+      if (x <= dimensions.width - rightPadding) {
         lines.push(
           <line 
             key={`x-grid-${d}`}
@@ -800,14 +801,14 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             <line 
               x1={leftPadding} 
               y1={dimensions.height - (isMobile ? 30 : 40)} 
-              x2={dimensions.width - (isMobile ? 40 : 60)} 
+              x2={dimensions.width - rightPadding} 
               y2={dimensions.height - (isMobile ? 30 : 40)} 
               stroke="black" 
               strokeWidth={1} 
             />
 
-            {renderDiagonalLines()}
-            {renderSolidDiagonalLines()}
+            {renderDiagonalLines && renderDiagonalLines()}
+            {renderSolidDiagonalLines && renderSolidDiagonalLines()}
 
             {intersections.map((intersection, i) => {
               const offset = mode === 'display' ? 0 : (intersection.offset || 0);
@@ -908,7 +909,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     strokeWidth={1} 
                   />
                   <text 
-                    x={leftPadding - (isMobile ? 17 : 20)} 
+                    x={leftPadding - (isMobile ? 22 : 25)} 
                     y={y} 
                     textAnchor="end" 
                     fontSize={isMobile ? 10 : 12}
@@ -941,32 +942,29 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               
               return sortedPositions.map(value => {
                 const x = originX + xScale(value);
-                // Adjust the width limit to ensure the last intersection label is shown
-                if (x <= dimensions.width - (isMobile ? 30 : 40)) {
-                  return (
-                    <g key={`x-tick-${value}`}>
-                      <line 
-                        x1={x} 
-                        y1={dimensions.height - (isMobile ? 30 : 40)} 
-                        x2={x} 
-                        y2={dimensions.height - (isMobile ? 25 : 35)} 
-                        stroke="black" 
-                        strokeWidth={1} 
-                      />
-                      <text 
-                        x={x} 
-                        y={dimensions.height - (isMobile ? 15 : 20)} 
-                        textAnchor="middle" 
-                        fontSize={isMobile ? 9 : 12}
-                      >
-                        {isMobile && value > 999 
-                          ? `${(value/1000).toFixed(1)}K` 
-                          : value}
-                      </text>
-                    </g>
-                  );
-                }
-                return null;
+                // Always show the last intersection label by ensuring it's within bounds
+                return (
+                  <g key={`x-tick-${value}`}>
+                    <line 
+                      x1={x} 
+                      y1={dimensions.height - (isMobile ? 30 : 40)} 
+                      x2={x} 
+                      y2={dimensions.height - (isMobile ? 25 : 35)} 
+                      stroke="black" 
+                      strokeWidth={1} 
+                    />
+                    <text 
+                      x={x} 
+                      y={dimensions.height - (isMobile ? 15 : 20)} 
+                      textAnchor="middle" 
+                      fontSize={isMobile ? 9 : 12}
+                    >
+                      {isMobile && value > 999 
+                        ? `${(value/1000).toFixed(1)}K` 
+                        : value}
+                    </text>
+                  </g>
+                );
               });
             })()}
 
