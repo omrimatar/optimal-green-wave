@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -909,7 +908,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     strokeWidth={1} 
                   />
                   <text 
-                    x={leftPadding - (isMobile ? 12 : 15)} 
+                    x={leftPadding - (isMobile ? 17 : 20)} 
                     y={y} 
                     textAnchor="end" 
                     fontSize={isMobile ? 10 : 12}
@@ -921,38 +920,53 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               );
             })}
 
-            {/* X-axis labels every 100 meters */}
-            {intersections.length > 0 && Array.from({ 
-              length: Math.ceil(Math.max(...intersections.map(i => i.distance)) / 100) + 1 
-            }).map((_, i) => {
-              const value = i * 100;
-              const x = originX + xScale(value);
-              if (x <= dimensions.width - 40) {
-                return (
-                  <g key={`x-tick-${i}`}>
-                    <line 
-                      x1={x} 
-                      y1={dimensions.height - (isMobile ? 30 : 40)} 
-                      x2={x} 
-                      y2={dimensions.height - (isMobile ? 25 : 35)} 
-                      stroke="black" 
-                      strokeWidth={1} 
-                    />
-                    <text 
-                      x={x} 
-                      y={dimensions.height - (isMobile ? 15 : 20)} 
-                      textAnchor="middle" 
-                      fontSize={isMobile ? 9 : 12}
-                    >
-                      {isMobile && value > 999 
-                        ? `${(value/1000).toFixed(1)}K` 
-                        : value}
-                    </text>
-                  </g>
-                );
+            {/* X-axis labels for each 100 meters and intersection locations */}
+            {(() => {
+              // Create a set of all x-axis label positions to avoid duplicates
+              const labelPositions = new Set<number>();
+              
+              // Add labels every 100 meters
+              for (let i = 0; i <= Math.ceil(maxDistance / 100); i++) {
+                labelPositions.add(i * 100);
               }
-              return null;
-            })}
+              
+              // Add labels for each intersection location
+              intersections.forEach(intersection => {
+                labelPositions.add(intersection.distance);
+              });
+              
+              // Convert to sorted array
+              const sortedPositions = Array.from(labelPositions).sort((a, b) => a - b);
+              
+              return sortedPositions.map(value => {
+                const x = originX + xScale(value);
+                if (x <= dimensions.width - 40) {
+                  return (
+                    <g key={`x-tick-${value}`}>
+                      <line 
+                        x1={x} 
+                        y1={dimensions.height - (isMobile ? 30 : 40)} 
+                        x2={x} 
+                        y2={dimensions.height - (isMobile ? 25 : 35)} 
+                        stroke="black" 
+                        strokeWidth={1} 
+                      />
+                      <text 
+                        x={x} 
+                        y={dimensions.height - (isMobile ? 15 : 20)} 
+                        textAnchor="middle" 
+                        fontSize={isMobile ? 9 : 12}
+                      >
+                        {isMobile && value > 999 
+                          ? `${(value/1000).toFixed(1)}K` 
+                          : value}
+                      </text>
+                    </g>
+                  );
+                }
+                return null;
+              });
+            })()}
 
             <text 
               x={dimensions.width / 2} 
