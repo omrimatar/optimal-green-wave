@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -38,7 +39,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   });
   const [isMobile, setIsMobile] = useState(false);
 
-  const leftPadding = isMobile ? 60 : 80;
+  const leftPadding = isMobile ? 65 : 85;
   const originX = leftPadding + 25;
   const rightPadding = isMobile ? 80 : 110;
 
@@ -781,11 +782,13 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         </div>
       </CardHeader>
       <CardContent className="p-2 md:p-6">
-        <div className="relative w-full overflow-x-auto mobile-scroll" ref={chartRef}>
+        <div className="relative w-full" ref={chartRef}>
           <svg 
             width={dimensions.width} 
             height={dimensions.height}
-            className="overflow-visible w-full min-w-[500px]"
+            className="overflow-visible w-full"
+            viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
+            preserveAspectRatio="xMidYMid meet"
           >
             {generateYGridLines()}
             {generateXGridLines()}
@@ -909,7 +912,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     strokeWidth={1} 
                   />
                   <text 
-                    x={leftPadding - (isMobile ? 22 : 25)} 
+                    x={leftPadding - (isMobile ? 27 : 30)} 
                     y={y} 
                     textAnchor="end" 
                     fontSize={isMobile ? 10 : 12}
@@ -942,7 +945,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               
               return sortedPositions.map(value => {
                 const x = originX + xScale(value);
-                // Always show the last intersection label by ensuring it's within bounds
                 return (
                   <g key={`x-tick-${value}`}>
                     <line 
