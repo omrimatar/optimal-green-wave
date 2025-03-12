@@ -119,23 +119,26 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   };
 
   const generateXGridLines = () => {
-    if (intersections.length <= 1) return null;
-    
+    const interval = 100;
     const lines = [];
-    for (let i = 0; i < intersections.length; i++) {
-      const x = originX + xScale(intersections[i].distance);
-      lines.push(
-        <line 
-          key={`x-grid-${i}`}
-          x1={x} 
-          y1={40} 
-          x2={x} 
-          y2={dimensions.height - 40} 
-          stroke="#e5e7eb" 
-          strokeWidth={1}
-          strokeDasharray="4 4"
-        />
-      );
+    const maxDistance = Math.max(...intersections.map(i => i.distance));
+    
+    for (let d = 0; d <= maxDistance; d += interval) {
+      const x = originX + xScale(d);
+      if (x <= dimensions.width - 40) {
+        lines.push(
+          <line 
+            key={`x-grid-${d}`}
+            x1={x} 
+            y1={40} 
+            x2={x} 
+            y2={dimensions.height - 40} 
+            stroke="#e5e7eb" 
+            strokeWidth={1}
+            strokeDasharray="4 4"
+          />
+        );
+      }
     }
     return lines;
   };
@@ -890,8 +893,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               });
             })}
 
-            {Array.from({ length: 5 }).map((_, i) => {
-              const value = (maxCycleTime / 4) * i;
+            {/* Y-axis labels every 10 seconds */}
+            {Array.from({ length: Math.ceil(maxCycleTime / 10) + 1 }).map((_, i) => {
+              const value = i * 10;
               const y = dimensions.height - (isMobile ? 30 : 40) - yScale(value);
               return (
                 <g key={`y-tick-${i}`}>
@@ -910,36 +914,43 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     fontSize={isMobile ? 10 : 12}
                     dominantBaseline="middle"
                   >
-                    {Math.round(value)}
+                    {value}
                   </text>
                 </g>
               );
             })}
 
-            {intersections.map((intersection, i) => {
-              const x = originX + xScale(intersection.distance);
-              return (
-                <g key={`x-tick-${i}`}>
-                  <line 
-                    x1={x} 
-                    y1={dimensions.height - (isMobile ? 30 : 40)} 
-                    x2={x} 
-                    y2={dimensions.height - (isMobile ? 25 : 35)} 
-                    stroke="black" 
-                    strokeWidth={1} 
-                  />
-                  <text 
-                    x={x} 
-                    y={dimensions.height - (isMobile ? 15 : 20)} 
-                    textAnchor="middle" 
-                    fontSize={isMobile ? 9 : 12}
-                  >
-                    {isMobile && intersection.distance > 999 
-                      ? `${(intersection.distance/1000).toFixed(1)}K` 
-                      : intersection.distance}
-                  </text>
-                </g>
-              );
+            {/* X-axis labels every 100 meters */}
+            {intersections.length > 0 && Array.from({ 
+              length: Math.ceil(Math.max(...intersections.map(i => i.distance)) / 100) + 1 
+            }).map((_, i) => {
+              const value = i * 100;
+              const x = originX + xScale(value);
+              if (x <= dimensions.width - 40) {
+                return (
+                  <g key={`x-tick-${i}`}>
+                    <line 
+                      x1={x} 
+                      y1={dimensions.height - (isMobile ? 30 : 40)} 
+                      x2={x} 
+                      y2={dimensions.height - (isMobile ? 25 : 35)} 
+                      stroke="black" 
+                      strokeWidth={1} 
+                    />
+                    <text 
+                      x={x} 
+                      y={dimensions.height - (isMobile ? 15 : 20)} 
+                      textAnchor="middle" 
+                      fontSize={isMobile ? 9 : 12}
+                    >
+                      {isMobile && value > 999 
+                        ? `${(value/1000).toFixed(1)}K` 
+                        : value}
+                    </text>
+                  </g>
+                );
+              }
+              return null;
             })}
 
             <text 
