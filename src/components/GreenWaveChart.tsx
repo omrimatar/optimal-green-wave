@@ -925,8 +925,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               // Create a set of all x-axis label positions to avoid duplicates
               const labelPositions = new Set<number>();
               
-              // Add labels every 100 meters
-              for (let i = 0; i <= Math.ceil(maxDistance / 100); i++) {
+              // Add labels every 100 meters up to and including the last intersection
+              const lastIntersectionDistance = Math.max(...intersections.map(i => i.distance));
+              for (let i = 0; i <= Math.ceil(lastIntersectionDistance / 100); i++) {
                 labelPositions.add(i * 100);
               }
               
@@ -940,7 +941,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               
               return sortedPositions.map(value => {
                 const x = originX + xScale(value);
-                if (x <= dimensions.width - 40) {
+                // Adjust the width limit to ensure the last intersection label is shown
+                if (x <= dimensions.width - (isMobile ? 30 : 40)) {
                   return (
                     <g key={`x-tick-${value}`}>
                       <line 
