@@ -1,4 +1,3 @@
-
 // Input types for the Lambda function
 export interface LambdaGreenPhase {
   start: number;
@@ -39,8 +38,8 @@ export interface LambdaRequest {
 // Lambda response types
 export interface DiagonalPoint {
   junction: number;
-  top: number;
   low: number;
+  top: number;
 }
 
 export interface DiagonalPoints {
@@ -63,13 +62,11 @@ export interface PairBandPoint {
     dest_low: number;
     dest_high: number;
   };
-  // Add these fields to store the API-provided bandwidth values
   apiUpstreamBandwidth?: number;
   apiDownstreamBandwidth?: number;
 }
 
 export interface RunResult {
-  // Arrays of results per intersection pair
   pair_bandwidth_up?: number[];
   pair_bandwidth_down?: number[];
   avg_delay_up?: number[];
@@ -77,34 +74,26 @@ export interface RunResult {
   max_delay_up?: number[];
   max_delay_down?: number[];
   
-  // Overall corridor metrics
   corridor_bandwidth_up?: number;
   corridor_bandwidth_down?: number;
   
-  // Calculated local bandwidths (added after Lambda call)
   local_up?: Array<number|null>;
   local_down?: Array<number|null>;
   
-  // For compatibility with UI components
   corridorBW_up?: number;
   corridorBW_down?: number;
   
-  // Diagonal points for visualization
   diagonal_points?: DiagonalPoints;
   diagonal_up_start?: Array<number|null>;
   diagonal_up_end?: Array<number|null>;
   diagonal_down_start?: Array<number|null>;
   diagonal_down_end?: Array<number|null>;
   
-  // Band points for each pair of intersections
   pairs_band_points?: PairBandPoint[];
   
-  // Optimization results
   offsets: number[];
-  // Added distances property to store actual intersection distances
   distances?: number[];
   
-  // Added properties for green wave visualization
   cycle_times?: number[];
   green_up?: Array<{start: number; duration: number; speed?: number}[]>;
   green_down?: Array<{start: number; duration: number; speed?: number}[]>;
