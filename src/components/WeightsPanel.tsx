@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { SlidersHorizontal, RotateCcw } from "lucide-react";
-import { OptimizationWeights, normalizeWeights } from "@/types/optimization";
+import { OptimizationWeights, normalizeWeights, modifiedWeights, resetModifiedFlags } from "@/types/optimization";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -52,6 +52,12 @@ export const WeightsPanel = ({
     }
   };
 
+  const handleResetWeights = () => {
+    // Reset the modified flags when user resets weights
+    resetModifiedFlags();
+    onResetWeights();
+  };
+
   // Ensure weights sum to 1
   const totalWeight = Object.values(localWeights).reduce((sum, val) => sum + val, 0);
 
@@ -61,7 +67,7 @@ export const WeightsPanel = ({
         <SlidersHorizontal size={16} />
         {showWeights ? t('hide_weights') : t('show_weights')}
       </Button>
-      {showWeights && <Button onClick={onResetWeights} variant="outline" className="flex items-center gap-2">
+      {showWeights && <Button onClick={handleResetWeights} variant="outline" className="flex items-center gap-2">
         <RotateCcw size={16} />
         {t('reset')}
       </Button>}

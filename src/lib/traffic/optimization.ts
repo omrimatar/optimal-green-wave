@@ -1,4 +1,3 @@
-
 import { callLambdaOptimization } from './lambda-client';
 import type { 
   NetworkData, 
@@ -27,6 +26,7 @@ export async function greenWaveOptimization(
       manualOffsets
     });
     console.log('Using weights:', weights);
+    console.log('Weight modification status:', modifiedWeights);
 
     if (!data.intersections || !data.travel || !weights) {
       throw new Error('Missing required data for optimization');

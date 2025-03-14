@@ -330,6 +330,7 @@ const Index = () => {
 
   const handleResetWeights = () => {
     setWeights(DEFAULT_WEIGHTS);
+    resetModifiedFlags();
     clearResults();
     toast.success("המשקולות אופסו לברירת המחדל");
   };
