@@ -27,12 +27,12 @@ export interface OptimizationWeights {
 }
 
 export const DEFAULT_WEIGHTS: OptimizationWeights = {
-  corridor_up: 0,
-  corridor_down: 0,
-  overlap_up: 0.3,
-  overlap_down: 0.3,
-  avg_delay_up: 0.1,
-  avg_delay_down: 0.1,
+  corridor_up: 0.2,
+  corridor_down: 0.2,
+  overlap_up: 0.1,
+  overlap_down: 0.1,
+  avg_delay_up: 0.2,
+  avg_delay_down: 0.2,
   max_delay_up: 0.1,
   max_delay_down: 0.1
 };
@@ -51,10 +51,9 @@ export const normalizeWeights = (
   
   updatedWeights[changedKey] = newValue;
   
-  // Get keys to adjust (excluding the changed key and fixed keys)
-  const fixedKeys = ['corridor_up', 'corridor_down'];
+  // Get keys to adjust (excluding the changed key)
   const keysToAdjust = Object.keys(updatedWeights).filter(
-    key => key !== changedKey && !fixedKeys.includes(key)
+    key => key !== changedKey
   ) as Array<keyof OptimizationWeights>;
   
   // Calculate sum of weights to adjust

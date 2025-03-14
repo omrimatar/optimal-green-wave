@@ -32,11 +32,6 @@ export const WeightsPanel = ({
   }, [weights]);
 
   const handleWeightChange = (category: keyof OptimizationWeights, value: number) => {
-    if (category === 'corridor_up' || category === 'corridor_down') {
-      // These values are locked at 0
-      return;
-    }
-
     // Make sure value is between 0 and 1
     value = Math.max(0, Math.min(1, value));
 
@@ -55,10 +50,6 @@ export const WeightsPanel = ({
     if (!isNaN(numValue)) {
       handleWeightChange(category, numValue);
     }
-  };
-
-  const getDisabled = (category: keyof OptimizationWeights) => {
-    return category === 'corridor_up' || category === 'corridor_down';
   };
 
   // Ensure weights sum to 1
@@ -86,15 +77,15 @@ export const WeightsPanel = ({
         <div className="space-y-2">
           <div className="flex justify-between">
             <Label>{t('upstream')} ({formatNumber(localWeights.corridor_up)})</Label>
-            <input type="number" value={localWeights.corridor_up} min="0" max="1" step="0.1" disabled className="w-16 text-right border rounded px-2" />
+            <input type="number" value={parseFloat(localWeights.corridor_up.toFixed(2))} min="0" max="1" step="0.1" onChange={e => handleInputChange('corridor_up', e.target.value)} className="w-16 text-right border rounded px-2" />
           </div>
-          <Slider value={[localWeights.corridor_up * 100]} onValueChange={value => handleWeightChange('corridor_up', value[0] / 100)} max={100} step={1} disabled={true} />
+          <Slider value={[localWeights.corridor_up * 100]} onValueChange={value => handleWeightChange('corridor_up', value[0] / 100)} max={100} step={1} />
           
           <div className="flex justify-between">
             <Label>{t('downstream')} ({formatNumber(localWeights.corridor_down)})</Label>
-            <input type="number" value={localWeights.corridor_down} min="0" max="1" step="0.1" disabled className="w-16 text-right border rounded px-2" />
+            <input type="number" value={parseFloat(localWeights.corridor_down.toFixed(2))} min="0" max="1" step="0.1" onChange={e => handleInputChange('corridor_down', e.target.value)} className="w-16 text-right border rounded px-2" />
           </div>
-          <Slider value={[localWeights.corridor_down * 100]} onValueChange={value => handleWeightChange('corridor_down', value[0] / 100)} max={100} step={1} disabled={true} />
+          <Slider value={[localWeights.corridor_down * 100]} onValueChange={value => handleWeightChange('corridor_down', value[0] / 100)} max={100} step={1} />
         </div>
       </div>
 
