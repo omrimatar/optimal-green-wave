@@ -27,8 +27,8 @@ export interface OptimizationWeights {
 }
 
 export const DEFAULT_WEIGHTS: OptimizationWeights = {
-  corridor_up: 0.2,
-  corridor_down: 0.2,
+  corridor_up: 0.1,  // Changed from 0.2 to 0.1
+  corridor_down: 0.1, // Changed from 0.2 to 0.1
   overlap_up: 0.1,
   overlap_down: 0.1,
   avg_delay_up: 0.2,
