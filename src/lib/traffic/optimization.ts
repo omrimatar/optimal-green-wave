@@ -1,4 +1,6 @@
+
 import { callLambdaOptimization } from './lambda-client';
+import { modifiedWeights } from '@/types/optimization';
 import type { 
   NetworkData, 
   Weights, 
