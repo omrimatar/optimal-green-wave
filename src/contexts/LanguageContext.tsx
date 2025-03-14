@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 type Language = 'he' | 'en';
@@ -304,6 +303,24 @@ const translations: Record<string, Record<Language, string>> = {
   "language": {
     he: "English",
     en: "עברית"
+  },
+  
+  // Additional translation keys
+  "must_not_exceed": {
+    he: "לא יכול לעבור את",
+    en: "must not exceed"
+  },
+  "phase_starts_after_half_cycle": {
+    he: "יש מופע שמתחיל אחרי חצי זמן המחזור",
+    en: "there's a phase that starts after half cycle time"
+  },
+  "phase_extends_beyond_half_cycle": {
+    he: "יש מופע שחורג מחצי זמן המחזור",
+    en: "there's a phase that extends beyond half cycle time"
+  },
+  "cannot_enable_half_cycle": {
+    he: "לא ניתן להפעיל חצי זמן מחזור",
+    en: "Cannot enable half cycle time"
   }
 };
 

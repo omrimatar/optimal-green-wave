@@ -45,12 +45,12 @@ export const IntersectionInput = ({
     const effectiveCycleTime = useHalfCycleTime ? intersection.cycleTime / 2 : intersection.cycleTime;
     
     if (field === 'startTime') {
-      if (value < 0 || value > effectiveCycleTime || !Number.isInteger(value)) {
-        toast.error(`${t('start_time')} ${t('must_be_between')} 0 ${t('and')} ${effectiveCycleTime}`);
+      if (value < 0 || !Number.isInteger(value)) {
+        toast.error(`${t('start_time')} ${t('must_be_between')} 0 ${t('and')} ${effectiveCycleTime - 1}`);
         return;
       }
     } else if (field === 'duration') {
-      if (value < 1 || value > effectiveCycleTime || !Number.isInteger(value)) {
+      if (value < 1 || !Number.isInteger(value)) {
         toast.error(`${t('duration')} ${t('must_be_between')} 1 ${t('and')} ${effectiveCycleTime}`);
         return;
       }
@@ -61,6 +61,19 @@ export const IntersectionInput = ({
       ...updatedGreenPhases[phaseIndex],
       [field]: value
     };
+    
+    // Validate that startTime + duration doesn't exceed effective cycle time
+    const phase = updatedGreenPhases[phaseIndex];
+    if (phase.startTime >= effectiveCycleTime) {
+      toast.error(`${t('start_time')} ${t('must_be_less_than')} ${effectiveCycleTime}`);
+      return;
+    }
+    
+    if (phase.startTime + phase.duration > effectiveCycleTime && phase.startTime < effectiveCycleTime) {
+      toast.error(`${t('start_time')} + ${t('duration')} ${t('must_not_exceed')} ${effectiveCycleTime}`);
+      return;
+    }
+    
     onChange({
       ...intersection,
       greenPhases: updatedGreenPhases
@@ -72,14 +85,21 @@ export const IntersectionInput = ({
     const newStartTime = (lastPhase?.startTime || 0) + (lastPhase?.duration || 0);
     const effectiveCycleTime = useHalfCycleTime ? intersection.cycleTime / 2 : intersection.cycleTime;
     
+    // Make sure new phase starts within the effective cycle time
+    const adjustedStartTime = newStartTime < effectiveCycleTime ? newStartTime : 0;
+    
+    // Default duration but ensure it doesn't exceed the remaining cycle time
+    const maxDuration = effectiveCycleTime - adjustedStartTime;
+    const defaultDuration = Math.min(45, maxDuration > 0 ? maxDuration : effectiveCycleTime);
+    
     onChange({
       ...intersection,
       greenPhases: [
         ...intersection.greenPhases,
         {
           direction,
-          startTime: newStartTime < effectiveCycleTime ? newStartTime : 0,
-          duration: Math.min(45, effectiveCycleTime)
+          startTime: adjustedStartTime,
+          duration: defaultDuration
         }
       ]
     });
@@ -146,11 +166,6 @@ export const IntersectionInput = ({
     for (const phase of intersection.greenPhases) {
       if (phase.startTime >= halfCycleTime) {
         toast.error(`${t('cannot_enable_half_cycle')} - ${t('phase_starts_after_half_cycle')}`);
-        return false;
-      }
-      
-      if (phase.startTime + phase.duration > halfCycleTime) {
-        toast.error(`${t('cannot_enable_half_cycle')} - ${t('phase_extends_beyond_half_cycle')}`);
         return false;
       }
     }
@@ -320,7 +335,7 @@ export const IntersectionInput = ({
                   type="number"
                   value={phase.startTime}
                   min={0}
-                  max={effectiveCycleTime}
+                  max={effectiveCycleTime - 1}
                   onChange={e => handleGreenPhaseChange(index, 'startTime', Number(e.target.value))}
                 />
               </div>
