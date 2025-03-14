@@ -41,17 +41,17 @@ export const IntersectionInput = ({
   }, [defaultSpeed]);
 
   const handleGreenPhaseChange = (phaseIndex: number, field: 'startTime' | 'duration', value: number) => {
-    // Check for valid start time and duration based on cycle time
-    const cycleTime = intersection.cycleTime;
+    // Calculate effective cycle time based on half cycle checkbox
+    const effectiveCycleTime = useHalfCycleTime ? intersection.cycleTime / 2 : intersection.cycleTime;
     
     if (field === 'startTime') {
-      if (value < 0 || value > cycleTime || !Number.isInteger(value)) {
-        toast.error(`${t('start_time')} must be an integer between 0 and ${cycleTime}`);
+      if (value < 0 || value > effectiveCycleTime || !Number.isInteger(value)) {
+        toast.error(`${t('start_time')} ${t('must_be_between')} 0 ${t('and')} ${effectiveCycleTime}`);
         return;
       }
     } else if (field === 'duration') {
-      if (value < 1 || value > cycleTime || !Number.isInteger(value)) {
-        toast.error(`${t('duration')} must be an integer between 1 and ${cycleTime}`);
+      if (value < 1 || value > effectiveCycleTime || !Number.isInteger(value)) {
+        toast.error(`${t('duration')} ${t('must_be_between')} 1 ${t('and')} ${effectiveCycleTime}`);
         return;
       }
     }
@@ -70,6 +70,7 @@ export const IntersectionInput = ({
   const handleAddPhase = (direction: 'upstream' | 'downstream') => {
     const lastPhase = intersection.greenPhases[intersection.greenPhases.length - 1];
     const newStartTime = (lastPhase?.startTime || 0) + (lastPhase?.duration || 0);
+    const effectiveCycleTime = useHalfCycleTime ? intersection.cycleTime / 2 : intersection.cycleTime;
     
     onChange({
       ...intersection,
@@ -77,8 +78,8 @@ export const IntersectionInput = ({
         ...intersection.greenPhases,
         {
           direction,
-          startTime: newStartTime,
-          duration: Math.min(45, intersection.cycleTime)
+          startTime: newStartTime < effectiveCycleTime ? newStartTime : 0,
+          duration: Math.min(45, effectiveCycleTime)
         }
       ]
     });
@@ -103,7 +104,7 @@ export const IntersectionInput = ({
     
     const numValue = parseInt(tempDistance);
     if (isNaN(numValue) || numValue < 0 || numValue > 10000 || !Number.isInteger(numValue)) {
-      toast.error(`${t('distance')} must be an integer between 0 and 10000 meters`);
+      toast.error(`${t('distance')} ${t('must_be_between')} 0 ${t('and')} 10000 ${t('meters')}`);
       setTempDistance(intersection.distance.toString());
       return;
     }
@@ -115,7 +116,7 @@ export const IntersectionInput = ({
     if (currentIndex > 0) {
       const prevIntersection = allIntersections[currentIndex - 1];
       if (numValue < prevIntersection.distance) {
-        toast.error(`${t('distance')} must be greater than or equal to the previous intersection (${prevIntersection.distance})`);
+        toast.error(`${t('distance')} ${t('must_be_greater_than')} ${prevIntersection.distance}`);
         setTempDistance(intersection.distance.toString());
         return;
       }
@@ -124,7 +125,7 @@ export const IntersectionInput = ({
     if (currentIndex < allIntersections.length - 1) {
       const nextIntersection = allIntersections[currentIndex + 1];
       if (numValue > nextIntersection.distance) {
-        toast.error(`${t('distance')} must be less than or equal to the next intersection (${nextIntersection.distance})`);
+        toast.error(`${t('distance')} ${t('must_be_less_than')} ${nextIntersection.distance}`);
         setTempDistance(intersection.distance.toString());
         return;
       }
@@ -136,7 +137,33 @@ export const IntersectionInput = ({
     });
   };
 
+  const validatePhasesForHalfCycle = (checked: boolean): boolean => {
+    if (!checked) return true; // No validation needed when unchecking
+    
+    const halfCycleTime = intersection.cycleTime / 2;
+    
+    // Check if any phase would be invalid with half cycle time
+    for (const phase of intersection.greenPhases) {
+      if (phase.startTime >= halfCycleTime) {
+        toast.error(`${t('cannot_enable_half_cycle')} - ${t('phase_starts_after_half_cycle')}`);
+        return false;
+      }
+      
+      if (phase.startTime + phase.duration > halfCycleTime) {
+        toast.error(`${t('cannot_enable_half_cycle')} - ${t('phase_extends_beyond_half_cycle')}`);
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
   const handleHalfCycleTimeChange = (checked: boolean) => {
+    // Validate phases before allowing half cycle time
+    if (!validatePhasesForHalfCycle(checked)) {
+      return;
+    }
+    
     setUseHalfCycleTime(checked);
     // We don't directly update the actual cycleTime prop here
     // The actual value will be computed when needed (e.g., in calculation functions)
@@ -146,7 +173,7 @@ export const IntersectionInput = ({
     const numValue = parseInt(value);
     
     if (isNaN(numValue) || numValue < 0 || numValue > 120 || !Number.isInteger(numValue)) {
-      toast.error(`${direction === 'upstream' ? t('upstream_speed') : t('downstream_speed')} must be an integer between 0 and 120 km/h`);
+      toast.error(`${direction === 'upstream' ? t('upstream_speed') : t('downstream_speed')} ${t('must_be_between')} 0 ${t('and')} 120 km/h`);
       return;
     }
     
@@ -293,7 +320,7 @@ export const IntersectionInput = ({
                   type="number"
                   value={phase.startTime}
                   min={0}
-                  max={intersection.cycleTime}
+                  max={effectiveCycleTime}
                   onChange={e => handleGreenPhaseChange(index, 'startTime', Number(e.target.value))}
                 />
               </div>
@@ -303,7 +330,7 @@ export const IntersectionInput = ({
                   type="number"
                   value={phase.duration}
                   min={1}
-                  max={intersection.cycleTime}
+                  max={effectiveCycleTime}
                   onChange={e => handleGreenPhaseChange(index, 'duration', Number(e.target.value))}
                 />
               </div>
