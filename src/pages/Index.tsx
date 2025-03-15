@@ -162,6 +162,7 @@ const Index = () => {
     } catch (error) {
       console.error("Error in manual calculation:", error);
       toast.error("שגיאה בחישוב הגל הירוק במצב ידני");
+      setCalculationPerformed(true);
     }
   };
 
@@ -221,6 +222,7 @@ const Index = () => {
     } catch (error) {
       console.error("Error in calculation:", error);
       toast.error("שגיאה בחישוב הגל הירוק");
+      setCalculationPerformed(true);
     }
   };
 
@@ -268,6 +270,7 @@ const Index = () => {
     } catch (error) {
       console.error("Error displaying existing green wave:", error);
       toast.error("שגיאה בהצגת הגל הירוק הקיים");
+      setCalculationPerformed(true);
     }
   };
 
