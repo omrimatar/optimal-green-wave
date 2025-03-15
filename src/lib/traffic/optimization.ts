@@ -76,24 +76,29 @@ export async function greenWaveOptimization(
 
     console.log('Request body for AWS Lambda:', requestBody);
     
-    // Call Lambda function
-    const lambdaResults: LambdaResponse = await callLambdaOptimization(requestBody);
-    
-    if (!lambdaResults) {
-      throw new Error('No results returned from optimization');
+    try {
+      // Call Lambda function
+      const lambdaResults: LambdaResponse = await callLambdaOptimization(requestBody);
+      
+      if (!lambdaResults) {
+        throw new Error('No results returned from optimization');
+      }
+
+      console.log('Received results from Lambda:', lambdaResults);
+
+      // Process the results and add the actual distances to each result object
+      const results = {
+        baseline_results: enhanceResults(lambdaResults.baseline_results, actualDistances),
+        optimized_results: enhanceResults(lambdaResults.optimization_results, actualDistances),
+        manual_results: manualOffsets ? enhanceResults(lambdaResults.optimization_results, actualDistances) : undefined
+      };
+
+      console.log('Final processed results with distances:', results);
+      return results;
+    } catch (error) {
+      // Throw the error again to be caught by the outer catch
+      throw error;
     }
-
-    console.log('Received results from Lambda:', lambdaResults);
-
-    // Process the results and add the actual distances to each result object
-    const results = {
-      baseline_results: enhanceResults(lambdaResults.baseline_results, actualDistances),
-      optimized_results: enhanceResults(lambdaResults.optimization_results, actualDistances),
-      manual_results: manualOffsets ? enhanceResults(lambdaResults.optimization_results, actualDistances) : undefined
-    };
-
-    console.log('Final processed results with distances:', results);
-    return results;
   } catch (error) {
     console.error('Error in greenWaveOptimization:', error);
     throw error;

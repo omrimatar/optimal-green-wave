@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { MetricsTable } from "./MetricsTable";
 import { OptimizationCharts } from "./OptimizationCharts";
@@ -19,7 +18,8 @@ interface ResultsPanelProps {
 }
 
 export const ResultsPanel = ({ results, mode, originalIntersections, speed, calculationPerformed = false }: ResultsPanelProps) => {
-  if (!results || !results.baseline_results || 
+  if (!results || 
+     !results.baseline_results || 
      (mode === 'manual' && !results.manual_results) ||
      (mode !== 'manual' && !results.optimized_results)) {
     console.log("No results to display in ResultsPanel:", results);

@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { AlertCircle } from 'lucide-react';
 
 interface DebugDialogProps {
   open: boolean;
@@ -15,6 +16,8 @@ interface DebugDialogProps {
 export function DebugDialog({ open, onOpenChange, requestData, responseData }: DebugDialogProps) {
   const { language, t } = useLanguage();
   
+  const isErrorResponse = responseData && responseData.error;
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
@@ -22,8 +25,10 @@ export function DebugDialog({ open, onOpenChange, requestData, responseData }: D
         dir={language === 'he' ? 'rtl' : 'ltr'}
       >
         <DialogHeader>
-          <DialogTitle className="text-lg md:text-xl font-bold">
+          <DialogTitle className="text-lg md:text-xl font-bold flex items-center gap-2">
+            {isErrorResponse && <AlertCircle className="text-red-500" size={20} />}
             AWS Lambda Debug Data
+            {isErrorResponse && <span className="text-red-500 text-sm font-normal">(Error Response)</span>}
           </DialogTitle>
         </DialogHeader>
         
@@ -46,9 +51,18 @@ export function DebugDialog({ open, onOpenChange, requestData, responseData }: D
           
           <TabsContent value="response">
             <div className="p-4 border rounded-md bg-slate-50">
-              <h3 className="text-md font-medium mb-2">Response Data</h3>
+              <h3 className="text-md font-medium mb-2">
+                {isErrorResponse ? (
+                  <span className="flex items-center gap-1 text-red-500">
+                    <AlertCircle size={16} />
+                    Error Response
+                  </span>
+                ) : (
+                  'Response Data'
+                )}
+              </h3>
               <ScrollArea className="h-[50vh] rounded-md border p-4 bg-black">
-                <pre className="text-xs md:text-sm text-green-400 font-mono">
+                <pre className={`text-xs md:text-sm ${isErrorResponse ? 'text-red-400' : 'text-green-400'} font-mono`}>
                   {responseData ? JSON.stringify(responseData, null, 2) : 'No response data available'}
                 </pre>
               </ScrollArea>

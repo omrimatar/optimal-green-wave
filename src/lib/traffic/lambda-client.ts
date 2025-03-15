@@ -7,6 +7,7 @@ const LAMBDA_URL = "https://xphhfrlnpiikldzbmfkboitshq0dkdnt.lambda-url.eu-north
 // Store the latest request and response for debugging
 let latestRequest: LambdaRequest | null = null;
 let latestResponse: LambdaResponse | null = null;
+let latestErrorResponse: any = null;
 
 /**
  * Sends optimization request to AWS Lambda function
@@ -28,19 +29,29 @@ export async function callLambdaOptimization(request: LambdaRequest): Promise<La
       body: JSON.stringify(request)
     });
 
+    // Get response as text first to handle both successful and error responses
+    const responseText = await response.text();
+    let parsedResponse: any;
+    
+    try {
+      // Try to parse as JSON
+      parsedResponse = JSON.parse(responseText);
+    } catch (e) {
+      // If not valid JSON, use the raw text
+      parsedResponse = { error: responseText };
+    }
+    
+    // Store the response for debugging (whether successful or error)
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Lambda response error:', response.status, errorText);
-      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      console.error('Lambda response error:', response.status, responseText);
+      latestErrorResponse = parsedResponse;
+      throw new Error(`HTTP error! status: ${response.status}, message: ${responseText}`);
     }
 
-    const lambdaResults = await response.json();
-    console.log('Lambda results:', lambdaResults);
+    console.log('Lambda results:', parsedResponse);
+    latestResponse = parsedResponse;
     
-    // Store the response for debugging
-    latestResponse = lambdaResults;
-    
-    return lambdaResults;
+    return parsedResponse;
   } catch (error) {
     console.error('Error calling Lambda optimization:', error);
     throw error;
@@ -53,6 +64,6 @@ export async function callLambdaOptimization(request: LambdaRequest): Promise<La
 export function getLatestDebugData() {
   return {
     request: latestRequest,
-    response: latestResponse
+    response: latestResponse || latestErrorResponse
   };
 }

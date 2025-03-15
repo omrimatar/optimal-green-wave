@@ -282,7 +282,7 @@ const Index = () => {
     intersections: Intersection[];
   }) => {
     if (data.speed < 0 || data.speed > 120 || !Number.isInteger(data.speed)) {
-      toast.error("הקובץ שנטען מכיל מהירות תכן שאינה חוקית. מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
+      toast.error("הקובץ שנטען מכיל מהיר��ת תכן שאינה חוקית. מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
       return;
     }
     
@@ -343,6 +343,10 @@ const Index = () => {
     const latestData = getLatestLambdaDebugData();
     setDebugData(latestData);
     setShowDebugDialog(true);
+  };
+
+  const afterApiCallAttempt = () => {
+    setCalculationPerformed(true);
   };
 
   console.log("Current results state:", results);
