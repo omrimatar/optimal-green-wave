@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { IntersectionInput } from '@/components/IntersectionInput';
 import { calculateGreenWave } from '@/lib/calculations';
 import { toast } from 'sonner';
-import { ArrowRight, Hand, Play, Plus } from 'lucide-react';
+import { ArrowRight, Hand, Play, Plus, Bug } from 'lucide-react';
 import { WeightsPanel } from '@/components/WeightsPanel';
 import { FileActions } from '@/components/FileActions';
 import { ResultsPanel } from '@/components/ResultsPanel';
@@ -15,6 +14,8 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights, normalizeWeights, resetModifiedFlags } from '@/types/optimization';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { getLatestLambdaDebugData } from '@/lib/traffic/optimization';
+import { DebugDialog } from '@/components/DebugDialog';
 
 const Index = () => {
   const { t, language } = useLanguage();
@@ -58,6 +59,8 @@ const Index = () => {
   const [manualOffsets, setManualOffsets] = useState<number[]>([0, 0]);
   const [showManualDialog, setShowManualDialog] = useState(false);
   const [calculationPerformed, setCalculationPerformed] = useState(false);
+  const [showDebugDialog, setShowDebugDialog] = useState(false);
+  const [debugData, setDebugData] = useState<{ request: any; response: any }>({ request: null, response: null });
 
   useEffect(() => {
     if (intersections.length > 0) {
@@ -336,6 +339,12 @@ const Index = () => {
     toast.success("המשקולות אופסו לברירת המחדל");
   };
 
+  const handleShowDebugData = () => {
+    const latestData = getLatestLambdaDebugData();
+    setDebugData(latestData);
+    setShowDebugDialog(true);
+  };
+
   console.log("Current results state:", results);
 
   return (
@@ -481,6 +490,19 @@ const Index = () => {
                 <ArrowRight className={`${language === 'he' ? "mr-2" : "ml-2"} w-3 h-3 md:w-4 md:h-4`} size={16} />
               </Button>
             </div>
+            
+            <div className="flex justify-end">
+              <Button 
+                variant="debug" 
+                size="sm" 
+                onClick={handleShowDebugData} 
+                disabled={!calculationPerformed}
+                className="flex items-center gap-1"
+              >
+                <Bug size={14} />
+                <span>Debug</span>
+              </Button>
+            </div>
           </div>
         </Card>
 
@@ -493,6 +515,13 @@ const Index = () => {
             calculationPerformed={calculationPerformed}
           />
         )}
+        
+        <DebugDialog 
+          open={showDebugDialog} 
+          onOpenChange={setShowDebugDialog} 
+          requestData={debugData.request} 
+          responseData={debugData.response} 
+        />
       </div>
     </div>
   );

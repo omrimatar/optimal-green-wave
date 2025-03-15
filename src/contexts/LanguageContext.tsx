@@ -321,6 +321,12 @@ const translations: Record<string, Record<Language, string>> = {
   "cannot_enable_half_cycle": {
     he: "לא ניתן להפעיל חצי זמן מחזור",
     en: "Cannot enable half cycle time"
+  },
+  
+  // Debug button translation
+  "debug": {
+    he: "דיבאג",
+    en: "Debug"
   }
 };
 

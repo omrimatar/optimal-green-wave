@@ -1,5 +1,5 @@
 
-import { callLambdaOptimization } from './lambda-client';
+import { callLambdaOptimization, getLatestDebugData } from './lambda-client';
 import { modifiedWeights } from '@/types/optimization';
 import type { 
   NetworkData, 
@@ -114,4 +114,11 @@ function enhanceResults(result: RunResult, actualDistances?: number[]): RunResul
     // Add the actual distances to the result
     distances: actualDistances || result.distances
   };
+}
+
+/**
+ * Returns the latest Lambda request and response data for debugging
+ */
+export function getLatestLambdaDebugData() {
+  return getLatestDebugData();
 }
