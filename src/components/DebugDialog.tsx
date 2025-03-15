@@ -4,7 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Copy, CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface DebugDialogProps {
   open: boolean;
@@ -15,8 +17,37 @@ interface DebugDialogProps {
 
 export function DebugDialog({ open, onOpenChange, requestData, responseData }: DebugDialogProps) {
   const { language, t } = useLanguage();
+  const [activeTab, setActiveTab] = React.useState<string>("request");
+  const [copySuccess, setCopySuccess] = React.useState<boolean>(false);
   
   const isErrorResponse = responseData && responseData.error;
+
+  const handleCopy = () => {
+    const dataToCopy = activeTab === "request" 
+      ? requestData 
+      : responseData;
+    
+    if (!dataToCopy) {
+      toast.error("No data available to copy");
+      return;
+    }
+    
+    const textToCopy = JSON.stringify(dataToCopy, null, 2);
+    
+    navigator.clipboard.writeText(textToCopy)
+      .then(() => {
+        setCopySuccess(true);
+        toast.success("Debug data copied to clipboard");
+        
+        setTimeout(() => {
+          setCopySuccess(false);
+        }, 2000);
+      })
+      .catch(err => {
+        console.error("Failed to copy: ", err);
+        toast.error("Failed to copy data to clipboard");
+      });
+  };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -32,11 +63,37 @@ export function DebugDialog({ open, onOpenChange, requestData, responseData }: D
           </DialogTitle>
         </DialogHeader>
         
-        <Tabs defaultValue="request" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="request">Request</TabsTrigger>
-            <TabsTrigger value="response">Response</TabsTrigger>
-          </TabsList>
+        <Tabs 
+          defaultValue="request" 
+          className="w-full"
+          value={activeTab}
+          onValueChange={setActiveTab}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="request">Request</TabsTrigger>
+              <TabsTrigger value="response">Response</TabsTrigger>
+            </TabsList>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleCopy}
+              className="flex items-center gap-1"
+            >
+              {copySuccess ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <span>Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4" />
+                  <span>Copy</span>
+                </>
+              )}
+            </Button>
+          </div>
           
           <TabsContent value="request">
             <div className="p-4 border rounded-md bg-slate-50">
