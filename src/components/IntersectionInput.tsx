@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,6 +30,19 @@ export const IntersectionInput = ({
   const [tempDistance, setTempDistance] = useState<string>(intersection.distance.toString());
   const [useHalfCycleTime, setUseHalfCycleTime] = useState(false);
   
+  // Add state for temporary green phase values
+  const [tempGreenPhaseValues, setTempGreenPhaseValues] = useState<{
+    [key: number]: { startTime: string; duration: string }
+  }>({});
+  
+  // Add state for temporary speed values
+  const [tempUpstreamSpeed, setTempUpstreamSpeed] = useState<string>(
+    intersection.upstreamSpeed !== undefined ? intersection.upstreamSpeed.toString() : defaultSpeed.toString()
+  );
+  const [tempDownstreamSpeed, setTempDownstreamSpeed] = useState<string>(
+    intersection.downstreamSpeed !== undefined ? intersection.downstreamSpeed.toString() : defaultSpeed.toString()
+  );
+  
   // Add effect to update speeds when defaultSpeed changes
   useEffect(() => {
     onChange({
@@ -39,6 +51,18 @@ export const IntersectionInput = ({
       downstreamSpeed: defaultSpeed
     });
   }, [defaultSpeed]);
+  
+  // Initialize temp phase values
+  useEffect(() => {
+    const initialPhaseValues: {[key: number]: { startTime: string; duration: string }} = {};
+    intersection.greenPhases.forEach((phase, index) => {
+      initialPhaseValues[index] = {
+        startTime: phase.startTime.toString(),
+        duration: phase.duration.toString()
+      };
+    });
+    setTempGreenPhaseValues(initialPhaseValues);
+  }, [intersection.greenPhases.length]);
 
   // Check if two phases overlap
   const phasesOverlap = (phase1Start: number, phase1Duration: number, phase2Start: number, phase2Duration: number, cycleTime: number) => {
@@ -50,16 +74,12 @@ export const IntersectionInput = ({
     
     // Handle cases where the phase wraps around the cycle
     if (phase1Start < phase1End && phase2Start < phase2End) {
-      // Neither phase wraps around the cycle
       return (phase1Start < phase2End && phase2Start < phase1End);
     } else if (phase1Start >= phase1End && phase2Start < phase2End) {
-      // First phase wraps around the cycle
       return (phase2Start < phase1End || phase2End > phase1Start);
     } else if (phase1Start < phase1End && phase2Start >= phase2End) {
-      // Second phase wraps around the cycle
       return (phase1Start < phase2End || phase1End > phase2Start);
     } else {
-      // Both phases wrap around the cycle
       return true; // They must overlap in this case
     }
   };
@@ -82,25 +102,69 @@ export const IntersectionInput = ({
     return false;
   };
 
-  const handleGreenPhaseChange = (phaseIndex: number, field: 'startTime' | 'duration', value: number) => {
-    // Calculate effective cycle time based on half cycle checkbox
+  const handleGreenPhaseChange = (phaseIndex: number, field: 'startTime' | 'duration', value: string) => {
+    setTempGreenPhaseValues(prev => ({
+      ...prev,
+      [phaseIndex]: {
+        ...prev[phaseIndex],
+        [field]: value
+      }
+    }));
+  };
+  
+  const validateAndUpdateGreenPhase = (phaseIndex: number, field: 'startTime' | 'duration') => {
     const effectiveCycleTime = useHalfCycleTime ? intersection.cycleTime / 2 : intersection.cycleTime;
+    
+    const value = parseInt(tempGreenPhaseValues[phaseIndex][field]);
+    
+    if (isNaN(value)) {
+      toast.error(`${field === 'startTime' ? t('start_time') : t('duration')} ${t('must_be_a_number')}`);
+      
+      setTempGreenPhaseValues(prev => ({
+        ...prev,
+        [phaseIndex]: {
+          ...prev[phaseIndex],
+          [field]: intersection.greenPhases[phaseIndex][field].toString()
+        }
+      }));
+      
+      return;
+    }
     
     if (field === 'startTime') {
       if (value < 0 || !Number.isInteger(value)) {
         toast.error(`${t('start_time')} ${t('must_be_between')} 0 ${t('and')} ${effectiveCycleTime - 1}`);
+        
+        setTempGreenPhaseValues(prev => ({
+          ...prev,
+          [phaseIndex]: {
+            ...prev[phaseIndex],
+            startTime: intersection.greenPhases[phaseIndex].startTime.toString()
+          }
+        }));
+        
         return;
       }
     } else if (field === 'duration') {
       if (value < 1 || !Number.isInteger(value)) {
         toast.error(`${t('duration')} ${t('must_be_between')} 1 ${t('and')} ${effectiveCycleTime}`);
+        
+        setTempGreenPhaseValues(prev => ({
+          ...prev,
+          [phaseIndex]: {
+            ...prev[phaseIndex],
+            duration: intersection.greenPhases[phaseIndex].duration.toString()
+          }
+        }));
+        
         return;
       }
     }
 
     const updatedGreenPhases = [...intersection.greenPhases];
     const currentPhase = updatedGreenPhases[phaseIndex];
-    const newValue = field === 'startTime' ? value : currentPhase.startTime;
+    
+    const newStartTime = field === 'startTime' ? value : currentPhase.startTime;
     const newDuration = field === 'duration' ? value : currentPhase.duration;
     
     // Check if the updated phase would overlap with other phases in the same direction
@@ -109,20 +173,47 @@ export const IntersectionInput = ({
     );
     
     for (const otherPhase of otherPhasesInSameDirection) {
-      if (phasesOverlap(newValue, newDuration, otherPhase.startTime, otherPhase.duration, effectiveCycleTime)) {
+      if (phasesOverlap(newStartTime, newDuration, otherPhase.startTime, otherPhase.duration, effectiveCycleTime)) {
         toast.error(`${t('phase_overlap_error')} ${currentPhase.direction === 'upstream' ? t('upstream_phase') : t('downstream_phase')}`);
+        
+        setTempGreenPhaseValues(prev => ({
+          ...prev,
+          [phaseIndex]: {
+            startTime: currentPhase.startTime.toString(),
+            duration: currentPhase.duration.toString()
+          }
+        }));
+        
         return;
       }
     }
     
     // Validate that startTime + duration doesn't exceed effective cycle time
-    if (newValue >= effectiveCycleTime) {
+    if (newStartTime >= effectiveCycleTime) {
       toast.error(`${t('start_time')} ${t('must_be_less_than')} ${effectiveCycleTime}`);
+      
+      setTempGreenPhaseValues(prev => ({
+        ...prev,
+        [phaseIndex]: {
+          ...prev[phaseIndex],
+          startTime: currentPhase.startTime.toString()
+        }
+      }));
+      
       return;
     }
     
-    if (newValue + newDuration > effectiveCycleTime && newValue < effectiveCycleTime) {
+    if (newStartTime + newDuration > effectiveCycleTime && newStartTime < effectiveCycleTime) {
       toast.error(`${t('start_time')} + ${t('duration')} ${t('must_not_exceed')} ${effectiveCycleTime}`);
+      
+      setTempGreenPhaseValues(prev => ({
+        ...prev,
+        [phaseIndex]: {
+          startTime: currentPhase.startTime.toString(),
+          duration: currentPhase.duration.toString()
+        }
+      }));
+      
       return;
     }
     
@@ -252,7 +343,6 @@ export const IntersectionInput = ({
   };
 
   const handleHalfCycleTimeChange = (checked: boolean) => {
-    // Validate phases before allowing half cycle time
     if (!validatePhasesForHalfCycle(checked)) {
       return;
     }
@@ -267,6 +357,35 @@ export const IntersectionInput = ({
     
     if (isNaN(numValue) || numValue < 0 || numValue > 120 || !Number.isInteger(numValue)) {
       toast.error(`${direction === 'upstream' ? t('upstream_speed') : t('downstream_speed')} ${t('must_be_between')} 0 ${t('and')} 120 km/h`);
+      return;
+    }
+    
+    if (direction === 'upstream') {
+      onChange({
+        ...intersection,
+        upstreamSpeed: numValue
+      });
+    } else {
+      onChange({
+        ...intersection,
+        downstreamSpeed: numValue
+      });
+    }
+  };
+  
+  const validateAndUpdateSpeed = (direction: 'upstream' | 'downstream') => {
+    const value = direction === 'upstream' ? tempUpstreamSpeed : tempDownstreamSpeed;
+    const numValue = parseInt(value);
+    
+    if (isNaN(numValue) || numValue < 0 || numValue > 120 || !Number.isInteger(numValue)) {
+      toast.error(`${direction === 'upstream' ? t('upstream_speed') : t('downstream_speed')} ${t('must_be_between')} 0 ${t('and')} 120 km/h`);
+      
+      if (direction === 'upstream') {
+        setTempUpstreamSpeed(intersection.upstreamSpeed?.toString() || defaultSpeed.toString());
+      } else {
+        setTempDownstreamSpeed(intersection.downstreamSpeed?.toString() || defaultSpeed.toString());
+      }
+      
       return;
     }
     
@@ -349,9 +468,15 @@ export const IntersectionInput = ({
           <Label>{t('upstream_speed')}</Label>
           <Input
             type="number"
-            value={upstreamSpeed}
+            value={tempUpstreamSpeed}
             placeholder={defaultSpeed.toString()}
             onChange={e => handleSpeedChange('upstream', e.target.value)}
+            onBlur={() => validateAndUpdateSpeed('upstream')}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                validateAndUpdateSpeed('upstream');
+              }
+            }}
           />
         </div>
 
@@ -359,9 +484,15 @@ export const IntersectionInput = ({
           <Label>{t('downstream_speed')}</Label>
           <Input
             type="number"
-            value={downstreamSpeed}
+            value={tempDownstreamSpeed}
             placeholder={defaultSpeed.toString()}
             onChange={e => handleSpeedChange('downstream', e.target.value)}
+            onBlur={() => validateAndUpdateSpeed('downstream')}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                validateAndUpdateSpeed('downstream');
+              }
+            }}
           />
         </div>
       </div>
@@ -411,20 +542,32 @@ export const IntersectionInput = ({
                 <Label className="text-sm">{t('start_time')}</Label>
                 <Input
                   type="number"
-                  value={phase.startTime}
+                  value={tempGreenPhaseValues[index]?.startTime || phase.startTime}
                   min={0}
                   max={effectiveCycleTime - 1}
-                  onChange={e => handleGreenPhaseChange(index, 'startTime', Number(e.target.value))}
+                  onChange={e => handleGreenPhaseChange(index, 'startTime', e.target.value)}
+                  onBlur={() => validateAndUpdateGreenPhase(index, 'startTime')}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      validateAndUpdateGreenPhase(index, 'startTime');
+                    }
+                  }}
                 />
               </div>
               <div>
                 <Label className="text-sm">{t('duration')}</Label>
                 <Input
                   type="number"
-                  value={phase.duration}
+                  value={tempGreenPhaseValues[index]?.duration || phase.duration}
                   min={1}
                   max={effectiveCycleTime}
-                  onChange={e => handleGreenPhaseChange(index, 'duration', Number(e.target.value))}
+                  onChange={e => handleGreenPhaseChange(index, 'duration', e.target.value)}
+                  onBlur={() => validateAndUpdateGreenPhase(index, 'duration')}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      validateAndUpdateGreenPhase(index, 'duration');
+                    }
+                  }}
                 />
               </div>
             </div>
