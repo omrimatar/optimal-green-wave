@@ -40,6 +40,48 @@ export const IntersectionInput = ({
     });
   }, [defaultSpeed]);
 
+  // Check if two phases overlap
+  const phasesOverlap = (phase1Start: number, phase1Duration: number, phase2Start: number, phase2Duration: number, cycleTime: number) => {
+    const effectiveCycleTime = useHalfCycleTime ? cycleTime / 2 : cycleTime;
+    
+    // Calculate end times
+    const phase1End = (phase1Start + phase1Duration) % effectiveCycleTime;
+    const phase2End = (phase2Start + phase2Duration) % effectiveCycleTime;
+    
+    // Handle cases where the phase wraps around the cycle
+    if (phase1Start < phase1End && phase2Start < phase2End) {
+      // Neither phase wraps around the cycle
+      return (phase1Start < phase2End && phase2Start < phase1End);
+    } else if (phase1Start >= phase1End && phase2Start < phase2End) {
+      // First phase wraps around the cycle
+      return (phase2Start < phase1End || phase2End > phase1Start);
+    } else if (phase1Start < phase1End && phase2Start >= phase2End) {
+      // Second phase wraps around the cycle
+      return (phase1Start < phase2End || phase1End > phase2Start);
+    } else {
+      // Both phases wrap around the cycle
+      return true; // They must overlap in this case
+    }
+  };
+
+  // Check if a new phase would overlap with existing phases of the same direction
+  const wouldOverlapWithExistingPhases = (direction: 'upstream' | 'downstream', startTime: number, duration: number) => {
+    const effectiveCycleTime = useHalfCycleTime ? intersection.cycleTime / 2 : intersection.cycleTime;
+    
+    // Get existing phases with the same direction
+    const existingPhasesInSameDirection = intersection.greenPhases.filter(
+      phase => phase.direction === direction
+    );
+    
+    for (const existingPhase of existingPhasesInSameDirection) {
+      if (phasesOverlap(startTime, duration, existingPhase.startTime, existingPhase.duration, effectiveCycleTime)) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
   const handleGreenPhaseChange = (phaseIndex: number, field: 'startTime' | 'duration', value: number) => {
     // Calculate effective cycle time based on half cycle checkbox
     const effectiveCycleTime = useHalfCycleTime ? intersection.cycleTime / 2 : intersection.cycleTime;
@@ -57,22 +99,37 @@ export const IntersectionInput = ({
     }
 
     const updatedGreenPhases = [...intersection.greenPhases];
-    updatedGreenPhases[phaseIndex] = {
-      ...updatedGreenPhases[phaseIndex],
-      [field]: value
-    };
+    const currentPhase = updatedGreenPhases[phaseIndex];
+    const newValue = field === 'startTime' ? value : currentPhase.startTime;
+    const newDuration = field === 'duration' ? value : currentPhase.duration;
+    
+    // Check if the updated phase would overlap with other phases in the same direction
+    const otherPhasesInSameDirection = updatedGreenPhases.filter(
+      (phase, idx) => phase.direction === currentPhase.direction && idx !== phaseIndex
+    );
+    
+    for (const otherPhase of otherPhasesInSameDirection) {
+      if (phasesOverlap(newValue, newDuration, otherPhase.startTime, otherPhase.duration, effectiveCycleTime)) {
+        toast.error(`${t('phase_overlap_error')} ${currentPhase.direction === 'upstream' ? t('upstream_phase') : t('downstream_phase')}`);
+        return;
+      }
+    }
     
     // Validate that startTime + duration doesn't exceed effective cycle time
-    const phase = updatedGreenPhases[phaseIndex];
-    if (phase.startTime >= effectiveCycleTime) {
+    if (newValue >= effectiveCycleTime) {
       toast.error(`${t('start_time')} ${t('must_be_less_than')} ${effectiveCycleTime}`);
       return;
     }
     
-    if (phase.startTime + phase.duration > effectiveCycleTime && phase.startTime < effectiveCycleTime) {
+    if (newValue + newDuration > effectiveCycleTime && newValue < effectiveCycleTime) {
       toast.error(`${t('start_time')} + ${t('duration')} ${t('must_not_exceed')} ${effectiveCycleTime}`);
       return;
     }
+    
+    updatedGreenPhases[phaseIndex] = {
+      ...updatedGreenPhases[phaseIndex],
+      [field]: value
+    };
     
     onChange({
       ...intersection,
@@ -81,16 +138,37 @@ export const IntersectionInput = ({
   };
 
   const handleAddPhase = (direction: 'upstream' | 'downstream') => {
-    const lastPhase = intersection.greenPhases[intersection.greenPhases.length - 1];
-    const newStartTime = (lastPhase?.startTime || 0) + (lastPhase?.duration || 0);
     const effectiveCycleTime = useHalfCycleTime ? intersection.cycleTime / 2 : intersection.cycleTime;
     
-    // Make sure new phase starts within the effective cycle time
-    const adjustedStartTime = newStartTime < effectiveCycleTime ? newStartTime : 0;
+    // Find existing phases with the same direction
+    const phasesInSameDirection = intersection.greenPhases.filter(phase => phase.direction === direction);
     
-    // Default duration but ensure it doesn't exceed the remaining cycle time
-    const maxDuration = effectiveCycleTime - adjustedStartTime;
-    const defaultDuration = Math.min(45, maxDuration > 0 ? maxDuration : effectiveCycleTime);
+    // Find a non-overlapping time slot
+    let newStartTime = 0;
+    let newDuration = Math.min(30, effectiveCycleTime);
+    let attemptCount = 0;
+    const maxAttempts = effectiveCycleTime;
+    
+    // Try to find a non-overlapping slot by moving startTime
+    while (attemptCount < maxAttempts) {
+      if (!wouldOverlapWithExistingPhases(direction, newStartTime, newDuration)) {
+        break;
+      }
+      
+      newStartTime = (newStartTime + 5) % effectiveCycleTime;
+      attemptCount++;
+      
+      // If we can't find a non-overlapping slot, try reducing the duration
+      if (attemptCount === maxAttempts - 1 && newDuration > 5) {
+        newDuration = 5;
+        attemptCount = 0;
+      }
+    }
+    
+    if (attemptCount === maxAttempts) {
+      toast.error(`${t('cannot_add_phase')} - ${t('no_non_overlapping_slot_available')}`);
+      return;
+    }
     
     onChange({
       ...intersection,
@@ -98,8 +176,8 @@ export const IntersectionInput = ({
         ...intersection.greenPhases,
         {
           direction,
-          startTime: adjustedStartTime,
-          duration: defaultDuration
+          startTime: newStartTime,
+          duration: newDuration
         }
       ]
     });
