@@ -78,15 +78,29 @@
   
   /* Line styles for green wave chart */
   .line-groove {
-    stroke: #8E9196;
     stroke-width: 3px;
-    filter: drop-shadow(0px 1px 0px #C8C8C9);
+    filter: drop-shadow(0px 1px 0px rgba(200, 200, 201, 0.8));
+  }
+  
+  .line-groove-upstream {
+    stroke: #4ADE80; /* Green color for upstream */
+  }
+  
+  .line-groove-downstream {
+    stroke: #60A5FA; /* Blue color for downstream */
   }
   
   .line-ridge {
-    stroke: #403E43;
     stroke-width: 3px;
-    filter: drop-shadow(0px -1px 0px #9F9EA1);
+    filter: drop-shadow(0px -1px 0px rgba(159, 158, 161, 0.8));
+  }
+  
+  .line-ridge-upstream {
+    stroke: #22C55E; /* Darker green for upstream */
+  }
+  
+  .line-ridge-downstream {
+    stroke: #3B82F6; /* Darker blue for downstream */
   }
 }
 
