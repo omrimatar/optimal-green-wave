@@ -75,6 +75,19 @@
   .mobile-subheading {
     @apply text-lg md:text-xl;
   }
+  
+  /* Line styles for green wave chart */
+  .line-groove {
+    stroke: #8E9196;
+    stroke-width: 3px;
+    filter: drop-shadow(0px 1px 0px #C8C8C9);
+  }
+  
+  .line-ridge {
+    stroke: #403E43;
+    stroke-width: 3px;
+    filter: drop-shadow(0px -1px 0px #9F9EA1);
+  }
 }
 
 @keyframes tableAppear {

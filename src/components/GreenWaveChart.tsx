@@ -219,9 +219,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={upOriginLowY}
               x2={xAtCycleEnd}
               y2={upCycleEndY}
-              stroke="#4ADE80CC"
-              strokeWidth={2}
-              strokeDasharray="6 3"
+              stroke="#8E9196"
+              strokeWidth={3}
+              style={{ filter: 'drop-shadow(0px 1px 0px #C8C8C9)' }}
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -244,9 +244,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={upCycleStartY}
               x2={destX}
               y2={upDestLowY}
-              stroke="#4ADE80CC"
-              strokeWidth={2}
-              strokeDasharray="6 3"
+              stroke="#8E9196"
+              strokeWidth={3}
+              style={{ filter: 'drop-shadow(0px 1px 0px #C8C8C9)' }}
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -269,9 +269,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={upOriginLowY}
               x2={destX}
               y2={upDestLowY}
-              stroke="#4ADE80CC"
-              strokeWidth={2}
-              strokeDasharray="6 3"
+              stroke="#8E9196"
+              strokeWidth={3}
+              style={{ filter: 'drop-shadow(0px 1px 0px #C8C8C9)' }}
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -324,9 +324,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={upOriginHighY}
               x2={xAtCycleEnd}
               y2={upCycleEndY}
-              stroke="#4ADE80CC"
-              strokeWidth={2}
-              strokeDasharray="6 3"
+              stroke="#403E43"
+              strokeWidth={3}
+              style={{ filter: 'drop-shadow(0px -1px 0px #9F9EA1)' }}
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -349,9 +349,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={upCycleStartY}
               x2={destX}
               y2={upDestHighY}
-              stroke="#4ADE80CC"
-              strokeWidth={2}
-              strokeDasharray="6 3"
+              stroke="#403E43"
+              strokeWidth={3}
+              style={{ filter: 'drop-shadow(0px -1px 0px #9F9EA1)' }}
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -374,9 +374,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={upOriginHighY}
               x2={destX}
               y2={upDestHighY}
-              stroke="#4ADE80CC"
-              strokeWidth={2}
-              strokeDasharray="6 3"
+              stroke="#403E43"
+              strokeWidth={3}
+              style={{ filter: 'drop-shadow(0px -1px 0px #9F9EA1)' }}
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -439,9 +439,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={downOriginLowY}
               x2={xAtCycleEnd}
               y2={downCycleEndY}
-              stroke="#60A5FACC"
-              strokeWidth={2}
-              strokeDasharray="6 3"
+              stroke="#8E9196"
+              strokeWidth={3}
+              style={{ filter: 'drop-shadow(0px 1px 0px #C8C8C9)' }}
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -464,9 +464,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={downCycleStartY}
               x2={originX}
               y2={downDestLowY}
-              stroke="#60A5FACC"
-              strokeWidth={2}
-              strokeDasharray="6 3"
+              stroke="#8E9196"
+              strokeWidth={3}
+              style={{ filter: 'drop-shadow(0px 1px 0px #C8C8C9)' }}
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -489,9 +489,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={downOriginLowY}
               x2={originX}
               y2={downDestLowY}
-              stroke="#60A5FACC"
-              strokeWidth={2}
-              strokeDasharray="6 3"
+              stroke="#8E9196"
+              strokeWidth={3}
+              style={{ filter: 'drop-shadow(0px 1px 0px #C8C8C9)' }}
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -539,9 +539,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={downOriginHighY}
               x2={xAtCycleEnd}
               y2={downCycleEndY}
-              stroke="#60A5FACC"
-              strokeWidth={2}
-              strokeDasharray="6 3"
+              stroke="#403E43"
+              strokeWidth={3}
+              style={{ filter: 'drop-shadow(0px -1px 0px #9F9EA1)' }}
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -564,9 +564,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={downCycleStartY}
               x2={originX}
               y2={downDestHighY}
-              stroke="#60A5FACC"
-              strokeWidth={2}
-              strokeDasharray="6 3"
+              stroke="#403E43"
+              strokeWidth={3}
+              style={{ filter: 'drop-shadow(0px -1px 0px #9F9EA1)' }}
               onMouseEnter={(e) => {
                 const content = (
                   <div>
@@ -589,9 +589,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={downOriginHighY}
               x2={originX}
               y2={downDestHighY}
-              stroke="#60A5FACC"
-              strokeWidth={2}
-              strokeDasharray="6 3"
+              stroke="#403E43"
+              strokeWidth={3}
+              style={{ filter: 'drop-shadow(0px -1px 0px #9F9EA1)' }}
               onMouseEnter={(e) => {
                 const content = (
                   <div>
