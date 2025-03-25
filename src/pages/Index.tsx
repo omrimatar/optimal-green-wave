@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,7 +17,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { getLatestLambdaDebugData } from '@/lib/traffic/optimization';
 import { DebugDialog } from '@/components/DebugDialog';
 
-const Index = () => {
+interface IndexProps {
+  onMaintenanceToggle?: (value: boolean) => void;
+}
+
+const Index = ({ onMaintenanceToggle }: IndexProps) => {
   const { t, language } = useLanguage();
   const [intersections, setIntersections] = useState<Intersection[]>([{
     id: 1,
@@ -388,7 +391,8 @@ const Index = () => {
               speed={speed} 
               intersections={intersections} 
               weights={weights}
-              onLoadInput={handleLoadInput} 
+              onLoadInput={handleLoadInput}
+              onMaintenanceToggle={onMaintenanceToggle}
             />
 
             <div>
