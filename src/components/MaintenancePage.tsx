@@ -3,11 +3,14 @@ import React from 'react';
 import { useMaintenanceMode } from '@/contexts/MaintenanceContext';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Wrench, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Wrench, AlertTriangle, ArrowLeft, Lock } from 'lucide-react';
+import { useState } from 'react';
+import { AdminLoginDialog } from './AdminLoginDialog';
 
 export const MaintenancePage = () => {
   const { isAdmin, toggleMaintenanceMode } = useMaintenanceMode();
   const { language } = useLanguage();
+  const [showAdminDialog, setShowAdminDialog] = useState(false);
 
   return (
     <div 
@@ -54,8 +57,8 @@ export const MaintenancePage = () => {
         </div>
         
         {/* Admin controls */}
-        {isAdmin && (
-          <div className="mt-6 pt-6 border-t border-gray-100">
+        <div className="mt-6 pt-6 border-t border-gray-100">
+          {isAdmin ? (
             <Button 
               variant="outline" 
               onClick={toggleMaintenanceMode}
@@ -64,9 +67,23 @@ export const MaintenancePage = () => {
               <ArrowLeft className="h-4 w-4" />
               צא ממצב תחזוקה
             </Button>
-          </div>
-        )}
+          ) : (
+            <Button
+              variant="outline"
+              onClick={() => setShowAdminDialog(true)}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-700 border-0 shadow-sm flex items-center gap-2"
+            >
+              <Lock className="h-4 w-4" />
+              כניסת מנהל מערכת
+            </Button>
+          )}
+        </div>
       </div>
+
+      <AdminLoginDialog 
+        open={showAdminDialog} 
+        onOpenChange={setShowAdminDialog}
+      />
     </div>
   );
 };
