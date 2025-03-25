@@ -25,21 +25,9 @@ export const AdminLoginDialog = ({ open, onOpenChange }: AdminLoginDialogProps) 
   const { isAdmin, setIsAdmin, toggleMaintenanceMode } = useMaintenanceMode();
   const { language } = useLanguage();
   
-  // This is a simple hash function - not secure for production
-  // but better than plaintext in the code
-  const hashPassword = (str: string) => {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return hash;
-  };
-
-  // Admin password: "admin123" (hashed value: -1322487871)
+  // Correct password: "omri2205"
   const handleLogin = () => {
-    if (hashPassword(password) === -1322487871) {
+    if (password === "omri2205") {
       setIsAdmin(true);
       toggleMaintenanceMode();
       onOpenChange(false);
