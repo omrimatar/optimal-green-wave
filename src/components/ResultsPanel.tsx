@@ -90,6 +90,12 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
       comparisonResults.cycle_times[idx] : 
       90;
     
+    const useHalfCycleTime = comparisonResults.use_half_cycle ? 
+      comparisonResults.use_half_cycle[idx] : 
+      false;
+    
+    const effectiveCycleTime = useHalfCycleTime ? cycleTime / 2 : cycleTime;
+    
     const greenPhases: GreenPhase[] = [];
     
     if (comparisonResults.green_up && comparisonResults.green_up[idx]) {
@@ -104,7 +110,7 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
       greenPhases.push({
         direction: 'upstream',
         startTime: 0,
-        duration: Math.floor(cycleTime / 2)
+        duration: Math.floor(effectiveCycleTime / 2)
       });
     }
     
@@ -119,8 +125,8 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
     } else {
       greenPhases.push({
         direction: 'downstream',
-        startTime: Math.floor(cycleTime / 2),
-        duration: Math.floor(cycleTime / 2)
+        startTime: Math.floor(effectiveCycleTime / 2),
+        duration: Math.floor(effectiveCycleTime / 2)
       });
     }
     
@@ -141,7 +147,8 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
       offset,
       greenPhases,
       upstreamSpeed,
-      downstreamSpeed
+      downstreamSpeed,
+      useHalfCycleTime
     });
     
     return {
@@ -151,7 +158,8 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
       offset: mode === 'display' ? 0 : offset,
       greenPhases,
       upstreamSpeed,
-      downstreamSpeed
+      downstreamSpeed,
+      useHalfCycleTime
     };
   });
 

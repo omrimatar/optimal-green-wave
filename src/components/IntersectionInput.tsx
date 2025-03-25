@@ -28,7 +28,7 @@ export const IntersectionInput = ({
   // Add local state to track if the distance input is being edited
   const [isEditingDistance, setIsEditingDistance] = useState(false);
   const [tempDistance, setTempDistance] = useState<string>(intersection.distance.toString());
-  const [useHalfCycleTime, setUseHalfCycleTime] = useState(false);
+  const [useHalfCycleTime, setUseHalfCycleTime] = useState(intersection.useHalfCycleTime || false);
   
   // Add state for temporary green phase values
   const [tempGreenPhaseValues, setTempGreenPhaseValues] = useState<{
@@ -348,8 +348,12 @@ export const IntersectionInput = ({
     }
     
     setUseHalfCycleTime(checked);
-    // We don't directly update the actual cycleTime prop here
-    // The actual value will be computed when needed (e.g., in calculation functions)
+    
+    // Update the intersection with the useHalfCycleTime flag
+    onChange({
+      ...intersection,
+      useHalfCycleTime: checked
+    });
   };
 
   const handleSpeedChange = (direction: 'upstream' | 'downstream', value: string) => {
@@ -462,7 +466,6 @@ export const IntersectionInput = ({
         </div>
       </div>
 
-      {/* Speed inputs */}
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <Label>{t('upstream_speed')}</Label>
@@ -577,3 +580,4 @@ export const IntersectionInput = ({
     </Card>
   );
 };
+

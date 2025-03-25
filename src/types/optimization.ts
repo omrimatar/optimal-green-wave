@@ -1,4 +1,3 @@
-
 export interface GreenPhase {
   direction: 'upstream' | 'downstream';
   startTime: number;
@@ -13,6 +12,7 @@ export interface Intersection {
   offset?: number;
   upstreamSpeed?: number;
   downstreamSpeed?: number;
+  useHalfCycleTime?: boolean; // Added flag for half cycle time
 }
 
 export interface OptimizationWeights {

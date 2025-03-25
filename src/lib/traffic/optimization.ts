@@ -1,4 +1,3 @@
-
 import { callLambdaOptimization, getLatestDebugData } from './lambda-client';
 import { modifiedWeights } from '@/types/optimization';
 import type { 
@@ -54,7 +53,8 @@ export async function greenWaveOptimization(
             duration: phase.duration,
             speed: phase.speed || data.travel.down.speed // Use phase-specific speed if available
           })),
-          cycle: intersection.cycle_up || intersection.cycle_down || 90
+          cycle: intersection.cycle_up || intersection.cycle_down || 90,
+          use_half_cycle: intersection.use_half_cycle || false // Pass the half cycle time flag
         }))
       },
       weights: {

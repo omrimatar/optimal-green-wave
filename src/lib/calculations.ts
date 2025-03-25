@@ -21,6 +21,9 @@ export async function calculateGreenWave(
       const upstreamSpeed = intersection.upstreamSpeed !== undefined ? intersection.upstreamSpeed : speed;
       const downstreamSpeed = intersection.downstreamSpeed !== undefined ? intersection.downstreamSpeed : speed;
       
+      // Get effective cycle time based on useHalfCycleTime flag
+      const effectiveCycleTime = intersection.useHalfCycleTime ? intersection.cycleTime / 2 : intersection.cycleTime;
+      
       // Extract and combine green phases
       const upPhases = intersection.greenPhases
         .filter(phase => phase.direction === 'upstream')
@@ -43,8 +46,9 @@ export async function calculateGreenWave(
         distance: intersection.distance,
         green_up: upPhases,
         green_down: downPhases,
-        cycle_up: intersection.cycleTime,
-        cycle_down: intersection.cycleTime
+        cycle_up: effectiveCycleTime, // Pass the effective cycle time
+        cycle_down: effectiveCycleTime, // Pass the effective cycle time
+        use_half_cycle: intersection.useHalfCycleTime || false // Pass the half cycle time flag
       };
     }),
     travel: {
@@ -57,6 +61,9 @@ export async function calculateGreenWave(
   console.log("Sending intersections with distances:", intersections.map(i => `${i.id}: ${i.distance}`));
   console.log("Sending speeds:", intersections.map(i => 
     `${i.id}: upstream=${i.upstreamSpeed || speed}, downstream=${i.downstreamSpeed || speed}`
+  ));
+  console.log("Sending half cycle time flags:", intersections.map(i => 
+    `${i.id}: useHalfCycleTime=${i.useHalfCycleTime || false}`
   ));
   
   // קריאה לפונקציית האופטימיזציה
