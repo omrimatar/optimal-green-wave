@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,7 @@ import { FileActions } from '@/components/FileActions';
 import { ResultsPanel } from '@/components/ResultsPanel';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights, normalizeWeights, resetModifiedFlags } from '@/types/optimization';
+import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights, normalizeWeights, resetModifiedFlags, modifiedWeights } from '@/types/optimization';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { getLatestLambdaDebugData } from '@/lib/traffic/optimization';
 import { DebugDialog } from '@/components/DebugDialog';
@@ -552,4 +553,3 @@ const Index = () => {
 };
 
 export default Index;
-
