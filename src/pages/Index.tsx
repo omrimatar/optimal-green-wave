@@ -64,6 +64,7 @@ const Index = () => {
   const [showDebugDialog, setShowDebugDialog] = useState(false);
   const [debugData, setDebugData] = useState<{ request: any; response: any }>({ request: null, response: null });
   const [showAdminDialog, setShowAdminDialog] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
   const { isAdmin } = useMaintenanceMode();
 
   useEffect(() => {
