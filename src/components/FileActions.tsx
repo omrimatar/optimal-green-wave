@@ -2,18 +2,25 @@
 import { Button } from "@/components/ui/button";
 import { FileUp, FileDown } from "lucide-react";
 import type { Intersection } from "@/types/optimization";
+import type { OptimizationWeights } from "@/types/optimization";
 
 interface FileActionsProps {
   speed: number;
   intersections: Intersection[];
-  onLoadInput: (data: { speed: number; intersections: Intersection[] }) => void;
+  weights?: OptimizationWeights;
+  onLoadInput: (data: { 
+    speed: number; 
+    intersections: Intersection[];
+    weights?: OptimizationWeights;
+  }) => void;
 }
 
-export const FileActions = ({ speed, intersections, onLoadInput }: FileActionsProps) => {
+export const FileActions = ({ speed, intersections, weights, onLoadInput }: FileActionsProps) => {
   const handleExport = () => {
     const data = {
       speed,
-      intersections
+      intersections,
+      weights
     };
     
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });

@@ -283,9 +283,10 @@ const Index = () => {
   const handleLoadInput = (data: {
     speed: number;
     intersections: Intersection[];
+    weights?: OptimizationWeights;
   }) => {
     if (data.speed < 0 || data.speed > 120 || !Number.isInteger(data.speed)) {
-      toast.error("הקובץ שנטען מכיל מהיר��ת תכן שאינה חוקית. מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
+      toast.error("הקובץ שנטען מכיל מהירות תכן שאינה חוקית. מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
       return;
     }
     
@@ -328,6 +329,17 @@ const Index = () => {
     setSpeed(data.speed);
     setIntersections(data.intersections);
     setManualOffsets(new Array(data.intersections.length).fill(0));
+    
+    if (data.weights) {
+      setWeights(data.weights);
+      Object.keys(data.weights).forEach(key => {
+        const weightKey = key as keyof OptimizationWeights;
+        if (data.weights && data.weights[weightKey] !== DEFAULT_WEIGHTS[weightKey]) {
+          modifiedWeights[weightKey] = true;
+        }
+      });
+    }
+    
     if (data.intersections.length > 0) {
       setGlobalCycleTime(data.intersections[0].cycleTime);
     }
@@ -371,7 +383,12 @@ const Index = () => {
 
         <Card className="p-3 md:p-6 glassmorphism">
           <div className="space-y-4 md:space-y-6">
-            <FileActions speed={speed} intersections={intersections} onLoadInput={handleLoadInput} />
+            <FileActions 
+              speed={speed} 
+              intersections={intersections} 
+              weights={weights}
+              onLoadInput={handleLoadInput} 
+            />
 
             <div>
               <Label htmlFor="globalCycleTime">{t('cycle_time')}</Label>
@@ -535,3 +552,4 @@ const Index = () => {
 };
 
 export default Index;
+
