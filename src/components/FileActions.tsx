@@ -1,8 +1,11 @@
 
 import { Button } from "@/components/ui/button";
-import { FileUp, FileDown } from "lucide-react";
+import { FileUp, FileDown, Lock } from "lucide-react";
 import type { Intersection } from "@/types/optimization";
 import type { OptimizationWeights } from "@/types/optimization";
+import { useState } from "react";
+import { AdminLoginDialog } from "@/components/AdminLoginDialog";
+import { useMaintenanceMode } from "@/contexts/MaintenanceContext";
 
 interface FileActionsProps {
   speed: number;
@@ -16,6 +19,9 @@ interface FileActionsProps {
 }
 
 export const FileActions = ({ speed, intersections, weights, onLoadInput }: FileActionsProps) => {
+  const [showAdminDialog, setShowAdminDialog] = useState(false);
+  const { isAdmin } = useMaintenanceMode();
+
   const handleExport = () => {
     const data = {
       speed,
@@ -76,6 +82,20 @@ export const FileActions = ({ speed, intersections, weights, onLoadInput }: File
         <FileDown size={16} />
         ייצוא נתונים
       </Button>
+      <Button
+        variant={isAdmin ? "secondary" : "outline"}
+        size="sm"
+        onClick={() => setShowAdminDialog(true)}
+        className="flex items-center gap-2"
+      >
+        <Lock size={16} />
+        כניסת אדמין
+      </Button>
+
+      <AdminLoginDialog 
+        open={showAdminDialog} 
+        onOpenChange={setShowAdminDialog}
+      />
     </div>
   );
 };
