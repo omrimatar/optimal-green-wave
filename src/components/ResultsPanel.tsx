@@ -90,12 +90,35 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
       comparisonResults.cycle_times[idx] : 
       90;
     
-    const useHalfCycleTime = comparisonResults.use_half_cycle ? 
-      comparisonResults.use_half_cycle[idx] : 
-      false;
+    // Get the half cycle time flag from results or default to false
+    const useHalfCycleTime = comparisonResults.use_half_cycle && comparisonResults.use_half_cycle[idx] !== undefined
+      ? comparisonResults.use_half_cycle[idx]
+      : false;
     
     const effectiveCycleTime = useHalfCycleTime ? cycleTime / 2 : cycleTime;
     
+    const upstreamSpeed = originalIntersections && originalIntersections[idx] && 
+                         originalIntersections[idx].upstreamSpeed !== undefined ? 
+                         originalIntersections[idx].upstreamSpeed : 
+                         speed;
+    
+    const downstreamSpeed = originalIntersections && originalIntersections[idx] && 
+                            originalIntersections[idx].downstreamSpeed !== undefined ? 
+                            originalIntersections[idx].downstreamSpeed : 
+                            speed;
+    
+    console.log(`ResultsPanel created intersection ${idx+1}:`, {
+      id: idx + 1,
+      distance,
+      cycleTime,
+      offset,
+      greenPhases: (comparisonResults.green_up?.[idx] || []).concat(comparisonResults.green_down?.[idx] || []),
+      upstreamSpeed,
+      downstreamSpeed,
+      useHalfCycleTime
+    });
+    
+    // Create and return the Intersection object with all required properties
     const greenPhases: GreenPhase[] = [];
     
     if (comparisonResults.green_up && comparisonResults.green_up[idx]) {
@@ -129,27 +152,6 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
         duration: Math.floor(effectiveCycleTime / 2)
       });
     }
-    
-    const upstreamSpeed = originalIntersections && originalIntersections[idx] && 
-                         originalIntersections[idx].upstreamSpeed !== undefined ? 
-                         originalIntersections[idx].upstreamSpeed : 
-                         speed;
-    
-    const downstreamSpeed = originalIntersections && originalIntersections[idx] && 
-                            originalIntersections[idx].downstreamSpeed !== undefined ? 
-                            originalIntersections[idx].downstreamSpeed : 
-                            speed;
-    
-    console.log(`ResultsPanel created intersection ${idx+1}:`, {
-      id: idx + 1,
-      distance,
-      cycleTime,
-      offset,
-      greenPhases,
-      upstreamSpeed,
-      downstreamSpeed,
-      useHalfCycleTime
-    });
     
     return {
       id: idx + 1,

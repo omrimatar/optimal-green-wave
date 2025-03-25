@@ -1,4 +1,3 @@
-
 // Input types for the Lambda function
 export interface LambdaGreenPhase {
   start: number;
@@ -12,6 +11,7 @@ export interface LambdaIntersection {
   green_up: LambdaGreenPhase[];
   green_down: LambdaGreenPhase[];
   cycle: number;
+  use_half_cycle?: boolean;
 }
 
 export interface LambdaData {
@@ -100,6 +100,8 @@ export interface RunResult {
   green_down?: Array<{start: number; duration: number; speed?: number}[]>;
   speed?: number;
   
+  use_half_cycle?: boolean[];
+  
   status: string;
   objective_value: number;
 }
@@ -123,6 +125,7 @@ export interface Intersection {
   green_down: GreenPhase[];
   cycle_up?: number;
   cycle_down?: number;
+  use_half_cycle?: boolean;
 }
 
 export interface Travel {
