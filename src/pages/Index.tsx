@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,6 +16,8 @@ import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights, normalize
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { getLatestLambdaDebugData } from '@/lib/traffic/optimization';
 import { DebugDialog } from '@/components/DebugDialog';
+import { useMaintenanceMode } from '@/contexts/MaintenanceContext';
+import { AdminLoginDialog } from '@/components/AdminLoginDialog';
 
 const Index = () => {
   const { t, language } = useLanguage();
@@ -62,6 +63,8 @@ const Index = () => {
   const [calculationPerformed, setCalculationPerformed] = useState(false);
   const [showDebugDialog, setShowDebugDialog] = useState(false);
   const [debugData, setDebugData] = useState<{ request: any; response: any }>({ request: null, response: null });
+  const [showAdminDialog, setShowAdminDialog] = useState(false);
+  const { isAdmin } = useMaintenanceMode();
 
   useEffect(() => {
     if (intersections.length > 0) {
@@ -365,6 +368,18 @@ const Index = () => {
     setCalculationPerformed(true);
   };
 
+  const handleHeaderClick = () => {
+    setClickCount(prev => {
+      const newCount = prev + 1;
+      if (newCount >= 4) {
+        setShowAdminDialog(true);
+        return 0;
+      }
+      setTimeout(() => setClickCount(0), 2000);
+      return newCount;
+    });
+  };
+
   console.log("Current results state:", results);
 
   return (
@@ -375,7 +390,12 @@ const Index = () => {
         </div>
         
         <div className="flex flex-col items-center justify-center space-y-2 md:space-y-4">
-          <img alt={t('app_title')} src="/lovable-uploads/efa3c3e2-c92f-42c7-8cc6-a4096430a863.png" className="h-16 md:h-24 w-auto object-cover" />
+          <img 
+            alt={t('app_title')} 
+            src="/lovable-uploads/efa3c3e2-c92f-42c7-8cc6-a4096430a863.png" 
+            className="h-16 md:h-24 w-auto object-cover cursor-pointer" 
+            onClick={handleHeaderClick}
+          />
           <div className="text-center space-y-1 md:space-y-2">
             <h1 className="text-2xl md:text-4xl font-bold text-gray-900">{t('app_title')}</h1>
             <p className="text-base md:text-lg text-gray-600">{t('app_subtitle')}</p>
@@ -546,6 +566,11 @@ const Index = () => {
           onOpenChange={setShowDebugDialog} 
           requestData={debugData.request} 
           responseData={debugData.response} 
+        />
+        
+        <AdminLoginDialog
+          open={showAdminDialog}
+          onOpenChange={setShowAdminDialog}
         />
       </div>
     </div>
