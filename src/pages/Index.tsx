@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +25,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent, ProgramTabsList, ProgramTabsT
 import { HomeTab } from '@/components/HomeTab';
 import { ProgramTab } from '@/components/ProgramTab';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const MAX_PROGRAMS = 6;
 
