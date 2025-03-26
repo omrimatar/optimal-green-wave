@@ -6,14 +6,13 @@ export interface GreenPhase {
 
 export interface Intersection {
   id: number;
-  name?: string;
   distance: number;
   cycleTime: number;
   greenPhases: GreenPhase[];
   offset?: number;
   upstreamSpeed?: number;
   downstreamSpeed?: number;
-  useHalfCycleTime?: boolean; // Flag for half cycle time
+  useHalfCycleTime?: boolean; // Added flag for half cycle time
 }
 
 export interface OptimizationWeights {

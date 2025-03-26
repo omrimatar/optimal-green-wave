@@ -1,39 +1,28 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Bug } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { IntersectionInput } from '@/components/IntersectionInput';
 import { calculateGreenWave } from '@/lib/calculations';
 import { toast } from 'sonner';
+import { ArrowRight, Hand, Play, Plus, Bug } from 'lucide-react';
+import { WeightsPanel } from '@/components/WeightsPanel';
 import { FileActions } from '@/components/FileActions';
 import { ResultsPanel } from '@/components/ResultsPanel';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { useLanguage } from '@/contexts/LanguageContext';
-import {
-  DEFAULT_WEIGHTS,
-  type Intersection,
-  type OptimizationWeights,
-  normalizeWeights,
-  resetModifiedFlags,
-  modifiedWeights
-} from '@/types/optimization';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights, normalizeWeights, resetModifiedFlags, modifiedWeights } from '@/types/optimization';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { getLatestLambdaDebugData } from '@/lib/traffic/optimization';
 import { DebugDialog } from '@/components/DebugDialog';
 import { useMaintenanceMode } from '@/contexts/MaintenanceContext';
 import { AdminLoginDialog } from '@/components/AdminLoginDialog';
-import { Tabs, TabsList, TabsTrigger, TabsContent, ProgramTabsList, ProgramTabsTrigger } from '@/components/ui/tabs';
-import { HomeTab } from '@/components/HomeTab';
-import { ProgramTab } from '@/components/ProgramTab';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-
-const MAX_PROGRAMS = 6;
 
 const Index = () => {
   const { t, language } = useLanguage();
   const [intersections, setIntersections] = useState<Intersection[]>([{
     id: 1,
-    name: t('intersection') + ' 1',
     distance: 0,
     cycleTime: 90,
     greenPhases: [{
@@ -49,7 +38,6 @@ const Index = () => {
     downstreamSpeed: 50
   }, {
     id: 2,
-    name: t('intersection') + ' 2',
     distance: 300,
     cycleTime: 90,
     greenPhases: [{
@@ -72,15 +60,12 @@ const Index = () => {
   const [showWeights, setShowWeights] = useState(false);
   const [manualOffsets, setManualOffsets] = useState<number[]>([0, 0]);
   const [showManualDialog, setShowManualDialog] = useState(false);
-  const [currentProgramId, setCurrentProgramId] = useState(1);
   const [calculationPerformed, setCalculationPerformed] = useState(false);
   const [showDebugDialog, setShowDebugDialog] = useState(false);
   const [debugData, setDebugData] = useState<{ request: any; response: any }>({ request: null, response: null });
   const [showAdminDialog, setShowAdminDialog] = useState(false);
   const [clickCount, setClickCount] = useState(0);
   const { isAdmin } = useMaintenanceMode();
-  const [activeTab, setActiveTab] = useState("home");
-  const [programCount, setProgramCount] = useState(1);
 
   useEffect(() => {
     if (intersections.length > 0) {
@@ -101,7 +86,7 @@ const Index = () => {
   const handleGlobalCycleTimeChange = (value: string) => {
     const numValue = parseInt(value);
     if (isNaN(numValue) || numValue < 0 || numValue > 300 || !Number.isInteger(numValue)) {
-      toast.error("זמן מחזור חייב להיות מספר שלם בין 0 ל-300 שניות");
+      toast.error("זמן מחז��ר חייב להיות מספר שלם בין 0 ל-300 שניות");
       return;
     }
     
@@ -135,7 +120,6 @@ const Index = () => {
     
     const newIntersection: Intersection = {
       id: newId,
-      name: `${t('intersection')} ${newId}`,
       distance: newDistance,
       cycleTime: globalCycleTime,
       greenPhases: [{
@@ -155,11 +139,6 @@ const Index = () => {
     setIntersections(newIntersections);
     setManualOffsets(prev => [...prev, 0]);
     clearResults();
-  };
-
-  const handleManualDialogOpen = (programId: number) => {
-    setCurrentProgramId(programId);
-    setShowManualDialog(true);
   };
 
   const handleManualCalculate = async () => {
@@ -192,10 +171,8 @@ const Index = () => {
     }
   };
 
-  const handleCalculate = async (programId: number) => {
+  const handleCalculate = async () => {
     try {
-      setCurrentProgramId(programId);
-      
       if (speed < 0 || speed > 120 || !Number.isInteger(speed)) {
         toast.error("מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
         return;
@@ -235,6 +212,11 @@ const Index = () => {
         }
       }
       
+      const baseIntersections = intersections.map(intersection => ({
+        ...intersection,
+        offset: 0
+      }));
+      
       const calculationResults = await calculateGreenWave(intersections, speed, weights);
       console.log("Calculation results received:", calculationResults);
       
@@ -249,10 +231,8 @@ const Index = () => {
     }
   };
 
-  const handleShowExisting = async (programId: number) => {
+  const handleShowExisting = async () => {
     try {
-      setCurrentProgramId(programId);
-      
       if (speed < 0 || speed > 120 || !Number.isInteger(speed)) {
         toast.error("מהירות תכן חייבת להיות מספר שלם בין 0 ל-120 קמ\"ש");
         return;
@@ -385,6 +365,10 @@ const Index = () => {
     setShowDebugDialog(true);
   };
 
+  const afterApiCallAttempt = () => {
+    setCalculationPerformed(true);
+  };
+
   const handleHeaderClick = () => {
     setClickCount(prev => {
       const newCount = prev + 1;
@@ -397,44 +381,7 @@ const Index = () => {
     });
   };
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
-
-  const handleProgramCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    if (value >= 1 && value <= MAX_PROGRAMS) {
-      setProgramCount(value);
-    }
-  };
-
-  const handleIntersectionChange = (index: number, updatedIntersection: Intersection) => {
-    const newIntersections = [...intersections];
-    newIntersections[index] = updatedIntersection;
-    setIntersections(newIntersections);
-    setCalculationPerformed(false);
-    if (mode === 'display') {
-      handleShowExisting(currentProgramId);
-    }
-  };
-
-  const handleDeleteIntersection = (id: number) => {
-    if (intersections.length > 2) {
-      setIntersections(intersections.filter(i => i.id !== id));
-      const index = intersections.findIndex(i => i.id === id);
-      if (index !== -1) {
-        setManualOffsets(prev => {
-          const newOffsets = [...prev];
-          newOffsets.splice(index, 1);
-          return newOffsets;
-        });
-      }
-      setCalculationPerformed(false);
-      if (mode === 'display') {
-        handleShowExisting(currentProgramId);
-      }
-    }
-  };
+  console.log("Current results state:", results);
 
   return (
     <div className="min-h-screen p-4 md:p-8 bg-gradient-to-br from-green-50 to-blue-50" dir={language === 'he' ? 'rtl' : 'ltr'}>
@@ -456,78 +403,141 @@ const Index = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="home" value={activeTab} onValueChange={handleTabChange}>
-          <Card className="p-3 md:p-6 glassmorphism">
-            <div className="flex justify-between items-center mb-6">
-              <TabsList>
-                <TabsTrigger value="home">{t('home')}</TabsTrigger>
-                <TabsTrigger value="programs">{t('programs')}</TabsTrigger>
-              </TabsList>
+        <Card className="p-3 md:p-6 glassmorphism">
+          <div className="space-y-4 md:space-y-6">
+            <FileActions 
+              speed={speed} 
+              intersections={intersections} 
+              weights={weights}
+              onLoadInput={handleLoadInput} 
+            />
+
+            <div>
+              <Label htmlFor="globalCycleTime">{t('cycle_time')}</Label>
+              <Input 
+                id="globalCycleTime" 
+                type="number" 
+                value={globalCycleTime} 
+                min={0} 
+                max={300} 
+                onChange={e => handleGlobalCycleTimeChange(e.target.value)} 
+                className="w-full" 
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="speed">{t('default_speed')}</Label>
+              <Input id="speed" type="number" value={speed} min={0} max={120} onChange={e => handleSpeedChange(e.target.value)} className="w-full" />
+            </div>
+
+            <WeightsPanel 
+              weights={weights} 
+              showWeights={showWeights} 
+              onWeightChange={updateWeight} 
+              onToggleWeights={() => setShowWeights(!showWeights)} 
+              onResetWeights={handleResetWeights} 
+            />
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <Label>{t('intersections')}</Label>
+                <Button variant="outline" size="sm" onClick={handleAddIntersection} className="flex items-center gap-2">
+                  <Plus size={16} />
+                  <span className="hidden sm:inline">{t('add_intersection')}</span>
+                  <span className="sm:hidden">{t('add')}</span>
+                </Button>
+              </div>
               
-              {activeTab === "programs" && (
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="programCount">{t('program_count')}</Label>
-                  <Input
-                    id="programCount"
-                    type="number"
-                    min={1}
-                    max={MAX_PROGRAMS}
-                    value={programCount}
-                    onChange={handleProgramCountChange}
-                    className="w-20"
-                  />
-                </div>
-              )}
+              {intersections.map((intersection, index) => (
+                <IntersectionInput 
+                  key={intersection.id} 
+                  intersection={intersection} 
+                  defaultSpeed={speed} 
+                  allIntersections={intersections} 
+                  onChange={updated => {
+                    const newIntersections = [...intersections];
+                    newIntersections[index] = updated;
+                    setIntersections(newIntersections);
+                    setCalculationPerformed(false);
+                    if (mode === 'display') {
+                      handleShowExisting();
+                    }
+                  }} 
+                  onDelete={() => {
+                    if (intersections.length > 2) {
+                      setIntersections(intersections.filter(i => i.id !== intersection.id));
+                      setManualOffsets(prev => {
+                        const newOffsets = [...prev];
+                        newOffsets.splice(index, 1);
+                        return newOffsets;
+                      });
+                      setCalculationPerformed(false);
+                      if (mode === 'display') {
+                        handleShowExisting();
+                      }
+                    }
+                  }} 
+                />
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-2 md:gap-4">
+              <Button variant="outline" onClick={handleShowExisting} className="flex items-center gap-1 md:gap-2 bg-orange-500 hover:bg-orange-600 text-white text-xs md:text-sm">
+                <Play size={14} className="md:w-4 md:h-4" />
+                <span className="hidden sm:inline">{t('draw_existing')}</span>
+                <span className="sm:hidden">{t('draw_existing')}</span>
+              </Button>
+
+              <Dialog open={showManualDialog} onOpenChange={setShowManualDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-1 md:gap-2 bg-purple-500 hover:bg-purple-600 text-white text-xs md:text-sm">
+                    <Hand size={14} className="md:w-4 md:h-4" />
+                    <span className="hidden sm:inline">{t('manual_calculation')}</span>
+                    <span className="sm:hidden">{t('manual')}</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-[95vw] md:max-w-lg" dir={language === 'he' ? 'rtl' : 'ltr'}>
+                  <DialogHeader>
+                    <DialogTitle>{t('manual_offsets')}</DialogTitle>
+                    <DialogDescription>
+                      {t('offsets_description')}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+                    {intersections.map((intersection, index) => (
+                      <div key={intersection.id} className="grid grid-cols-3 md:grid-cols-4 items-center gap-2 md:gap-4">
+                        <Label htmlFor={`offset-${index}`} className={language === 'he' ? "text-right text-sm" : "text-left text-sm"}>
+                          {t('intersection')} {index + 1}
+                        </Label>
+                        <Input 
+                          id={`offset-${index}`} 
+                          type="number" 
+                          value={manualOffsets[index] || 0} 
+                          onChange={e => {
+                            const newOffsets = [...manualOffsets];
+                            newOffsets[index] = Number(e.target.value);
+                            setManualOffsets(newOffsets);
+                          }} 
+                          disabled={index === 0} 
+                          className="col-span-2 md:col-span-3" 
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <DialogFooter className={language === 'he' ? "" : "flex-row-reverse"}>
+                    <Button onClick={handleManualCalculate}>{t('calculate')}</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              <Button onClick={handleCalculate} className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white text-xs md:text-sm">
+                <span className="sm:hidden">{t('calculate')}</span>
+                <span className="hidden sm:inline">{t('calculate_green_wave')}</span>
+                <ArrowRight className={`${language === 'he' ? "mr-2" : "ml-2"} w-3 h-3 md:w-4 md:h-4`} size={16} />
+              </Button>
             </div>
             
-            <HomeTab
-              globalCycleTime={globalCycleTime}
-              speed={speed}
-              weights={weights}
-              showWeights={showWeights}
-              intersections={intersections}
-              onGlobalCycleTimeChange={handleGlobalCycleTimeChange}
-              onSpeedChange={handleSpeedChange}
-              onToggleWeights={() => setShowWeights(!showWeights)}
-              onWeightChange={updateWeight}
-              onResetWeights={handleResetWeights}
-              onLoadInput={handleLoadInput}
-              onIntersectionChange={handleIntersectionChange}
-              onAddIntersection={handleAddIntersection}
-              onDeleteIntersection={handleDeleteIntersection}
-            />
-            
-            <TabsContent value="programs">
-              <Card className="p-4">
-                <ProgramTabsList>
-                  {Array.from({ length: programCount }).map((_, index) => (
-                    <ProgramTabsTrigger key={index + 1} value={`program-${index + 1}`}>
-                      {t('program')} {index + 1}
-                    </ProgramTabsTrigger>
-                  ))}
-                </ProgramTabsList>
-                
-                <Tabs defaultValue="program-1">
-                  {Array.from({ length: programCount }).map((_, index) => (
-                    <ProgramTab
-                      key={index + 1}
-                      programId={index + 1}
-                      speed={speed}
-                      intersections={intersections}
-                      weights={weights}
-                      showManualDialog={handleManualDialogOpen}
-                      onShowExisting={handleShowExisting}
-                      onCalculate={handleCalculate}
-                      onIntersectionChange={handleIntersectionChange}
-                      language={language}
-                      t={t}
-                    />
-                  ))}
-                </Tabs>
-              </Card>
-            </TabsContent>
-            
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-end">
               <Button 
                 variant="debug" 
                 size="sm" 
@@ -539,8 +549,8 @@ const Index = () => {
                 <span>Debug</span>
               </Button>
             </div>
-          </Card>
-        </Tabs>
+          </div>
+        </Card>
 
         {results && (
           <ResultsPanel 
@@ -551,41 +561,6 @@ const Index = () => {
             calculationPerformed={calculationPerformed}
           />
         )}
-        
-        <Dialog open={showManualDialog} onOpenChange={setShowManualDialog}>
-          <DialogContent className="max-w-[95vw] md:max-w-lg" dir={language === 'he' ? 'rtl' : 'ltr'}>
-            <DialogHeader>
-              <DialogTitle>{t('manual_offsets')}</DialogTitle>
-              <DialogDescription>
-                {t('offsets_description')}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
-              {intersections.map((intersection, index) => (
-                <div key={intersection.id} className="grid grid-cols-3 md:grid-cols-4 items-center gap-2 md:gap-4">
-                  <Label htmlFor={`offset-${index}`} className={language === 'he' ? "text-right text-sm" : "text-left text-sm"}>
-                    {intersection.name || `${t('intersection')} ${index + 1}`}
-                  </Label>
-                  <Input 
-                    id={`offset-${index}`} 
-                    type="number" 
-                    value={manualOffsets[index] || 0} 
-                    onChange={e => {
-                      const newOffsets = [...manualOffsets];
-                      newOffsets[index] = Number(e.target.value);
-                      setManualOffsets(newOffsets);
-                    }} 
-                    disabled={index === 0} 
-                    className="col-span-2 md:col-span-3" 
-                  />
-                </div>
-              ))}
-            </div>
-            <DialogFooter className={language === 'he' ? "" : "flex-row-reverse"}>
-              <Button onClick={handleManualCalculate}>{t('calculate')}</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
         
         <DebugDialog 
           open={showDebugDialog} 
