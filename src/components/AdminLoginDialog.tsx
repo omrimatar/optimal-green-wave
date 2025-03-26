@@ -44,11 +44,7 @@ export const AdminLoginDialog = ({ open, onOpenChange }: AdminLoginDialogProps) 
 
   const handleToggleMaintenance = () => {
     toggleMaintenanceMode();
-    if (isMaintenanceMode) {
-      toast.info("מצב תחזוקה בוטל - המערכת נגישה לכל המשתמשים");
-    } else {
-      toast.info("מצב תחזוקה הופעל - המערכת חסומה לכל המשתמשים בכל המכשירים");
-    }
+    toast.info(isMaintenanceMode ? "מצב תחזוקה בוטל" : "מצב תחזוקה הופעל");
   };
 
   return (
@@ -61,7 +57,7 @@ export const AdminLoginDialog = ({ open, onOpenChange }: AdminLoginDialogProps) 
           </DialogTitle>
           <DialogDescription>
             {isAdmin 
-              ? "אתה מחובר כמנהל מערכת. האם תרצה להפעיל או לבטל מצב תחזוקה עבור כל המשתמשים?"
+              ? "אתה מחובר כמנהל מערכת. האם תרצה להפעיל או לבטל מצב תחזוקה?"
               : "הזן סיסמת מנהל מערכת כדי להפעיל מצב תחזוקה"}
           </DialogDescription>
         </DialogHeader>
@@ -105,15 +101,10 @@ export const AdminLoginDialog = ({ open, onOpenChange }: AdminLoginDialogProps) 
                 ) : (
                   <>
                     <ToggleLeft className="h-5 w-5" />
-                    הפעל מצב תחזוקה גלובלי
+                    הפעל מצב תחזוקה
                   </>
                 )}
               </Button>
-              <div className="text-sm text-gray-500 bg-gray-100 p-3 rounded-md">
-                {isMaintenanceMode 
-                  ? "כאשר מצב תחזוקה מופעל, כל המשתמשים בכל המכשירים יראו את דף התחזוקה עד שתבטל אותו." 
-                  : "הפעלת מצב תחזוקה תחסום גישה למערכת עבור כל המשתמשים בכל המכשירים והדפדפנים."}
-              </div>
               <Button 
                 onClick={handleLogout} 
                 variant="outline"

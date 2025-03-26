@@ -65,7 +65,7 @@ export const MaintenancePage = () => {
               className="bg-red-500 hover:bg-red-600 text-white border-0 shadow-sm flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              צא ממצב תחזוקה גלובלי
+              צא ממצב תחזוקה
             </Button>
           ) : (
             <Button
