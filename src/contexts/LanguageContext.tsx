@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface LanguageContextProps {
@@ -56,11 +57,12 @@ const translations = {
     print: "Print",
     print_options: "Print Options",
     select_print_items: "Select the items you want to print",
-    cancel: "Cancel"
+    cancel: "Cancel",
+    language: "Language"
   },
   he: {
-    app_title: "מטבֵּחַ גל ירוק",
-    app_subtitle: "מטבים את תזמוני הרמזורים לנסיעה חלקה יותר",
+    app_title: "מתאם גל ירוק",
+    app_subtitle: "מתאם את תזמוני הרמזורים לנסיעה חלקה יותר",
     cycle_time: "זמן מחזור גלובלי (שניות)",
     default_speed: "מהירות תכן ברירת מחדל (קמ\"ש)",
     intersections: "צמתים",
@@ -105,7 +107,8 @@ const translations = {
     print: "הדפסה",
     print_options: "אפשרויות הדפסה",
     select_print_items: "בחר את הפריטים שברצונך להדפיס",
-    cancel: "ביטול"
+    cancel: "ביטול",
+    language: "שפה"
   }
 };
 
@@ -117,7 +120,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [language]);
 
   const t = (key: string) => {
-    return translations[language][key] || key;
+    return translations[language][key as keyof typeof translations['en']] || key;
   };
 
   const value: LanguageContextProps = {
