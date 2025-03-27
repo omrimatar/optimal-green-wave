@@ -18,6 +18,7 @@ import { getLatestLambdaDebugData } from '@/lib/traffic/optimization';
 import { DebugDialog } from '@/components/DebugDialog';
 import { useMaintenanceMode } from '@/contexts/MaintenanceContext';
 import { AdminLoginDialog } from '@/components/AdminLoginDialog';
+import { PrintDialog } from '@/components/PrintDialog';
 
 const Index = () => {
   const { t, language } = useLanguage();
@@ -386,8 +387,13 @@ const Index = () => {
   return (
     <div className="min-h-screen p-4 md:p-8 bg-gradient-to-br from-green-50 to-blue-50" dir={language === 'he' ? 'rtl' : 'ltr'}>
       <div className="max-w-[1600px] mx-auto space-y-4 md:space-y-8 animate-fade-up">
-        <div className="flex justify-end mb-4">
-          <LanguageToggle />
+        <div className="flex justify-between items-center mb-4">
+          <div className="no-print">
+            <PrintDialog />
+          </div>
+          <div>
+            <LanguageToggle />
+          </div>
         </div>
         
         <div className="flex flex-col items-center justify-center space-y-2 md:space-y-4">
@@ -403,7 +409,7 @@ const Index = () => {
           </div>
         </div>
 
-        <Card className="p-3 md:p-6 glassmorphism">
+        <Card className="p-3 md:p-6 glassmorphism intersection-data">
           <div className="space-y-4 md:space-y-6">
             <FileActions 
               speed={speed} 
