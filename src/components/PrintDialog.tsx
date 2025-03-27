@@ -46,6 +46,122 @@ export function PrintDialog() {
     // Add print-only classes based on selected options
     document.body.classList.add("is-printing");
     
+    // Add custom print stylesheet
+    const style = document.createElement('style');
+    style.id = 'print-style';
+    style.innerHTML = `
+      @media print {
+        @page {
+          size: A4;
+          margin: 1cm;
+        }
+        
+        body {
+          font-family: Arial, sans-serif;
+        }
+        
+        /* Hide UI elements */
+        header, nav, button, .sidebar, .actions-row {
+          display: none !important;
+        }
+        
+        /* Format input data for better readability */
+        .print-intersectionData .input-data-section {
+          break-inside: avoid;
+          margin-bottom: 20px;
+          page-break-inside: avoid;
+        }
+        
+        .print-intersectionData .input-data-section h3 {
+          font-size: 18px;
+          margin-bottom: 10px;
+          border-bottom: 1px solid #ccc;
+          padding-bottom: 5px;
+        }
+        
+        .print-intersectionData .intersection-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 20px;
+        }
+        
+        .print-intersectionData .intersection-table th,
+        .print-intersectionData .intersection-table td {
+          border: 1px solid #ddd;
+          padding: 8px;
+          text-align: ${language === 'he' ? 'right' : 'left'};
+        }
+        
+        .print-intersectionData .intersection-table th {
+          background-color: #f2f2f2;
+          font-weight: bold;
+        }
+        
+        /* Green Wave Chart formatting */
+        .print-greenWaveChart .green-wave-chart {
+          page-break-inside: avoid;
+          page-break-before: always;
+          margin-bottom: 20px;
+          max-height: 40vh;
+        }
+        
+        /* Optimization Charts formatting */
+        .print-optimizationCharts .optimization-charts {
+          page-break-inside: avoid;
+          page-break-before: always;
+          margin-bottom: 20px;
+        }
+        
+        /* Metrics Table formatting */
+        .print-metricsTable .metrics-table {
+          page-break-inside: avoid;
+          page-break-before: always;
+        }
+        
+        /* Hide sections that shouldn't be printed */
+        .hide-intersectionData .input-data-section,
+        .hide-greenWaveChart .green-wave-chart,
+        .hide-optimizationCharts .optimization-charts,
+        .hide-metricsTable .metrics-table {
+          display: none !important;
+        }
+        
+        /* Add title on each page */
+        .print-header {
+          text-align: center;
+          margin-bottom: 20px;
+          font-size: 24px;
+          font-weight: bold;
+          display: block !important;
+        }
+        
+        /* Add page numbers */
+        .print-footer {
+          position: fixed;
+          bottom: 0;
+          width: 100%;
+          text-align: center;
+          font-size: 10px;
+          display: block !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Add print header and footer
+    const header = document.createElement('div');
+    header.className = 'print-header';
+    header.style.display = 'none';
+    header.innerHTML = t('app_title');
+    document.body.appendChild(header);
+    
+    const footer = document.createElement('div');
+    footer.className = 'print-footer';
+    footer.style.display = 'none';
+    footer.innerHTML = new Date().toLocaleDateString();
+    document.body.appendChild(footer);
+    
+    // Add classes for selected options
     printOptions.forEach(option => {
       if (option.checked) {
         document.body.classList.add(`print-${option.id}`);
@@ -57,13 +173,22 @@ export function PrintDialog() {
     // Trigger print
     window.print();
 
-    // Clean up classes after print dialog is closed
+    // Clean up after print dialog is closed
     setTimeout(() => {
       document.body.classList.remove("is-printing");
+      
+      // Remove print-specific classes
       printOptions.forEach(option => {
         document.body.classList.remove(`print-${option.id}`);
         document.body.classList.remove(`hide-${option.id}`);
       });
+      
+      // Remove added elements
+      const styleElement = document.getElementById('print-style');
+      if (styleElement) styleElement.remove();
+      
+      if (header.parentNode) header.parentNode.removeChild(header);
+      if (footer.parentNode) footer.parentNode.removeChild(footer);
     }, 1000);
     
     setOpen(false);
