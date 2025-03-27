@@ -117,6 +117,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     localStorage.setItem('language', language);
+    document.documentElement.dir = language === 'he' ? 'rtl' : 'ltr';
   }, [language]);
 
   const t = (key: string) => {
