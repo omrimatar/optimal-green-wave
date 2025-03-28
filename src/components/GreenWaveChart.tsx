@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -100,26 +99,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     setTooltipInfo(prev => ({ ...prev, visible: false }));
   };
 
-  // Helper function to constrain a value within the valid range [0, cycleTime]
-  const constrainToBounds = (value: number, cycleTime: number): number => {
-    return Math.max(0, Math.min(value, cycleTime));
-  };
-
-  // Helper function to determine if a line segment is completely outside the valid range
-  const isLineOutOfBounds = (y1: number, y2: number, cycleTime: number): boolean => {
-    // Both points are below 0 or both above cycleTime
-    return (y1 < 0 && y2 < 0) || (y1 > cycleTime && y2 > cycleTime);
-  };
-
-  // Helper function to calculate new X position when Y is constrained
-  const calculateNewX = (x1: number, y1: number, x2: number, y2: number, newY: number): number => {
-    // Avoid division by zero
-    if (y2 === y1) return x1;
-    
-    // Linear interpolation formula: x = x1 + (x2 - x1) * (newY - y1) / (y2 - y1)
-    return x1 + (x2 - x1) * (newY - y1) / (y2 - y1);
-  };
-
   const generateYGridLines = () => {
     const interval = 10;
     const lines = [];
@@ -198,443 +177,411 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       );
       
       if (upstreamBandwidth > 0) {
-        // Constrain origin and destination points to valid range [0, cycleTime]
-        const constrainedOriginLow = constrainToBounds(pair.up.origin_low, cycleTime);
-        const constrainedOriginHigh = constrainToBounds(pair.up.origin_high, cycleTime);
-        const constrainedDestLow = constrainToBounds(pair.up.dest_low, cycleTime);
-        const constrainedDestHigh = constrainToBounds(pair.up.dest_high, cycleTime);
-        
-        const upOriginLowY = dimensions.height - 40 - yScale(constrainedOriginLow);
-        const upOriginHighY = dimensions.height - 40 - yScale(constrainedOriginHigh);
-        const upDestLowY = dimensions.height - 40 - yScale(constrainedDestLow);
-        const upDestHighY = dimensions.height - 40 - yScale(constrainedDestHigh);
+        const upOriginLowY = dimensions.height - 40 - yScale(pair.up.origin_low);
+        const upOriginHighY = dimensions.height - 40 - yScale(pair.up.origin_high);
+        const upDestLowY = dimensions.height - 40 - yScale(pair.up.dest_low);
+        const upDestHighY = dimensions.height - 40 - yScale(pair.up.dest_high);
         
         const upLowWrapsAround = pair.up.dest_low < pair.up.origin_low;
         const upHighWrapsAround = pair.up.dest_high < pair.up.origin_high;
 
-        console.log(`Upstream low line: origin=${constrainedOriginLow.toFixed(2)}, dest=${constrainedDestLow.toFixed(2)}, wraps=${upLowWrapsAround}`);
-        console.log(`Upstream high line: origin=${constrainedOriginHigh.toFixed(2)}, dest=${constrainedDestHigh.toFixed(2)}, wraps=${upHighWrapsAround}`);
+        console.log(`Upstream low line: origin=${pair.up.origin_low.toFixed(2)}, dest=${pair.up.dest_low.toFixed(2)}, wraps=${upLowWrapsAround}`);
+        console.log(`Upstream high line: origin=${pair.up.origin_high.toFixed(2)}, dest=${pair.up.dest_high.toFixed(2)}, wraps=${upHighWrapsAround}`);
         
-        // Only draw lines if they're not completely outside the bounds
-        if (!isLineOutOfBounds(pair.up.origin_low, pair.up.dest_low, cycleTime)) {
-          if (upLowWrapsAround) {
-            const totalTimeDiff = cycleTime - constrainedOriginLow + constrainedDestLow;
-            const timeToCycleEnd = cycleTime - constrainedOriginLow;
-            const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
-            const distanceToTravel = destX - originX;
-            const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
-            const xAtCycleEnd = originX + distanceToCycleEnd;
-            
-            const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
-            const upCycleStartY = dimensions.height - 40 - yScale(0);
-            
-            console.log(`Upstream low wrap calculation:`, {
-              totalTimeDiff,
-              timeToCycleEnd,
-              proportionToCycleEnd,
-              distanceToTravel,
-              distanceToCycleEnd,
-              xAtCycleEnd,
-              upOriginLowY,
-              upCycleEndY,
-              upCycleStartY,
-              upDestLowY
-            });
-            
-            lines.push(
-              <line
-                key={`up-low-part1-${index}`}
-                x1={originX}
-                y1={upOriginLowY}
-                x2={xAtCycleEnd}
-                y2={upCycleEndY}
-                className="line-groove line-groove-upstream"
-                onMouseEnter={(e) => {
-                  const content = (
-                    <div>
-                      <p>כיוון: עם הזרם</p>
-                      <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                      <p>נקודה תחתונה - חלק 1 (עד סוף המחזור)</p>
-                      <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                    </div>
-                  );
-                  handleShowTooltip(e.clientX, e.clientY, content);
-                }}
-                onMouseLeave={handleHideTooltip}
-              />
-            );
-            
-            lines.push(
-              <line
-                key={`up-low-part2-${index}`}
-                x1={xAtCycleEnd}
-                y1={upCycleStartY}
-                x2={destX}
-                y2={upDestLowY}
-                className="line-groove line-groove-upstream"
-                onMouseEnter={(e) => {
-                  const content = (
-                    <div>
-                      <p>כיוון: עם הזרם</p>
-                      <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                      <p>נקודה תחתונה - חלק 2 (מתחילת המחזור)</p>
-                      <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                    </div>
-                  );
-                  handleShowTooltip(e.clientX, e.clientY, content);
-                }}
-                onMouseLeave={handleHideTooltip}
-              />
-            );
-          } else {
-            lines.push(
-              <line
-                key={`up-low-${index}`}
-                x1={originX}
-                y1={upOriginLowY}
-                x2={destX}
-                y2={upDestLowY}
-                className="line-groove line-groove-upstream"
-                onMouseEnter={(e) => {
-                  const content = (
-                    <div>
-                      <p>כיוון: עם הזרם</p>
-                      <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                      <p>נקודה תחתונה</p>
-                      <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                    </div>
-                  );
-                  handleShowTooltip(e.clientX, e.clientY, content);
-                }}
-                onMouseLeave={handleHideTooltip}
-              />
-            );
-          }
+        if (upLowWrapsAround) {
+          const totalTimeDiff = cycleTime - pair.up.origin_low + pair.up.dest_low;
+          const timeToCycleEnd = cycleTime - pair.up.origin_low;
+          const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
+          const distanceToTravel = destX - originX;
+          const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
+          const xAtCycleEnd = originX + distanceToCycleEnd;
+          
+          const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
+          const upCycleStartY = dimensions.height - 40 - yScale(0);
+          
+          console.log(`Upstream low wrap calculation:`, {
+            totalTimeDiff,
+            timeToCycleEnd,
+            proportionToCycleEnd,
+            distanceToTravel,
+            distanceToCycleEnd,
+            xAtCycleEnd,
+            upOriginLowY,
+            upCycleEndY,
+            upCycleStartY,
+            upDestLowY
+          });
+          
+          lines.push(
+            <line
+              key={`up-low-part1-${index}`}
+              x1={originX}
+              y1={upOriginLowY}
+              x2={xAtCycleEnd}
+              y2={upCycleEndY}
+              className="line-groove line-groove-upstream"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם</p>
+                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                    <p>נקודה תחתונה - חלק 1 (עד סוף המחזור)</p>
+                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          
+          lines.push(
+            <line
+              key={`up-low-part2-${index}`}
+              x1={xAtCycleEnd}
+              y1={upCycleStartY}
+              x2={destX}
+              y2={upDestLowY}
+              className="line-groove line-groove-upstream"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם</p>
+                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                    <p>נקודה תחתונה - חלק 2 (מתחילת המחזור)</p>
+                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
         } else {
-          console.log(`Skipping upstream low line for ${pair.from_junction}->${pair.to_junction} due to out of bounds values: origin=${pair.up.origin_low}, dest=${pair.up.dest_low}`);
+          lines.push(
+            <line
+              key={`up-low-${index}`}
+              x1={originX}
+              y1={upOriginLowY}
+              x2={destX}
+              y2={upDestLowY}
+              className="line-groove line-groove-upstream"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם</p>
+                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                    <p>נקודה תחתונה</p>
+                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
         }
         
-        // Only draw high lines if they're not completely outside the bounds  
-        if (!isLineOutOfBounds(pair.up.origin_high, pair.up.dest_high, cycleTime)) {
-          if (upHighWrapsAround) {
-            const totalTimeDiff = cycleTime - constrainedOriginHigh + constrainedDestHigh;
-            const timeToCycleEnd = cycleTime - constrainedOriginHigh;
-            const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
-            const distanceToTravel = destX - originX;
-            const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
-            const xAtCycleEnd = originX + distanceToCycleEnd;
-            
-            const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
-            const upCycleStartY = dimensions.height - 40 - yScale(0);
-            
-            console.log(`Upstream high wrap calculation:`, {
-              pair: `${pair.from_junction}->${pair.to_junction}`,
-              origin_high: constrainedOriginHigh,
-              dest_high: constrainedDestHigh,
-              totalTimeDiff,
-              timeToCycleEnd,
-              proportionToCycleEnd,
-              distanceToTravel,
-              distanceToCycleEnd,
-              originX,
-              destX,
-              xAtCycleEnd,
-              upOriginHighY,
-              upCycleEndY,
-              upCycleStartY,
-              upDestHighY
-            });
-            
-            lines.push(
-              <line
-                key={`up-high-part1-${index}`}
-                x1={originX}
-                y1={upOriginHighY}
-                x2={xAtCycleEnd}
-                y2={upCycleEndY}
-                className="line-ridge line-ridge-upstream"
-                onMouseEnter={(e) => {
-                  const content = (
-                    <div>
-                      <p>כיוון: עם הזרם</p>
-                      <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                      <p>נקודה עליונה - חלק 1 (עד סוף המחזור)</p>
-                      <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                    </div>
-                  );
-                  handleShowTooltip(e.clientX, e.clientY, content);
-                }}
-                onMouseLeave={handleHideTooltip}
-              />
-            );
-            
-            lines.push(
-              <line
-                key={`up-high-part2-${index}`}
-                x1={xAtCycleEnd}
-                y1={upCycleStartY}
-                x2={destX}
-                y2={upDestHighY}
-                className="line-ridge line-ridge-upstream"
-                onMouseEnter={(e) => {
-                  const content = (
-                    <div>
-                      <p>כיוון: עם הזרם</p>
-                      <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                      <p>נקודה עליונה - חלק 2 (מתחילת המחזור)</p>
-                      <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                    </div>
-                  );
-                  handleShowTooltip(e.clientX, e.clientY, content);
-                }}
-                onMouseLeave={handleHideTooltip}
-              />
-            );
-          } else {
-            lines.push(
-              <line
-                key={`up-high-${index}`}
-                x1={originX}
-                y1={upOriginHighY}
-                x2={destX}
-                y2={upDestHighY}
-                className="line-ridge line-ridge-upstream"
-                onMouseEnter={(e) => {
-                  const content = (
-                    <div>
-                      <p>כיוון: עם הזרם</p>
-                      <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                      <p>נקודה עליונה</p>
-                      <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                    </div>
-                  );
-                  handleShowTooltip(e.clientX, e.clientY, content);
-                }}
-                onMouseLeave={handleHideTooltip}
-              />
-            );
-          }
+        if (upHighWrapsAround) {
+          const totalTimeDiff = cycleTime - pair.up.origin_high + pair.up.dest_high;
+          const timeToCycleEnd = cycleTime - pair.up.origin_high;
+          const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
+          const distanceToTravel = destX - originX;
+          const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
+          const xAtCycleEnd = originX + distanceToCycleEnd;
+          
+          const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
+          const upCycleStartY = dimensions.height - 40 - yScale(0);
+          
+          console.log(`Upstream high wrap calculation:`, {
+            pair: `${pair.from_junction}->${pair.to_junction}`,
+            origin_high: pair.up.origin_high,
+            dest_high: pair.up.dest_high,
+            totalTimeDiff,
+            timeToCycleEnd,
+            proportionToCycleEnd,
+            distanceToTravel,
+            distanceToCycleEnd,
+            originX,
+            destX,
+            xAtCycleEnd,
+            upOriginHighY,
+            upCycleEndY,
+            upCycleStartY,
+            upDestHighY
+          });
+          
+          lines.push(
+            <line
+              key={`up-high-part1-${index}`}
+              x1={originX}
+              y1={upOriginHighY}
+              x2={xAtCycleEnd}
+              y2={upCycleEndY}
+              className="line-ridge line-ridge-upstream"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם</p>
+                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                    <p>נקודה עליונה - חלק 1 (עד סוף המחזור)</p>
+                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          
+          lines.push(
+            <line
+              key={`up-high-part2-${index}`}
+              x1={xAtCycleEnd}
+              y1={upCycleStartY}
+              x2={destX}
+              y2={upDestHighY}
+              className="line-ridge line-ridge-upstream"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם</p>
+                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                    <p>נקודה עליונה - חלק 2 (מתחילת המחזור)</p>
+                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
         } else {
-          console.log(`Skipping upstream high line for ${pair.from_junction}->${pair.to_junction} due to out of bounds values: origin=${pair.up.origin_high}, dest=${pair.up.dest_high}`);
+          lines.push(
+            <line
+              key={`up-high-${index}`}
+              x1={originX}
+              y1={upOriginHighY}
+              x2={destX}
+              y2={upDestHighY}
+              className="line-ridge line-ridge-upstream"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם</p>
+                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
+                    <p>נקודה עליונה</p>
+                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
         }
       } else {
         console.log(`Skipping upstream lines for ${pair.from_junction}->${pair.to_junction} due to zero or negative bandwidth: ${upstreamBandwidth}`);
       }
 
       if (downstreamBandwidth > 0) {
-        // Constrain origin and destination points to valid range [0, cycleTime]
-        const constrainedOriginLow = constrainToBounds(pair.down.origin_low, cycleTime);
-        const constrainedOriginHigh = constrainToBounds(pair.down.origin_high, cycleTime);
-        const constrainedDestLow = constrainToBounds(pair.down.dest_low, cycleTime);
-        const constrainedDestHigh = constrainToBounds(pair.down.dest_high, cycleTime);
-        
-        const downOriginLowY = dimensions.height - 40 - yScale(constrainedOriginLow);
-        const downOriginHighY = dimensions.height - 40 - yScale(constrainedOriginHigh);
-        const downDestLowY = dimensions.height - 40 - yScale(constrainedDestLow);
-        const downDestHighY = dimensions.height - 40 - yScale(constrainedDestHigh);
+        const downOriginLowY = dimensions.height - 40 - yScale(pair.down.origin_low);
+        const downOriginHighY = dimensions.height - 40 - yScale(pair.down.origin_high);
+        const downDestLowY = dimensions.height - 40 - yScale(pair.down.dest_low);
+        const downDestHighY = dimensions.height - 40 - yScale(pair.down.dest_high);
         
         const downLowWrapsAround = pair.down.dest_low < pair.down.origin_low;
         const downHighWrapsAround = pair.down.dest_high < pair.down.origin_high;
         
-        console.log(`Downstream low line: origin=${constrainedOriginLow.toFixed(2)}, dest=${constrainedDestLow.toFixed(2)}, wraps=${downLowWrapsAround}`);
-        console.log(`Downstream high line: origin=${constrainedOriginHigh.toFixed(2)}, dest=${constrainedDestHigh.toFixed(2)}, wraps=${downHighWrapsAround}`);
+        console.log(`Downstream low line: origin=${pair.down.origin_low.toFixed(2)}, dest=${pair.down.dest_low.toFixed(2)}, wraps=${downLowWrapsAround}`);
+        console.log(`Downstream high line: origin=${pair.down.origin_high.toFixed(2)}, dest=${pair.down.dest_high.toFixed(2)}, wraps=${downHighWrapsAround}`);
         
-        // Only draw low lines if they're not completely outside the bounds
-        if (!isLineOutOfBounds(pair.down.origin_low, pair.down.dest_low, cycleTime)) {
-          if (downLowWrapsAround) {
-            const totalTimeDiff = cycleTime - constrainedOriginLow + constrainedDestLow;
-            const timeToCycleEnd = cycleTime - constrainedOriginLow;
-            const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
-            const distanceToTravel = originX - destX;
-            const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
-            const xAtCycleEnd = destX + distanceToCycleEnd;
-            
-            const downCycleEndY = dimensions.height - 40 - yScale(cycleTime);
-            const downCycleStartY = dimensions.height - 40 - yScale(0);
-            
-            console.log(`Downstream wrap calculation for low line:`, {
-              totalTimeDiff,
-              timeToCycleEnd,
-              proportionToCycleEnd,
-              distanceToTravel,
-              distanceToCycleEnd,
-              xAtCycleEnd,
-              downOriginLowY,
-              downCycleEndY,
-              downCycleStartY,
-              downDestLowY
-            });
-            
-            lines.push(
-              <line
-                key={`down-low-part1-${index}`}
-                x1={destX}
-                y1={downOriginLowY}
-                x2={xAtCycleEnd}
-                y2={downCycleEndY}
-                className="line-groove line-groove-downstream"
-                onMouseEnter={(e) => {
-                  const content = (
-                    <div>
-                      <p>כיוון: נגד הזרם</p>
-                      <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                      <p>נקודה תחתונה - חלק 1 (עד סוף המחזור)</p>
-                      <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                    </div>
-                  );
-                  handleShowTooltip(e.clientX, e.clientY, content);
-                }}
-                onMouseLeave={handleHideTooltip}
-              />
-            );
-            
-            lines.push(
-              <line
-                key={`down-low-part2-${index}`}
-                x1={xAtCycleEnd}
-                y1={downCycleStartY}
-                x2={originX}
-                y2={downDestLowY}
-                className="line-groove line-groove-downstream"
-                onMouseEnter={(e) => {
-                  const content = (
-                    <div>
-                      <p>כיוון: נגד הזרם</p>
-                      <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                      <p>נקודה תחתונה - חלק 2 (מתחילת המחזור)</p>
-                      <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                    </div>
-                  );
-                  handleShowTooltip(e.clientX, e.clientY, content);
-                }}
-                onMouseLeave={handleHideTooltip}
-              />
-            );
-          } else {
-            lines.push(
-              <line
-                key={`down-low-${index}`}
-                x1={destX}
-                y1={downOriginLowY}
-                x2={originX}
-                y2={downDestLowY}
-                className="line-groove line-groove-downstream"
-                onMouseEnter={(e) => {
-                  const content = (
-                    <div>
-                      <p>כיוון: נגד הזרם</p>
-                      <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                      <p>נקודה תחתונה</p>
-                      <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                    </div>
-                  );
-                  handleShowTooltip(e.clientX, e.clientY, content);
-                }}
-                onMouseLeave={handleHideTooltip}
-              />
-            );
-          }
+        if (downLowWrapsAround) {
+          const totalTimeDiff = cycleTime - pair.down.origin_low + pair.down.dest_low;
+          const timeToCycleEnd = cycleTime - pair.down.origin_low;
+          const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
+          const distanceToTravel = originX - destX;
+          const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
+          const xAtCycleEnd = destX + distanceToCycleEnd;
+          
+          const downCycleEndY = dimensions.height - 40 - yScale(cycleTime);
+          const downCycleStartY = dimensions.height - 40 - yScale(0);
+          
+          console.log(`Downstream wrap calculation for low line:`, {
+            totalTimeDiff,
+            timeToCycleEnd,
+            proportionToCycleEnd,
+            distanceToTravel,
+            distanceToCycleEnd,
+            xAtCycleEnd,
+            downOriginLowY,
+            downCycleEndY,
+            downCycleStartY,
+            downDestLowY
+          });
+          
+          lines.push(
+            <line
+              key={`down-low-part1-${index}`}
+              x1={destX}
+              y1={downOriginLowY}
+              x2={xAtCycleEnd}
+              y2={downCycleEndY}
+              className="line-groove line-groove-downstream"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם</p>
+                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                    <p>נקודה תחתונה - חלק 1 (עד סוף המחזור)</p>
+                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          
+          lines.push(
+            <line
+              key={`down-low-part2-${index}`}
+              x1={xAtCycleEnd}
+              y1={downCycleStartY}
+              x2={originX}
+              y2={downDestLowY}
+              className="line-groove line-groove-downstream"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם</p>
+                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                    <p>נקודה תחתונה - חלק 2 (מתחילת המחזור)</p>
+                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
         } else {
-          console.log(`Skipping downstream low line for ${pair.to_junction}->${pair.from_junction} due to out of bounds values: origin=${pair.down.origin_low}, dest=${pair.down.dest_low}`);
+          lines.push(
+            <line
+              key={`down-low-${index}`}
+              x1={destX}
+              y1={downOriginLowY}
+              x2={originX}
+              y2={downDestLowY}
+              className="line-groove line-groove-downstream"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם</p>
+                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                    <p>נקודה תחתונה</p>
+                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
         }
         
-        // Only draw high lines if they're not completely outside the bounds
-        if (!isLineOutOfBounds(pair.down.origin_high, pair.down.dest_high, cycleTime)) {
-          if (downHighWrapsAround) {
-            const totalTimeDiff = cycleTime - constrainedOriginHigh + constrainedDestHigh;
-            const timeToCycleEnd = cycleTime - constrainedOriginHigh;
-            const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
-            const distanceToTravel = originX - destX;
-            const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
-            const xAtCycleEnd = destX + distanceToCycleEnd;
-            
-            const downCycleEndY = dimensions.height - 40 - yScale(cycleTime);
-            const downCycleStartY = dimensions.height - 40 - yScale(0);
-            
-            console.log(`Downstream wrap calculation for high line:`, {
-              totalTimeDiff,
-              timeToCycleEnd,
-              proportionToCycleEnd,
-              distanceToTravel,
-              distanceToCycleEnd,
-              xAtCycleEnd,
-              downOriginHighY,
-              downCycleEndY,
-              downCycleStartY,
-              downDestHighY
-            });
-            
-            lines.push(
-              <line
-                key={`down-high-part1-${index}`}
-                x1={destX}
-                y1={downOriginHighY}
-                x2={xAtCycleEnd}
-                y2={downCycleEndY}
-                className="line-ridge line-ridge-downstream"
-                onMouseEnter={(e) => {
-                  const content = (
-                    <div>
-                      <p>כיוון: נגד הזרם</p>
-                      <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                      <p>נקודה עליונה - חלק 1 (עד סוף המחזור)</p>
-                      <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                    </div>
-                  );
-                  handleShowTooltip(e.clientX, e.clientY, content);
-                }}
-                onMouseLeave={handleHideTooltip}
-              />
-            );
-            
-            lines.push(
-              <line
-                key={`down-high-part2-${index}`}
-                x1={xAtCycleEnd}
-                y1={downCycleStartY}
-                x2={originX}
-                y2={downDestHighY}
-                className="line-ridge line-ridge-downstream"
-                onMouseEnter={(e) => {
-                  const content = (
-                    <div>
-                      <p>כיוון: נגד הזרם</p>
-                      <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                      <p>נקודה עליונה - חלק 2 (מתחילת המחזור)</p>
-                      <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                    </div>
-                  );
-                  handleShowTooltip(e.clientX, e.clientY, content);
-                }}
-                onMouseLeave={handleHideTooltip}
-              />
-            );
-          } else {
-            lines.push(
-              <line
-                key={`down-high-${index}`}
-                x1={destX}
-                y1={downOriginHighY}
-                x2={originX}
-                y2={downDestHighY}
-                className="line-ridge line-ridge-downstream"
-                onMouseEnter={(e) => {
-                  const content = (
-                    <div>
-                      <p>כיוון: נגד הזרם</p>
-                      <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
-                      <p>נקודה עליונה</p>
-                      <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
-                    </div>
-                  );
-                  handleShowTooltip(e.clientX, e.clientY, content);
-                }}
-                onMouseLeave={handleHideTooltip}
-              />
-            );
-          }
+        if (downHighWrapsAround) {
+          const totalTimeDiff = cycleTime - pair.down.origin_high + pair.down.dest_high;
+          const timeToCycleEnd = cycleTime - pair.down.origin_high;
+          const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
+          const distanceToTravel = originX - destX;
+          const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
+          const xAtCycleEnd = destX + distanceToCycleEnd;
+          
+          const downCycleEndY = dimensions.height - 40 - yScale(cycleTime);
+          const downCycleStartY = dimensions.height - 40 - yScale(0);
+          
+          console.log(`Downstream wrap calculation for high line:`, {
+            totalTimeDiff,
+            timeToCycleEnd,
+            proportionToCycleEnd,
+            distanceToTravel,
+            distanceToCycleEnd,
+            xAtCycleEnd,
+            downOriginHighY,
+            downCycleEndY,
+            downCycleStartY,
+            downDestHighY
+          });
+          
+          lines.push(
+            <line
+              key={`down-high-part1-${index}`}
+              x1={destX}
+              y1={downOriginHighY}
+              x2={xAtCycleEnd}
+              y2={downCycleEndY}
+              className="line-ridge line-ridge-downstream"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם</p>
+                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                    <p>נקודה עליונה - חלק 1 (עד סוף המחזור)</p>
+                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          
+          lines.push(
+            <line
+              key={`down-high-part2-${index}`}
+              x1={xAtCycleEnd}
+              y1={downCycleStartY}
+              x2={originX}
+              y2={downDestHighY}
+              className="line-ridge line-ridge-downstream"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם</p>
+                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                    <p>נקודה עליונה - חלק 2 (מתחילת המחזור)</p>
+                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
         } else {
-          console.log(`Skipping downstream high line for ${pair.to_junction}->${pair.from_junction} due to out of bounds values: origin=${pair.down.origin_high}, dest=${pair.down.dest_high}`);
+          lines.push(
+            <line
+              key={`down-high-${index}`}
+              x1={destX}
+              y1={downOriginHighY}
+              x2={originX}
+              y2={downDestHighY}
+              className="line-ridge line-ridge-downstream"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם</p>
+                    <p>מצומת {pair.to_junction} לצומת {pair.from_junction}</p>
+                    <p>נקודה עליונה</p>
+                    <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
         }
       } else {
         console.log(`Skipping downstream lines for ${pair.to_junction}->${pair.from_junction} due to zero or negative bandwidth: ${downstreamBandwidth}`);
