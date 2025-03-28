@@ -1,143 +1,356 @@
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+type Language = 'he' | 'en';
 
-interface LanguageContextProps {
-  language: 'en' | 'he';
+interface LanguageContextType {
+  language: Language;
+  setLanguage: (language: Language) => void;
   t: (key: string) => string;
-  setLanguage: (lang: 'en' | 'he') => void;
 }
 
-const LanguageContext = createContext<LanguageContextProps | undefined>(undefined);
-
-const translations = {
-  en: {
-    app_title: "Green Wave Optimizer",
-    app_subtitle: "Optimize traffic signal timings for a smoother commute",
-    cycle_time: "Global Cycle Time (seconds)",
-    default_speed: "Default Design Speed (km/h)",
-    intersections: "Intersections",
-    add_intersection: "Add Intersection",
-    add: "Add",
-    distance: "Distance (meters)",
-    upstream_duration: "Upstream Duration (seconds)",
-    downstream_duration: "Downstream Duration (seconds)",
-    upstream_speed: "Upstream Speed (km/h)",
-    downstream_speed: "Downstream Speed (km/h)",
-    delete_intersection: "Delete Intersection",
-    draw_existing: "Show Existing",
-    manual_calculation: "Manual Calculation",
-    manual: "Manual",
-    calculate_green_wave: "Calculate Green Wave",
-    calculate: "Calculate",
-    file_actions: "File Actions",
-    load_input: "Load Input",
-    save_input: "Save Input",
-    save_results: "Save Results",
-    optimization_weights: "Optimization Weights",
-    toggle_weights: "Toggle Weights",
-    reset_weights: "Reset Weights",
-    delays: "Delays",
-    stops: "Stops",
-    fuel: "Fuel Consumption",
-    emissions: "Emissions",
-    travel_time: "Travel Time",
-    total_score: "Total Score",
-    metrics: "Metrics",
-    optimization_charts: "Optimization Charts",
-    delays_chart: "Delays Chart",
-    stops_chart: "Stops Chart",
-    fuel_chart: "Fuel Consumption Chart",
-    emissions_chart: "Emissions Chart",
-    travel_time_chart: "Travel Time Chart",
-    baseline: "Baseline",
-    optimized: "Optimized",
-    manual_offsets: "Manual Offsets",
-    offsets_description: "Enter the desired offsets for each intersection. The first intersection's offset is fixed at 0.",
-    intersection: "Intersection",
-    print: "Print",
-    print_options: "Print Options",
-    select_print_items: "Select the items you want to print",
-    cancel: "Cancel",
-    language: "Language"
+const translations: Record<string, Record<Language, string>> = {
+  // General
+  "app_title": {
+    he: "מחשבון גל ירוק",
+    en: "Green Wave Calculator"
   },
-  he: {
-    app_title: "מתאם גל ירוק",
-    app_subtitle: "מתאם את תזמוני הרמזורים לנסיעה חלקה יותר",
-    cycle_time: "זמן מחזור גלובלי (שניות)",
-    default_speed: "מהירות תכן ברירת מחדל (קמ\"ש)",
-    intersections: "צמתים",
-    add_intersection: "הוסף צומת",
-    add: "הוסף",
-    distance: "מרחק (מטרים)",
-    upstream_duration: "משך זרם עולה (שניות)",
-    downstream_duration: "משך זרם יורד (שניות)",
-    upstream_speed: "מהירות זרם עולה (קמ\"ש)",
-    downstream_speed: "מהירות זרם יורד (קמ\"ש)",
-    delete_intersection: "מחק צומת",
-    draw_existing: "הצג מצב קיים",
-    manual_calculation: "חישוב ידני",
-    manual: "ידני",
-    calculate_green_wave: "חשב גל ירוק",
-    calculate: "חשב",
-    file_actions: "פעולות קובץ",
-    load_input: "טען קלט",
-    save_input: "שמור קלט",
-    save_results: "שמור תוצאות",
-    optimization_weights: "משקלי אופטימיזציה",
-    toggle_weights: "הצג/הסתר משקלים",
-    reset_weights: "אפס משקלים",
-    delays: "עיכובים",
-    stops: "עצירות",
-    fuel: "צריכת דלק",
-    emissions: "פליטות",
-    travel_time: "זמן נסיעה",
-    total_score: "ניקוד כולל",
-    metrics: "מדדים",
-    optimization_charts: "תרשימי אופטימיזציה",
-    delays_chart: "תרשים עיכובים",
-    stops_chart: "תרשים עצירות",
-    fuel_chart: "תרשים צריכת דלק",
-    emissions_chart: "תרשים פליטות",
-    travel_time_chart: "תרשים זמן נסיעה",
-    baseline: "קו בסיס",
-    optimized: "מותאם",
-    manual_offsets: "הזחות ידניות",
-    offsets_description: "הזן את ההזחות הרצויות עבור כל צומת. ההזחה של הצומת הראשון קבועה על 0.",
-    intersection: "צומת",
-    print: "הדפסה",
-    print_options: "אפשרויות הדפסה",
-    select_print_items: "בחר את הפריטים שברצונך להדפיס",
-    cancel: "ביטול",
-    language: "שפה"
+  "app_subtitle": {
+    he: "כלי לתכנון אופטימלי של תזמוני רמזורים",
+    en: "A tool for optimal traffic light timing planning"
+  },
+  
+  // Input card
+  "cycle_time": {
+    he: "זמן מחזור (שניות)",
+    en: "Cycle Time (seconds)"
+  },
+  "default_speed": {
+    he: "מהירות ברירת מחדל (קמ\"ש)",
+    en: "Default Speed (km/h)"
+  },
+  "intersections": {
+    he: "צמתים",
+    en: "Intersections"
+  },
+  "add_intersection": {
+    he: "הוסף צומת",
+    en: "Add Intersection"
+  },
+  "add": {
+    he: "הוסף",
+    en: "Add"
+  },
+  
+  // Buttons
+  "draw_existing": {
+    he: "צייר מצב קיים",
+    en: "Draw Existing State"
+  },
+  "manual_calculation": {
+    he: "חישוב ידני",
+    en: "Manual Calculation"
+  },
+  "manual": {
+    he: "ידני",
+    en: "Manual"
+  },
+  "calculate": {
+    he: "חשב",
+    en: "Calculate"
+  },
+  "calculate_green_wave": {
+    he: "חשב גל ירוק",
+    en: "Calculate Green Wave"
+  },
+  
+  // Intersection fields
+  "intersection": {
+    he: "צומת",
+    en: "Intersection"
+  },
+  "distance": {
+    he: "מרחק (מטר)",
+    en: "Distance (meters)"
+  },
+  "half_cycle_time": {
+    he: "חצי זמן מחזור",
+    en: "Half Cycle Time"
+  },
+  "effective_cycle_time": {
+    he: "זמן מחזור בפועל",
+    en: "Effective Cycle Time"
+  },
+  "seconds": {
+    he: "שניות",
+    en: "seconds"
+  },
+  "upstream_speed": {
+    he: "מהירות במעלה הזרם (קמ\"ש)",
+    en: "Upstream Speed (km/h)"
+  },
+  "downstream_speed": {
+    he: "מהירות במורד הזרם (קמ\"ש)",
+    en: "Downstream Speed (km/h)"
+  },
+  "green_phases": {
+    he: "פאזות ירוקות",
+    en: "Green Phases"
+  },
+  "add_upstream_phase": {
+    he: "הוסף מופע במעלה",
+    en: "Add Upstream Phase"
+  },
+  "add_downstream_phase": {
+    he: "הוסף מופע במורד",
+    en: "Add Downstream Phase"
+  },
+  "upstream_phase": {
+    he: "פאזה ירוקה במעלה הזרם",
+    en: "Upstream Green Phase"
+  },
+  "downstream_phase": {
+    he: "פאזה ירוקה במורד הזרם",
+    en: "Downstream Green Phase"
+  },
+  "start_time": {
+    he: "זמן התחלה",
+    en: "Start Time"
+  },
+  "duration": {
+    he: "משך",
+    en: "Duration"
+  },
+  
+  // Weights
+  "show_weights": {
+    he: "הצג משקולות אופטימיזציה",
+    en: "Show Optimization Weights"
+  },
+  "hide_weights": {
+    he: "הסתר משקולות אופטימיזציה",
+    en: "Hide Optimization Weights"
+  },
+  "reset": {
+    he: "איפוס",
+    en: "Reset"
+  },
+  "corridor_wave": {
+    he: "גל ירוק בציר",
+    en: "Corridor Green Wave"
+  },
+  "upstream": {
+    he: "במעלה הזרם",
+    en: "Upstream"
+  },
+  "downstream": {
+    he: "במורד הזרם",
+    en: "Downstream"
+  },
+  "pair_bandwidth": {
+    he: "רוחב פס בין צמתים סמוכים",
+    en: "Bandwidth Between Adjacent Intersections"
+  },
+  "average_delay": {
+    he: "עיכוב ממוצע",
+    en: "Average Delay"
+  },
+  "maximum_delay": {
+    he: "עיכוב מקסימלי",
+    en: "Maximum Delay"
+  },
+  
+  // Manual offset dialog
+  "manual_offsets": {
+    he: "הזנת היסטים ידנית",
+    en: "Manual Offset Input"
+  },
+  "offsets_description": {
+    he: "הזן את ערכי ה-offset עבור כל צומת (בשניות). שים לב שה-offset של הצומת הראשון תמיד יהיה 0.",
+    en: "Enter the offset values for each intersection (in seconds). Note that the offset of the first intersection will always be 0."
+  },
+  
+  // Results card
+  "optimization_results": {
+    he: "תוצאות האופטימיזציה",
+    en: "Optimization Results"
+  },
+  "manual_results": {
+    he: "תוצאות החישוב הידני",
+    en: "Manual Calculation Results"
+  },
+  "optimal": {
+    he: "אופטימלי",
+    en: "Optimal"
+  },
+  "baseline": {
+    he: "בסיס",
+    en: "Baseline"
+  },
+  "optimized": {
+    he: "אופטימיזציה",
+    en: "Optimized"
+  },
+  "initial_state": {
+    he: "מצב התחלתי",
+    en: "Initial State"
+  },
+  "manual_state": {
+    he: "מצב ידני",
+    en: "Manual State"
+  },
+  "metric": {
+    he: "מדד",
+    en: "Metric"
+  },
+  "improvement": {
+    he: "שיפור",
+    en: "Improvement"
+  },
+  
+  // Table metrics
+  "intersection_offset": {
+    he: "היסט צומת",
+    en: "Intersection Offset"
+  },
+  "upstream_local_bandwidth": {
+    he: "רוחב פס מקומי למעלה",
+    en: "Upstream Local Bandwidth"
+  },
+  "downstream_local_bandwidth": {
+    he: "רוחב פס מקומי למטה",
+    en: "Downstream Local Bandwidth"
+  },
+  "upstream_corridor_bandwidth": {
+    he: "רוחב פס בציר למעלה",
+    en: "Upstream Corridor Bandwidth"
+  },
+  "downstream_corridor_bandwidth": {
+    he: "רוחב פס בציר למטה",
+    en: "Downstream Corridor Bandwidth"
+  },
+  "upstream_avg_delay": {
+    he: "עיכוב ממוצע למעלה צמתים",
+    en: "Average Upstream Delay Intersections"
+  },
+  "downstream_avg_delay": {
+    he: "עיכוב ממוצע למטה צמתים",
+    en: "Average Downstream Delay Intersections"
+  },
+  "upstream_max_delay": {
+    he: "עיכוב מקסימלי למעלה צמתים",
+    en: "Maximum Upstream Delay Intersections"
+  },
+  "downstream_max_delay": {
+    he: "עיכוב מקסימלי למטה צמתים",
+    en: "Maximum Downstream Delay Intersections"
+  },
+  
+  // Chart titles
+  "graphic_comparison": {
+    he: "השוואה גרפית",
+    en: "Graphic Comparison"
+  },
+  "manual_graphic_comparison": {
+    he: "השוואה גרפית - מצב ידני",
+    en: "Graphic Comparison - Manual State"
+  },
+  "optimization_graphic_comparison": {
+    he: "השוואה גרפית - אופטימיזציה",
+    en: "Graphic Comparison - Optimization"
+  },
+  "existing_graphic_comparison": {
+    he: "השוואה גרפית-ידני",
+    en: "Graphic Comparison - Manual"
+  },
+  
+  // Chart metrics
+  "corridor_width": {
+    he: "רוחב מסדרון",
+    en: "Corridor Width"
+  },
+  "avg_delay": {
+    he: "עיכוב ממוצע",
+    en: "Avg Delay"
+  },
+  "positive_metrics": {
+    he: "מדדים חיוביים",
+    en: "Positive Metrics"
+  },
+  "negative_metrics": {
+    he: "מדדים שליליים",
+    en: "Negative Metrics"
+  },
+  
+  // Chart toggle 
+  "compare_directions": {
+    he: "השוואה בין כיוונים",
+    en: "Compare Directions"
+  },
+  "compare_states": {
+    he: "השוואה בין מצבים",
+    en: "Compare States"
+  },
+  "optimization": {
+    he: "אופטימיזציה",
+    en: "Optimization"
+  },
+  "directions": {
+    he: "כיוונים",
+    en: "Directions"
+  },
+  
+  // Language toggle
+  "language": {
+    he: "English",
+    en: "עברית"
+  },
+  
+  // Additional translation keys
+  "must_not_exceed": {
+    he: "לא יכול לעבור את",
+    en: "must not exceed"
+  },
+  "phase_starts_after_half_cycle": {
+    he: "יש מופע שמתחיל אחרי חצי זמן המחזור",
+    en: "there's a phase that starts after half cycle time"
+  },
+  "phase_extends_beyond_half_cycle": {
+    he: "יש מופע שחורג מחצי זמן המחזור",
+    en: "there's a phase that extends beyond half cycle time"
+  },
+  "cannot_enable_half_cycle": {
+    he: "לא ניתן להפעיל חצי זמן מחזור",
+    en: "Cannot enable half cycle time"
+  },
+  
+  // Debug button translation
+  "debug": {
+    he: "דיבאג",
+    en: "Debug"
   }
 };
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<'en' | 'he'>((localStorage.getItem('language') as 'en' | 'he') || 'he');
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-  useEffect(() => {
-    localStorage.setItem('language', language);
-    document.documentElement.dir = language === 'he' ? 'rtl' : 'ltr';
-  }, [language]);
+export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [language, setLanguage] = useState<Language>('he');
 
-  const t = (key: string) => {
-    return translations[language][key as keyof typeof translations['en']] || key;
-  };
-
-  const value: LanguageContextProps = {
-    language,
-    t,
-    setLanguage,
+  const translate = (key: string): string => {
+    if (!translations[key]) {
+      console.warn(`Missing translation for key: ${key}`);
+      return key;
+    }
+    return translations[key][language] || key;
   };
 
   return (
-    <LanguageContext.Provider value={value}>
+    <LanguageContext.Provider value={{ language, setLanguage, t: translate }}>
       {children}
     </LanguageContext.Provider>
   );
 };
 
-export const useLanguage = () => {
+export const useLanguage = (): LanguageContextType => {
   const context = useContext(LanguageContext);
   if (context === undefined) {
     throw new Error('useLanguage must be used within a LanguageProvider');

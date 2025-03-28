@@ -170,7 +170,7 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
   
   return (
     <div className="space-y-6">
-      <Card className="p-6 w-full green-wave-chart">
+      <Card className="p-6 w-full">
         <GreenWaveChart 
           intersections={chartIntersections}
           mode={mode}
@@ -183,21 +183,17 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
       
       <Card className="p-6">
         <div className="space-y-4">
-          <div className="optimization-charts">
-            <OptimizationCharts
-              baseline={results.baseline_results}
-              optimized={comparisonResults}
-              mode={mode}
-            />
-          </div>
+          <OptimizationCharts
+            baseline={results.baseline_results}
+            optimized={comparisonResults}
+            mode={mode}
+          />
           
-          <div className="metrics-table">
-            <MetricsTable 
-              baseline={results.baseline_results}
-              optimized={comparisonResults}
-              mode={mode}
-            />
-          </div>
+          <MetricsTable 
+            baseline={results.baseline_results}
+            optimized={comparisonResults}
+            mode={mode}
+          />
         </div>
       </Card>
     </div>

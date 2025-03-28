@@ -15,10 +15,10 @@ export const LanguageToggle = () => {
       variant="outline" 
       size="sm" 
       onClick={toggleLanguage}
-      className="flex items-center gap-1 min-w-[100px] justify-center"
+      className="flex items-center gap-1"
     >
       <Globe size={16} />
-      <span>{language === 'he' ? 'עברית' : 'English'}</span>
+      <span>{t('language')}</span>
     </Button>
   );
 };
