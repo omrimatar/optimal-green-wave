@@ -1,3 +1,4 @@
+
 import { callLambdaOptimization, getLatestDebugData } from './lambda-client';
 import { modifiedWeights } from '@/types/optimization';
 import type { 
@@ -46,12 +47,12 @@ export async function greenWaveOptimization(
           green_up: intersection.green_up.map(phase => ({
             start: phase.start,
             duration: phase.duration,
-            speed: phase.speed || data.travel.up.speed // Use phase-specific speed if available
+            speed: phase.speed // Use phase-specific speed from the data
           })),
           green_down: intersection.green_down.map(phase => ({
             start: phase.start,
             duration: phase.duration,
-            speed: phase.speed || data.travel.down.speed // Use phase-specific speed if available
+            speed: phase.speed // Use phase-specific speed from the data
           })),
           cycle: intersection.cycle_up || intersection.cycle_down || 90,
           use_half_cycle: intersection.use_half_cycle || false // Pass the half cycle time flag

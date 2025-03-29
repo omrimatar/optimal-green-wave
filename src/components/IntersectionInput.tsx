@@ -43,14 +43,18 @@ export const IntersectionInput = ({
     intersection.downstreamSpeed !== undefined ? intersection.downstreamSpeed.toString() : defaultSpeed.toString()
   );
   
-  // Add effect to update speeds when defaultSpeed changes
+  // Add effect to update temporary speeds when defaultSpeed changes
   useEffect(() => {
-    onChange({
-      ...intersection,
-      upstreamSpeed: defaultSpeed,
-      downstreamSpeed: defaultSpeed
-    });
-  }, [defaultSpeed]);
+    // Only update temporary speed fields if they match the previous default speed
+    // or if they were undefined
+    if (intersection.upstreamSpeed === undefined || intersection.upstreamSpeed === defaultSpeed) {
+      setTempUpstreamSpeed(defaultSpeed.toString());
+    }
+    
+    if (intersection.downstreamSpeed === undefined || intersection.downstreamSpeed === defaultSpeed) {
+      setTempDownstreamSpeed(defaultSpeed.toString());
+    }
+  }, [defaultSpeed, intersection.upstreamSpeed, intersection.downstreamSpeed]);
   
   // Initialize temp phase values
   useEffect(() => {
@@ -357,23 +361,10 @@ export const IntersectionInput = ({
   };
 
   const handleSpeedChange = (direction: 'upstream' | 'downstream', value: string) => {
-    const numValue = parseInt(value);
-    
-    if (isNaN(numValue) || numValue < 0 || numValue > 120 || !Number.isInteger(numValue)) {
-      toast.error(`${direction === 'upstream' ? t('upstream_speed') : t('downstream_speed')} ${t('must_be_between')} 0 ${t('and')} 120 km/h`);
-      return;
-    }
-    
     if (direction === 'upstream') {
-      onChange({
-        ...intersection,
-        upstreamSpeed: numValue
-      });
+      setTempUpstreamSpeed(value);
     } else {
-      onChange({
-        ...intersection,
-        downstreamSpeed: numValue
-      });
+      setTempDownstreamSpeed(value);
     }
   };
   
@@ -393,15 +384,16 @@ export const IntersectionInput = ({
       return;
     }
     
+    // If the input is valid, update the intersection with the new speed
     if (direction === 'upstream') {
       onChange({
         ...intersection,
-        upstreamSpeed: numValue
+        upstreamSpeed: numValue === defaultSpeed ? undefined : numValue
       });
     } else {
       onChange({
         ...intersection,
-        downstreamSpeed: numValue
+        downstreamSpeed: numValue === defaultSpeed ? undefined : numValue
       });
     }
   };
@@ -580,4 +572,3 @@ export const IntersectionInput = ({
     </Card>
   );
 };
-
