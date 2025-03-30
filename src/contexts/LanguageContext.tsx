@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
 
 type Language = 'he' | 'en';
@@ -88,7 +87,7 @@ const translations = {
       en: "Downstream Speed (km/h)"
     },
     "green_phases": {
-      he: "פאזות ירוקות",
+      he: "מופעים ירוקים",
       en: "Green Phases"
     },
     "add_upstream_phase": {
@@ -100,11 +99,11 @@ const translations = {
       en: "Add Downstream Phase"
     },
     "upstream_phase": {
-      he: "פאזה ירוקה במעלה הזרם",
+      he: "מופע ירוק במעלה הזרם",
       en: "Upstream Green Phase"
     },
     "downstream_phase": {
-      he: "פאזה ירוקה במורד הזרם",
+      he: "מופע ירוק במורד הזרם",
       en: "Downstream Green Phase"
     },
     "start_time": {
@@ -303,7 +302,7 @@ const translations = {
       he: "דיבאג",
       en: "Debug"
     },
-    "contact_us": 'צור קשר'
+    "contact_us": 'Contact Us'
   },
   en: {
     "app_title": {
@@ -383,7 +382,7 @@ const translations = {
       en: "Downstream Speed (km/h)"
     },
     "green_phases": {
-      he: "פאזות ירוקות",
+      he: "מופעים ירוקים",
       en: "Green Phases"
     },
     "add_upstream_phase": {
@@ -395,11 +394,11 @@ const translations = {
       en: "Add Downstream Phase"
     },
     "upstream_phase": {
-      he: "פאזה ירוקה במעלה הזרם",
+      he: "מופע ירוק במעלה הזרם",
       en: "Upstream Green Phase"
     },
     "downstream_phase": {
-      he: "פאזה ירוקה במורד הזרם",
+      he: "מופע ירוק במורד הזרם",
       en: "Downstream Green Phase"
     },
     "start_time": {
@@ -613,10 +612,8 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
       return key;
     }
     
-    // Get the correct string based on the current language
     const translationEntry = translations[language][key];
     
-    // Check if the translation is an object with language keys or a direct string
     if (typeof translationEntry === 'object' && translationEntry !== null) {
       return translationEntry[language] || key;
     }
