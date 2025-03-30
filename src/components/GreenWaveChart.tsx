@@ -659,6 +659,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               console.log(`  Cycle Time: ${intersection.cycleTime}s`);
               console.log(`  Offset: ${offset}s`);
               console.log(`  Green Phases:`, intersection.greenPhases);
+              console.log(`  UseHalfCycleTime: ${intersection.useHalfCycleTime}`);
               
               return intersection.greenPhases.map((phase, j) => {
                 const x = originX + xScale(intersection.distance);
@@ -679,8 +680,12 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 console.log(`    Adjusted End: ${wrappedPhase ? intersection.cycleTime : endTime}s`);
                 console.log(`    Wrapped: ${wrappedPhase}`);
                 
-                return (
-                  <React.Fragment key={`phase-${i}-${j}`}>
+                // Generate phases for the original representation
+                const phaseElements = [];
+                
+                // Add the original phase
+                phaseElements.push(
+                  <React.Fragment key={`phase-${i}-${j}-original`}>
                     <GreenPhaseBar
                       x={x + xOffset}
                       startTime={startTime}
@@ -732,111 +737,25 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     )}
                   </React.Fragment>
                 );
-              });
-            })}
-
-            {/* Y-axis labels every 10 seconds */}
-            {Array.from({ length: Math.ceil(maxCycleTime / 10) + 1 }).map((_, i) => {
-              const value = i * 10;
-              const y = dimensions.height - (isMobile ? 30 : 40) - yScale(value);
-              return (
-                <g key={`y-tick-${i}`}>
-                  <line 
-                    x1={leftPadding - 5} 
-                    y1={y} 
-                    x2={leftPadding} 
-                    y2={y} 
-                    stroke="black" 
-                    strokeWidth={1} 
-                  />
-                  <text 
-                    x={leftPadding - (isMobile ? 27 : 30)} 
-                    y={y} 
-                    textAnchor="end" 
-                    fontSize={isMobile ? 10 : 12}
-                    dominantBaseline="middle"
-                  >
-                    {value}
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* X-axis labels for each 100 meters and intersection locations */}
-            {(() => {
-              // Create a set of all x-axis label positions to avoid duplicates
-              const labelPositions = new Set<number>();
-              
-              // Add labels every 100 meters up to and including the last intersection
-              const lastIntersectionDistance = Math.max(...intersections.map(i => i.distance));
-              for (let i = 0; i <= Math.ceil(lastIntersectionDistance / 100); i++) {
-                labelPositions.add(i * 100);
-              }
-              
-              // Add labels for each intersection location
-              intersections.forEach(intersection => {
-                labelPositions.add(intersection.distance);
-              });
-              
-              // Convert to sorted array
-              const sortedPositions = Array.from(labelPositions).sort((a, b) => a - b);
-              
-              return sortedPositions.map(value => {
-                const x = originX + xScale(value);
-                return (
-                  <g key={`x-tick-${value}`}>
-                    <line 
-                      x1={x} 
-                      y1={dimensions.height - (isMobile ? 30 : 40)} 
-                      x2={x} 
-                      y2={dimensions.height - (isMobile ? 25 : 35)} 
-                      stroke="black" 
-                      strokeWidth={1} 
-                    />
-                    <text 
-                      x={x} 
-                      y={dimensions.height - (isMobile ? 15 : 20)} 
-                      textAnchor="middle" 
-                      fontSize={isMobile ? 9 : 12}
-                    >
-                      {isMobile && value > 999 
-                        ? `${(value/1000).toFixed(1)}K` 
-                        : value}
-                    </text>
-                  </g>
-                );
-              });
-            })()}
-
-            <text 
-              x={dimensions.width / 2} 
-              y={dimensions.height - (isMobile ? 3 : 5)} 
-              textAnchor="middle" 
-              fontSize={isMobile ? 12 : 14}
-            >
-              מרחק (מטר)
-            </text>
-            <text 
-              x={isMobile ? 10 : 15} 
-              y={dimensions.height / 2} 
-              textAnchor="middle" 
-              fontSize={isMobile ? 12 : 14}
-              transform={`rotate(-90 ${isMobile ? 10 : 15} ${dimensions.height / 2})`}
-            >
-              זמן (שניות)
-            </text>
-          </svg>
-          
-          {tooltipInfo.visible && (
-            <GreenWaveTooltip
-              x={tooltipInfo.x}
-              y={tooltipInfo.y}
-              content={tooltipInfo.content}
-              isMobile={isMobile}
-            />
-          )}
-        </div>
-      </CardContent>
-    </>
-  );
-};
+                
+                // If half cycle time is enabled, duplicate the phase at half cycle time distance
+                if (intersection.useHalfCycleTime) {
+                  const halfCycleTime = intersection.cycleTime / 2;
+                  let halfCycleStartTime = (startTime + halfCycleTime) % intersection.cycleTime;
+                  let halfCycleEndTime = (halfCycleStartTime + phase.duration) % intersection.cycleTime;
+                  
+                  if (halfCycleEndTime === 0) halfCycleEndTime = intersection.cycleTime;
+                  
+                  const halfCycleWrappedPhase = halfCycleEndTime < halfCycleStartTime;
+                  
+                  console.log(`  Half-Cycle Phase ${j+1}:`);
+                  console.log(`    Direction: ${phase.direction}`);
+                  console.log(`    Half-Cycle Start: ${halfCycleStartTime}s`);
+                  console.log(`    Half-Cycle End: ${halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime}s`);
+                  console.log(`    Half-Cycle Wrapped: ${halfCycleWrappedPhase}`);
+                  
+                  phaseElements.push(
+                    <React.Fragment key={`phase-${i}-${j}-half-cycle`}>
+                      <GreenPhaseBar
+                        x={x + xOffset}
+                        startTime={halfCycleStartTime

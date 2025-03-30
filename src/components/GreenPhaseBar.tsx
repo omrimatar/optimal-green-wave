@@ -12,6 +12,7 @@ interface GreenPhaseBarProps {
   chartHeight: number;
   onMouseEnter: (e: React.MouseEvent) => void;
   onMouseLeave: () => void;
+  isHalfCycle?: boolean;
 }
 
 export const GreenPhaseBar: React.FC<GreenPhaseBarProps> = ({
@@ -24,7 +25,8 @@ export const GreenPhaseBar: React.FC<GreenPhaseBarProps> = ({
   yScale,
   chartHeight,
   onMouseEnter,
-  onMouseLeave
+  onMouseLeave,
+  isHalfCycle
 }) => {
   // Calculate Y positions (inverted because SVG Y grows downward)
   const y1 = chartHeight - yScale(startTime);
