@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
 
 type Language = 'he' | 'en';
@@ -611,7 +612,16 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
       console.warn(`Missing translation for key: ${key}`);
       return key;
     }
-    return translations[language][key] || key;
+    
+    // Get the correct string based on the current language
+    const translationEntry = translations[language][key];
+    
+    // Check if the translation is an object with language keys or a direct string
+    if (typeof translationEntry === 'object' && translationEntry !== null) {
+      return translationEntry[language] || key;
+    }
+    
+    return translationEntry || key;
   };
 
   const toggleLanguage = () => {
