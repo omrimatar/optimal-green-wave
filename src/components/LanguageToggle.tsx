@@ -4,11 +4,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Globe } from "lucide-react";
 
 export const LanguageToggle = () => {
-  const { language, setLanguage, t } = useLanguage();
-
-  const toggleLanguage = () => {
-    setLanguage(language === 'he' ? 'en' : 'he');
-  };
+  const { language, toggleLanguage, t } = useLanguage();
 
   return (
     <Button 
