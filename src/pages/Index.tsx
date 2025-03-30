@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ import { getLatestLambdaDebugData } from '@/lib/traffic/optimization';
 import { DebugDialog } from '@/components/DebugDialog';
 import { useMaintenanceMode } from '@/contexts/MaintenanceContext';
 import { AdminLoginDialog } from '@/components/AdminLoginDialog';
+import { ContactButton } from '@/components/ContactButton';
 
 const Index = () => {
   const { t, language } = useLanguage();
@@ -573,6 +575,9 @@ const Index = () => {
           open={showAdminDialog}
           onOpenChange={setShowAdminDialog}
         />
+        
+        {/* Add the contact button at the bottom */}
+        <ContactButton />
       </div>
     </div>
   );
