@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -648,8 +649,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               strokeWidth={1} 
             />
 
-            {renderDiagonalLines && renderDiagonalLines()}
-            {renderSolidDiagonalLines && renderSolidDiagonalLines()}
+            {renderDiagonalLines()}
+            {renderSolidDiagonalLines()}
 
             {intersections.map((intersection, i) => {
               const offset = mode === 'display' ? 0 : (intersection.offset || 0);
@@ -758,4 +759,73 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <React.Fragment key={`phase-${i}-${j}-half-cycle`}>
                       <GreenPhaseBar
                         x={x + xOffset}
-                        startTime={halfCycleStartTime
+                        startTime={halfCycleStartTime}
+                        endTime={halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime}
+                        cycleTime={intersection.cycleTime}
+                        direction={phase.direction}
+                        barWidth={15}
+                        yScale={yScale}
+                        chartHeight={dimensions.height - 40}
+                        isHalfCycle={true}
+                        onMouseEnter={(e) => {
+                          const content = (
+                            <div>
+                              <p>צומת: {intersection.id}</p>
+                              <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
+                              <p>התחלה: {Math.round(halfCycleStartTime)} שניות (מופע חוזר)</p>
+                              <p>סיום: {Math.round(halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime)} שניות</p>
+                              <p>היסט: {Math.round(offset)} שניות</p>
+                            </div>
+                          );
+                          handleShowTooltip(e.clientX, e.clientY, content);
+                        }}
+                        onMouseLeave={handleHideTooltip}
+                      />
+                      
+                      {halfCycleWrappedPhase && (
+                        <GreenPhaseBar
+                          x={x + xOffset}
+                          startTime={0}
+                          endTime={halfCycleEndTime}
+                          cycleTime={intersection.cycleTime}
+                          direction={phase.direction}
+                          barWidth={15}
+                          yScale={yScale}
+                          chartHeight={dimensions.height - 40}
+                          isHalfCycle={true}
+                          onMouseEnter={(e) => {
+                            const content = (
+                              <div>
+                                <p>צומת: {intersection.id}</p>
+                                <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
+                                <p>התחלה: 0 שניות (המשך מופע חוזר)</p>
+                                <p>סיום: {Math.round(halfCycleEndTime)} שניות</p>
+                                <p>היסט: {Math.round(offset)} שניות</p>
+                              </div>
+                            );
+                            handleShowTooltip(e.clientX, e.clientY, content);
+                          }}
+                          onMouseLeave={handleHideTooltip}
+                        />
+                      )}
+                    </React.Fragment>
+                  );
+                }
+                
+                return phaseElements;
+              });
+            })}
+          </svg>
+        </div>
+      </CardContent>
+      
+      {tooltipInfo.visible && (
+        <GreenWaveTooltip 
+          x={tooltipInfo.x} 
+          y={tooltipInfo.y} 
+          content={tooltipInfo.content} 
+        />
+      )}
+    </>
+  );
+};

@@ -33,9 +33,14 @@ export const GreenPhaseBar: React.FC<GreenPhaseBarProps> = ({
   const y2 = chartHeight - yScale(endTime);
   const height = Math.abs(y2 - y1);
 
-  // Set colors based on direction
-  const color = direction === 'upstream' ? '#A7F3D0' : '#93C5FD'; // Light green / Light blue
-  const strokeColor = direction === 'upstream' ? '#10B981' : '#3B82F6'; // Darker border for contrast
+  // Set colors based on direction and whether it's a half-cycle phase
+  const color = direction === 'upstream' 
+    ? isHalfCycle ? '#C7F9E2' : '#A7F3D0'  // Lighter green for half-cycle
+    : isHalfCycle ? '#BDD7FC' : '#93C5FD'; // Lighter blue for half-cycle
+    
+  const strokeColor = direction === 'upstream' 
+    ? isHalfCycle ? '#34D399' : '#10B981'  // Lighter border for half-cycle
+    : isHalfCycle ? '#60A5FA' : '#3B82F6'; // Lighter border for half-cycle
 
   return (
     <rect
