@@ -6,6 +6,7 @@ import type { OptimizationWeights } from "@/types/optimization";
 import { useState } from "react";
 import { AdminLoginDialog } from "@/components/AdminLoginDialog";
 import { useMaintenanceMode } from "@/contexts/MaintenanceContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface FileActionsProps {
   speed: number;
@@ -21,6 +22,7 @@ interface FileActionsProps {
 export const FileActions = ({ speed, intersections, weights, onLoadInput }: FileActionsProps) => {
   const [showAdminDialog, setShowAdminDialog] = useState(false);
   const { isAdmin } = useMaintenanceMode();
+  const { t } = useLanguage();
 
   const handleExport = () => {
     const data = {
@@ -71,7 +73,7 @@ export const FileActions = ({ speed, intersections, weights, onLoadInput }: File
         className="flex items-center gap-2"
       >
         <FileUp size={16} />
-        ייבוא נתונים
+        {t('import_data')}
       </Button>
       <Button 
         variant="outline" 
@@ -80,7 +82,7 @@ export const FileActions = ({ speed, intersections, weights, onLoadInput }: File
         className="flex items-center gap-2"
       >
         <FileDown size={16} />
-        ייצוא נתונים
+        {t('export_data')}
       </Button>
       <Button
         variant={isAdmin ? "secondary" : "outline"}
@@ -89,7 +91,7 @@ export const FileActions = ({ speed, intersections, weights, onLoadInput }: File
         className="flex items-center gap-2"
       >
         <Lock size={16} />
-        כניסת אדמין
+        {t('admin_login')}
       </Button>
 
       <AdminLoginDialog 

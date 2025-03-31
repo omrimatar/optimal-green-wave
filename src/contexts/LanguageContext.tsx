@@ -310,7 +310,27 @@ const translations = {
       he: "דיבאג",
       en: "Debug"
     },
-    "contact_us": 'Contact Us'
+    "contact_us": 'Contact Us',
+    "import_data": {
+      he: "ייבוא נתונים",
+      en: "Import Data"
+    },
+    "export_data": {
+      he: "ייצוא נתונים",
+      en: "Export Data"
+    },
+    "admin_login": {
+      he: "כניסת אדמין",
+      en: "Admin Login"
+    },
+    "green_wave_chart": {
+      he: "תרשים גל ירוק",
+      en: "Green Wave Chart"
+    },
+    "graphic_comparison": {
+      he: "השוואה גרפית",
+      en: "Graphic Comparison"
+    }
   },
   en: {
     "app_title": {
@@ -613,7 +633,27 @@ const translations = {
       he: "דיבאג",
       en: "Debug"
     },
-    "contact_us": 'Contact Us'
+    "contact_us": 'Contact Us',
+    "import_data": {
+      he: "ייבוא נתונים",
+      en: "Import Data"
+    },
+    "export_data": {
+      he: "ייצוא נתונים",
+      en: "Export Data"
+    },
+    "admin_login": {
+      he: "כניסת אדמין",
+      en: "Admin Login"
+    },
+    "green_wave_chart": {
+      he: "תרשים גל ירוק",
+      en: "Green Wave Chart"
+    },
+    "graphic_comparison": {
+      he: "השוואה גרפית",
+      en: "Graphic Comparison"
+    }
   }
 };
 
