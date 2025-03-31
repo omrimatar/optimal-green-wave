@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,7 +10,6 @@ import { ArrowRight, Hand, Play, Plus, Bug } from 'lucide-react';
 import { WeightsPanel } from '@/components/WeightsPanel';
 import { FileActions } from '@/components/FileActions';
 import { ResultsPanel } from '@/components/ResultsPanel';
-import { LanguageToggle } from '@/components/LanguageToggle';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { DEFAULT_WEIGHTS, type Intersection, type OptimizationWeights, normalizeWeights, resetModifiedFlags, modifiedWeights } from '@/types/optimization';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -388,10 +386,6 @@ const Index = () => {
   return (
     <div className="min-h-screen p-4 md:p-8 bg-gradient-to-br from-green-50 to-blue-50" dir={language === 'he' ? 'rtl' : 'ltr'}>
       <div className="max-w-[1600px] mx-auto space-y-4 md:space-y-8 animate-fade-up">
-        <div className="flex justify-end mb-4">
-          <LanguageToggle />
-        </div>
-        
         <div className="flex flex-col items-center justify-center space-y-2 md:space-y-4">
           <img 
             alt={t('app_title')} 
@@ -576,7 +570,6 @@ const Index = () => {
           onOpenChange={setShowAdminDialog}
         />
         
-        {/* Add the contact button at the bottom */}
         <ContactButton />
       </div>
     </div>
