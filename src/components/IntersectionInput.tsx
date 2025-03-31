@@ -544,10 +544,10 @@ export const IntersectionInput = ({
                 {phase.direction === 'upstream' 
                   ? isSecondaryPhase(index, 'upstream') 
                     ? `${t('upstream_phase')} משני #${getPhaseNumber(index, 'upstream')}` 
-                    : `${t('upstream_phase')} #${getPhaseNumber(index, 'upstream')}`
+                    : t('upstream_phase')
                   : isSecondaryPhase(index, 'downstream')
                     ? `${t('downstream_phase')} משני #${getPhaseNumber(index, 'downstream')}` 
-                    : `${t('downstream_phase')} #${getPhaseNumber(index, 'downstream')}`
+                    : t('downstream_phase')
                 }
               </Label>
               {intersection.greenPhases.length > 1 && (
