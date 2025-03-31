@@ -326,10 +326,6 @@ const translations = {
     "green_wave_chart": {
       he: "תרשים גל ירוק",
       en: "Green Wave Chart"
-    },
-    "graphic_comparison": {
-      he: "השוואה גרפית",
-      en: "Graphic Comparison"
     }
   },
   en: {
@@ -649,10 +645,6 @@ const translations = {
     "green_wave_chart": {
       he: "תרשים גל ירוק",
       en: "Green Wave Chart"
-    },
-    "graphic_comparison": {
-      he: "השוואה גרפית",
-      en: "Graphic Comparison"
     }
   }
 };
