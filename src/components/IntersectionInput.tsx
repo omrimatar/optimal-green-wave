@@ -398,7 +398,27 @@ export const IntersectionInput = ({
     }
   };
 
-  // Get the effective speeds (either specific speeds or default)
+  // Get the phase counts per direction for numbering
+  const getPhaseNumber = (index: number, direction: 'upstream' | 'downstream'): number => {
+    // Count phases with the same direction that appear before this one
+    const phasesInSameDirection = intersection.greenPhases
+      .filter(phase => phase.direction === direction);
+    
+    // Find the position of the current phase in the filtered array
+    const currentPhase = intersection.greenPhases[index];
+    const positionInDirection = phasesInSameDirection.findIndex(
+      phase => phase.startTime === currentPhase.startTime && phase.duration === currentPhase.duration
+    );
+    
+    return positionInDirection + 1;
+  };
+
+  // Determine if a phase is primary (first) or secondary
+  const isSecondaryPhase = (index: number, direction: 'upstream' | 'downstream'): boolean => {
+    return getPhaseNumber(index, direction) > 1;
+  };
+
+  // Get effective speeds (either specific speeds or default)
   const upstreamSpeed = intersection.upstreamSpeed !== undefined ? intersection.upstreamSpeed : defaultSpeed;
   const downstreamSpeed = intersection.downstreamSpeed !== undefined ? intersection.downstreamSpeed : defaultSpeed;
 
@@ -520,7 +540,16 @@ export const IntersectionInput = ({
         {intersection.greenPhases.map((phase, index) => (
           <div key={index} className="space-y-2 border rounded p-3">
             <div className="flex justify-between items-center">
-              <Label>{phase.direction === 'upstream' ? t('upstream_phase') : t('downstream_phase')}</Label>
+              <Label>
+                {phase.direction === 'upstream' 
+                  ? isSecondaryPhase(index, 'upstream') 
+                    ? `${t('upstream_phase')} משני #${getPhaseNumber(index, 'upstream')}` 
+                    : `${t('upstream_phase')} #${getPhaseNumber(index, 'upstream')}`
+                  : isSecondaryPhase(index, 'downstream')
+                    ? `${t('downstream_phase')} משני #${getPhaseNumber(index, 'downstream')}` 
+                    : `${t('downstream_phase')} #${getPhaseNumber(index, 'downstream')}`
+                }
+              </Label>
               {intersection.greenPhases.length > 1 && (
                 <Button
                   variant="ghost"

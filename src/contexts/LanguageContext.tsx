@@ -106,6 +106,14 @@ const translations = {
       he: "מופע ירוק במורד הזרם",
       en: "Downstream Green Phase"
     },
+    "secondary_upstream_phase": {
+      he: "מופע ירוק משני במעלה הזרם",
+      en: "Secondary Upstream Green Phase"
+    },
+    "secondary_downstream_phase": {
+      he: "מופע ירוק משני במורד הזרם",
+      en: "Secondary Downstream Green Phase"
+    },
     "start_time": {
       he: "זמן התחלה",
       en: "Start Time"
@@ -400,6 +408,14 @@ const translations = {
     "downstream_phase": {
       he: "מופע ירוק במורד הזרם",
       en: "Downstream Green Phase"
+    },
+    "secondary_upstream_phase": {
+      he: "מופע ירוק משני במעלה הזרם",
+      en: "Secondary Upstream Green Phase"
+    },
+    "secondary_downstream_phase": {
+      he: "מופע ירוק משני במורד הזרם",
+      en: "Secondary Downstream Green Phase"
     },
     "start_time": {
       he: "זמן התחלה",
