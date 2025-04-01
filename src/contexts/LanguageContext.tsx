@@ -54,7 +54,26 @@ type TranslationKey =
   | 'add_downstream_phase'
   | 'start_time'
   | 'duration'
-  | 'distance';
+  | 'distance'
+  | 'metric'
+  | 'baseline'
+  | 'optimized'
+  | 'improvement'
+  | 'intersection_offset'
+  | 'upstream_local_bandwidth'
+  | 'downstream_local_bandwidth'
+  | 'upstream_corridor_bandwidth'
+  | 'downstream_corridor_bandwidth'
+  | 'upstream_avg_delay'
+  | 'downstream_avg_delay'
+  | 'upstream_max_delay'
+  | 'downstream_max_delay'
+  | 'initial_state'
+  | 'manual_state'
+  | 'manual_results'
+  | 'optimization_results'
+  | 'optimal'
+  | 'contact us';
 
 interface LanguageContextType {
   language: Language;
@@ -114,7 +133,26 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     add_downstream_phase: 'Add Downstream',
     start_time: 'Start Time',
     duration: 'Duration',
-    distance: 'Distance'
+    distance: 'Distance',
+    metric: 'Metric',
+    baseline: 'Baseline',
+    optimized: 'Optimized',
+    improvement: 'Improvement',
+    intersection_offset: 'Intersection Offset',
+    upstream_local_bandwidth: 'Upstream Local Bandwidth',
+    downstream_local_bandwidth: 'Downstream Local Bandwidth',
+    upstream_corridor_bandwidth: 'Upstream Corridor Bandwidth',
+    downstream_corridor_bandwidth: 'Downstream Corridor Bandwidth',
+    upstream_avg_delay: 'Upstream Avg Delay',
+    downstream_avg_delay: 'Downstream Avg Delay',
+    upstream_max_delay: 'Upstream Max Delay',
+    downstream_max_delay: 'Downstream Max Delay',
+    initial_state: 'Initial State',
+    manual_state: 'Manual State',
+    manual_results: 'Manual Results',
+    optimization_results: 'Optimization Results',
+    optimal: 'Optimal',
+    'contact us': 'Contact Us'
   },
   he: {
     app_title: 'מחשבון גל ירוק',
@@ -167,7 +205,26 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     add_downstream_phase: 'הוסף במורד',
     start_time: 'זמן התחלה',
     duration: 'משך',
-    distance: 'מרחק'
+    distance: 'מרחק',
+    metric: 'מדד',
+    baseline: 'בסיס',
+    optimized: 'מותאם',
+    improvement: 'שיפור',
+    intersection_offset: 'היסט צומת',
+    upstream_local_bandwidth: 'רוחב פס מקומי במעלה הזרם',
+    downstream_local_bandwidth: 'רוחב פס מקומי במורד הזרם',
+    upstream_corridor_bandwidth: 'רוחב פס מסדרון במעלה הזרם',
+    downstream_corridor_bandwidth: 'רוחב פס מסדרון במורד הזרם',
+    upstream_avg_delay: 'עיכוב ממוצע במעלה הזרם',
+    downstream_avg_delay: 'עיכוב ממוצע במורד הזרם',
+    upstream_max_delay: 'עיכוב מקסימלי במעלה הזרם',
+    downstream_max_delay: 'עיכוב מקסימלי במורד הזרם',
+    initial_state: 'מצב התחלתי',
+    manual_state: 'מצב ידני',
+    manual_results: 'תוצאות ידניות',
+    optimization_results: 'תוצאות אופטימיזציה',
+    optimal: 'אופטימלי',
+    'contact us': 'צור קשר'
   }
 };
 
