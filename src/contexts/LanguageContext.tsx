@@ -1,6 +1,37 @@
-import React, { createContext, useContext, useState, type ReactNode } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
-type Language = 'he' | 'en';
+type Language = 'en' | 'he';
+
+type TranslationKey = 
+  | 'app_title'
+  | 'app_subtitle' 
+  | 'language'
+  | 'cycle_time'
+  | 'default_speed'
+  | 'weights'
+  | 'intersections'
+  | 'add_intersection'
+  | 'add'
+  | 'draw_existing'
+  | 'manual_calculation'
+  | 'manual'
+  | 'manual_offsets'
+  | 'offsets_description'
+  | 'intersection'
+  | 'calculate'
+  | 'calculate_green_wave'
+  | 'import_data'
+  | 'export_data'
+  | 'admin_login'
+  | 'green_wave_chart'
+  | 'graphic_comparison'
+  | 'best_experience_title'
+  | 'mobile_warning_message'
+  | 'not_supported'
+  | 'tablet'
+  | 'desktop'
+  | 'explore_anyway'
+  | 'continue_anyway';
 
 interface LanguageContextType {
   language: Language;
@@ -8,644 +39,68 @@ interface LanguageContextType {
   t: (key: string) => string;
 }
 
-const translations = {
-  he: {
-    "app_title": {
-      he: "מחשבון גל ירוק",
-      en: "Green Wave Calculator"
-    },
-    "app_subtitle": {
-      he: "כלי לתכנון אופטימלי של תזמוני רמזורים",
-      en: "A tool for optimal traffic light timing planning"
-    },
-    "cycle_time": {
-      he: "זמן מחזור (שניות)",
-      en: "Cycle Time (seconds)"
-    },
-    "default_speed": {
-      he: "מהירות ברירת מחדל (קמ\"ש)",
-      en: "Default Speed (km/h)"
-    },
-    "intersections": {
-      he: "צמתים",
-      en: "Intersections"
-    },
-    "add_intersection": {
-      he: "הוסף צומת",
-      en: "Add Intersection"
-    },
-    "add": {
-      he: "הוסף",
-      en: "Add"
-    },
-    "draw_existing": {
-      he: "צייר מצב קיים",
-      en: "Draw Existing State"
-    },
-    "manual_calculation": {
-      he: "חישוב ידני",
-      en: "Manual Calculation"
-    },
-    "manual": {
-      he: "ידני",
-      en: "Manual"
-    },
-    "calculate": {
-      he: "חשב",
-      en: "Calculate"
-    },
-    "calculate_green_wave": {
-      he: "חשב גל ירוק",
-      en: "Calculate Green Wave"
-    },
-    "intersection": {
-      he: "צומת",
-      en: "Intersection"
-    },
-    "distance": {
-      he: "מרחק (מטר)",
-      en: "Distance (meters)"
-    },
-    "half_cycle_time": {
-      he: "חצי זמן מחזור",
-      en: "Half Cycle Time"
-    },
-    "effective_cycle_time": {
-      he: "זמן מחזור בפועל",
-      en: "Effective Cycle Time"
-    },
-    "seconds": {
-      he: "שניות",
-      en: "seconds"
-    },
-    "upstream_speed": {
-      he: "מהירות במעלה הזרם (קמ\"ש)",
-      en: "Upstream Speed (km/h)"
-    },
-    "downstream_speed": {
-      he: "מהירות במורד הזרם (קמ\"ש)",
-      en: "Downstream Speed (km/h)"
-    },
-    "green_phases": {
-      he: "מופעים ירוקים",
-      en: "Green Phases"
-    },
-    "add_upstream_phase": {
-      he: "הוסף מופע במעלה",
-      en: "Add Upstream Phase"
-    },
-    "add_downstream_phase": {
-      he: "הוסף מופע במורד",
-      en: "Add Downstream Phase"
-    },
-    "upstream_phase": {
-      he: "מופע ירוק במעלה הזרם",
-      en: "Upstream Green Phase"
-    },
-    "downstream_phase": {
-      he: "מופע ירוק במורד הזרם",
-      en: "Downstream Green Phase"
-    },
-    "secondary_upstream_phase": {
-      he: "מופע ירוק משני במעלה הזרם",
-      en: "Secondary Upstream Green Phase"
-    },
-    "secondary_downstream_phase": {
-      he: "מופע ירוק משני במורד הזרם",
-      en: "Secondary Downstream Green Phase"
-    },
-    "start_time": {
-      he: "זמן התחלה",
-      en: "Start Time"
-    },
-    "duration": {
-      he: "משך",
-      en: "Duration"
-    },
-    "show_weights": {
-      he: "הצג משקולות אופטימיזציה",
-      en: "Show Optimization Weights"
-    },
-    "hide_weights": {
-      he: "הסתר משקולות אופטימיזציה",
-      en: "Hide Optimization Weights"
-    },
-    "reset": {
-      he: "איפוס",
-      en: "Reset"
-    },
-    "corridor_wave": {
-      he: "גל ירוק בציר",
-      en: "Corridor Green Wave"
-    },
-    "upstream": {
-      he: "במעלה הזרם",
-      en: "Upstream"
-    },
-    "downstream": {
-      he: "במורד הזרם",
-      en: "Downstream"
-    },
-    "pair_bandwidth": {
-      he: "רוחב פס בין צמתים סמוכים",
-      en: "Bandwidth Between Adjacent Intersections"
-    },
-    "average_delay": {
-      he: "עיכוב ממוצע",
-      en: "Average Delay"
-    },
-    "maximum_delay": {
-      he: "עיכוב מקסימלי",
-      en: "Maximum Delay"
-    },
-    "manual_offsets": {
-      he: "הזנת היסטים ידנית",
-      en: "Manual Offset Input"
-    },
-    "offsets_description": {
-      he: "הזן את ערכי ה-offset עבור כל צומת (בשניות). שים לב שה-offset של הצומת הראשון תמיד יהיה 0.",
-      en: "Enter the offset values for each intersection (in seconds). Note that the offset of the first intersection will always be 0."
-    },
-    "optimization_results": {
-      he: "תוצאות האופטימיזציה",
-      en: "Optimization Results"
-    },
-    "manual_results": {
-      he: "תוצאות החישוב הידני",
-      en: "Manual Calculation Results"
-    },
-    "optimal": {
-      he: "אופטימלי",
-      en: "Optimal"
-    },
-    "baseline": {
-      he: "בסיס",
-      en: "Baseline"
-    },
-    "optimized": {
-      he: "אופטימיזציה",
-      en: "Optimized"
-    },
-    "initial_state": {
-      he: "מצב התחלתי",
-      en: "Initial State"
-    },
-    "manual_state": {
-      he: "מצב ידני",
-      en: "Manual State"
-    },
-    "metric": {
-      he: "מדד",
-      en: "Metric"
-    },
-    "improvement": {
-      he: "שיפור",
-      en: "Improvement"
-    },
-    "intersection_offset": {
-      he: "היסט צומת",
-      en: "Intersection Offset"
-    },
-    "upstream_local_bandwidth": {
-      he: "רוחב פס מקומי למעלה",
-      en: "Upstream Local Bandwidth"
-    },
-    "downstream_local_bandwidth": {
-      he: "רוחב פס מקומי למטה",
-      en: "Downstream Local Bandwidth"
-    },
-    "upstream_corridor_bandwidth": {
-      he: "רוחב פס בציר למעלה",
-      en: "Upstream Corridor Bandwidth"
-    },
-    "downstream_corridor_bandwidth": {
-      he: "רוחב פס בציר למטה",
-      en: "Downstream Corridor Bandwidth"
-    },
-    "upstream_avg_delay": {
-      he: "עיכוב ממוצע למעלה צמתים",
-      en: "Average Upstream Delay Intersections"
-    },
-    "downstream_avg_delay": {
-      he: "עיכוב ממוצע למטה צמתים",
-      en: "Average Downstream Delay Intersections"
-    },
-    "upstream_max_delay": {
-      he: "עיכוב מקסימלי למעלה צמתים",
-      en: "Maximum Upstream Delay Intersections"
-    },
-    "downstream_max_delay": {
-      he: "עיכוב מקסימלי למטה צמתים",
-      en: "Maximum Downstream Delay Intersections"
-    },
-    "graphic_comparison": {
-      he: "השוואה גרפית",
-      en: "Graphic Comparison"
-    },
-    "manual_graphic_comparison": {
-      he: "השוואה גרפית - מצב ידני",
-      en: "Graphic Comparison - Manual State"
-    },
-    "optimization_graphic_comparison": {
-      he: "השוואה גרפית - אופטימיזציה",
-      en: "Graphic Comparison - Optimization"
-    },
-    "existing_graphic_comparison": {
-      he: "השוואה גרפית-ידני",
-      en: "Graphic Comparison - Manual"
-    },
-    "corridor_width": {
-      he: "רוחב מסדרון",
-      en: "Corridor Width"
-    },
-    "avg_delay": {
-      he: "עיכוב ממוצע",
-      en: "Avg Delay"
-    },
-    "positive_metrics": {
-      he: "מדדים חיוביים",
-      en: "Positive Metrics"
-    },
-    "negative_metrics": {
-      he: "מדדים שליליים",
-      en: "Negative Metrics"
-    },
-    "compare_directions": {
-      he: "השוואה בין כיוונים",
-      en: "Compare Directions"
-    },
-    "compare_states": {
-      he: "השוואה בין מצבים",
-      en: "Compare States"
-    },
-    "optimization": {
-      he: "אופטימיזציה",
-      en: "Optimization"
-    },
-    "directions": {
-      he: "כיוונים",
-      en: "Directions"
-    },
-    "language": {
-      he: "English",
-      en: "עברית"
-    },
-    "must_not_exceed": {
-      he: "לא יכול לעבור את",
-      en: "must not exceed"
-    },
-    "phase_starts_after_half_cycle": {
-      he: "יש מופע שמתחיל אחרי חצי זמן המחזור",
-      en: "there's a phase that starts after half cycle time"
-    },
-    "phase_extends_beyond_half_cycle": {
-      he: "יש מופע שחורג מחצי זמן המחזור",
-      en: "there's a phase that extends beyond half cycle time"
-    },
-    "cannot_enable_half_cycle": {
-      he: "לא ניתן להפעיל חצי זמן מחזור",
-      en: "Cannot enable half cycle time"
-    },
-    "debug": {
-      he: "דיבאג",
-      en: "Debug"
-    },
-    "contact_us": 'Contact Us',
-    "import_data": {
-      he: "ייבוא נתונים",
-      en: "Import Data"
-    },
-    "export_data": {
-      he: "ייצוא נתונים",
-      en: "Export Data"
-    },
-    "admin_login": {
-      he: "כניסת אדמין",
-      en: "Admin Login"
-    },
-    "green_wave_chart": {
-      he: "תרשים גל ירוק",
-      en: "Green Wave Chart"
-    }
-  },
+const translations: Record<Language, Record<TranslationKey, string>> = {
   en: {
-    "app_title": {
-      he: "מחשבון גל ירוק",
-      en: "Green Wave Calculator"
-    },
-    "app_subtitle": {
-      he: "כלי לתכנון אופטימלי של תזמוני רמזורים",
-      en: "A tool for optimal traffic light timing planning"
-    },
-    "cycle_time": {
-      he: "זמן מחזור (שניות)",
-      en: "Cycle Time (seconds)"
-    },
-    "default_speed": {
-      he: "מהירות ברירת מחדל (קמ\"ש)",
-      en: "Default Speed (km/h)"
-    },
-    "intersections": {
-      he: "צמתים",
-      en: "Intersections"
-    },
-    "add_intersection": {
-      he: "הוסף צומת",
-      en: "Add Intersection"
-    },
-    "add": {
-      he: "הוסף",
-      en: "Add"
-    },
-    "draw_existing": {
-      he: "צייר מצב קיים",
-      en: "Draw Existing State"
-    },
-    "manual_calculation": {
-      he: "חישוב ידני",
-      en: "Manual Calculation"
-    },
-    "manual": {
-      he: "ידני",
-      en: "Manual"
-    },
-    "calculate": {
-      he: "חשב",
-      en: "Calculate"
-    },
-    "calculate_green_wave": {
-      he: "חשב גל ירוק",
-      en: "Calculate Green Wave"
-    },
-    "intersection": {
-      he: "צומת",
-      en: "Intersection"
-    },
-    "distance": {
-      he: "מרחק (מטר)",
-      en: "Distance (meters)"
-    },
-    "half_cycle_time": {
-      he: "חצי זמן מחזור",
-      en: "Half Cycle Time"
-    },
-    "effective_cycle_time": {
-      he: "זמן מחזור בפועל",
-      en: "Effective Cycle Time"
-    },
-    "seconds": {
-      he: "שניות",
-      en: "seconds"
-    },
-    "upstream_speed": {
-      he: "מהירות במעלה הזרם (קמ\"ש)",
-      en: "Upstream Speed (km/h)"
-    },
-    "downstream_speed": {
-      he: "מהירות במורד הזרם (קמ\"ש)",
-      en: "Downstream Speed (km/h)"
-    },
-    "green_phases": {
-      he: "מופעים ירוקים",
-      en: "Green Phases"
-    },
-    "add_upstream_phase": {
-      he: "הוסף מופע במעלה",
-      en: "Add Upstream Phase"
-    },
-    "add_downstream_phase": {
-      he: "הוסף מופע במורד",
-      en: "Add Downstream Phase"
-    },
-    "upstream_phase": {
-      he: "מופע ירוק במעלה הזרם",
-      en: "Upstream Green Phase"
-    },
-    "downstream_phase": {
-      he: "מופע ירוק במורד הזרם",
-      en: "Downstream Green Phase"
-    },
-    "secondary_upstream_phase": {
-      he: "מופע ירוק משני במעלה הזרם",
-      en: "Secondary Upstream Green Phase"
-    },
-    "secondary_downstream_phase": {
-      he: "מופע ירוק משני במורד הזרם",
-      en: "Secondary Downstream Green Phase"
-    },
-    "start_time": {
-      he: "זמן התחלה",
-      en: "Start Time"
-    },
-    "duration": {
-      he: "משך",
-      en: "Duration"
-    },
-    "show_weights": {
-      he: "הצג משקולות אופטימיזציה",
-      en: "Show Optimization Weights"
-    },
-    "hide_weights": {
-      he: "הסתר משקולות אופטימיזציה",
-      en: "Hide Optimization Weights"
-    },
-    "reset": {
-      he: "איפוס",
-      en: "Reset"
-    },
-    "corridor_wave": {
-      he: "גל ירוק בציר",
-      en: "Corridor Green Wave"
-    },
-    "upstream": {
-      he: "במעלה הזרם",
-      en: "Upstream"
-    },
-    "downstream": {
-      he: "במורד הזרם",
-      en: "Downstream"
-    },
-    "pair_bandwidth": {
-      he: "רוחב פס בין צמתים סמוכים",
-      en: "Bandwidth Between Adjacent Intersections"
-    },
-    "average_delay": {
-      he: "עיכוב ממוצע",
-      en: "Average Delay"
-    },
-    "maximum_delay": {
-      he: "עיכוב מקסימלי",
-      en: "Maximum Delay"
-    },
-    "manual_offsets": {
-      he: "הזנת היסטים ידנית",
-      en: "Manual Offset Input"
-    },
-    "offsets_description": {
-      he: "הזן את ערכי ה-offset עבור כל צומת (בשניות). שים לב שה-offset של הצומת הראשון תמיד יהיה 0.",
-      en: "Enter the offset values for each intersection (in seconds). Note that the offset of the first intersection will always be 0."
-    },
-    "optimization_results": {
-      he: "תוצאות האופטימיזציה",
-      en: "Optimization Results"
-    },
-    "manual_results": {
-      he: "תוצאות החישוב הידני",
-      en: "Manual Calculation Results"
-    },
-    "optimal": {
-      he: "אופטימלי",
-      en: "Optimal"
-    },
-    "baseline": {
-      he: "בסיס",
-      en: "Baseline"
-    },
-    "optimized": {
-      he: "אופטימיזציה",
-      en: "Optimized"
-    },
-    "initial_state": {
-      he: "מצב התחלתי",
-      en: "Initial State"
-    },
-    "manual_state": {
-      he: "מצב ידני",
-      en: "Manual State"
-    },
-    "metric": {
-      he: "מדד",
-      en: "Metric"
-    },
-    "improvement": {
-      he: "שיפור",
-      en: "Improvement"
-    },
-    "intersection_offset": {
-      he: "היסט צומת",
-      en: "Intersection Offset"
-    },
-    "upstream_local_bandwidth": {
-      he: "רוחב פס מקומי למעלה",
-      en: "Upstream Local Bandwidth"
-    },
-    "downstream_local_bandwidth": {
-      he: "רוחב פס מקומי למטה",
-      en: "Downstream Local Bandwidth"
-    },
-    "upstream_corridor_bandwidth": {
-      he: "רוחב פס בציר למעלה",
-      en: "Upstream Corridor Bandwidth"
-    },
-    "downstream_corridor_bandwidth": {
-      he: "רוחב פס בציר למטה",
-      en: "Downstream Corridor Bandwidth"
-    },
-    "upstream_avg_delay": {
-      he: "עיכוב ממוצע למעלה צמתים",
-      en: "Average Upstream Delay Intersections"
-    },
-    "downstream_avg_delay": {
-      he: "עיכוב ממוצע למטה צמתים",
-      en: "Average Downstream Delay Intersections"
-    },
-    "upstream_max_delay": {
-      he: "עיכוב מקסימלי למעלה צמתים",
-      en: "Maximum Upstream Delay Intersections"
-    },
-    "downstream_max_delay": {
-      he: "עיכוב מקסימלי למטה צמתים",
-      en: "Maximum Downstream Delay Intersections"
-    },
-    "graphic_comparison": {
-      he: "השוואה גרפית",
-      en: "Graphic Comparison"
-    },
-    "manual_graphic_comparison": {
-      he: "השוואה גרפית - מצב ידני",
-      en: "Graphic Comparison - Manual State"
-    },
-    "optimization_graphic_comparison": {
-      he: "השוואה גרפית - אופטימיזציה",
-      en: "Graphic Comparison - Optimization"
-    },
-    "existing_graphic_comparison": {
-      he: "השוואה גרפית-ידני",
-      en: "Graphic Comparison - Manual"
-    },
-    "corridor_width": {
-      he: "רוחב מסדרון",
-      en: "Corridor Width"
-    },
-    "avg_delay": {
-      he: "עיכוב ממוצע",
-      en: "Avg Delay"
-    },
-    "positive_metrics": {
-      he: "מדדים חיוביים",
-      en: "Positive Metrics"
-    },
-    "negative_metrics": {
-      he: "מדדים שליליים",
-      en: "Negative Metrics"
-    },
-    "compare_directions": {
-      he: "השוואה בין כיוונים",
-      en: "Compare Directions"
-    },
-    "compare_states": {
-      he: "השוואה בין מצבים",
-      en: "Compare States"
-    },
-    "optimization": {
-      he: "אופטימיזציה",
-      en: "Optimization"
-    },
-    "directions": {
-      he: "כיוונים",
-      en: "Directions"
-    },
-    "language": {
-      he: "English",
-      en: "עברית"
-    },
-    "must_not_exceed": {
-      he: "לא יכול לעבור את",
-      en: "must not exceed"
-    },
-    "phase_starts_after_half_cycle": {
-      he: "יש מופע שמתחיל אחרי חצי זמן המחזור",
-      en: "there's a phase that starts after half cycle time"
-    },
-    "phase_extends_beyond_half_cycle": {
-      he: "יש מופע שחורג מחצי זמן המחזור",
-      en: "there's a phase that extends beyond half cycle time"
-    },
-    "cannot_enable_half_cycle": {
-      he: "לא ניתן להפעיל חצי זמן מחזור",
-      en: "Cannot enable half cycle time"
-    },
-    "debug": {
-      he: "דיבאג",
-      en: "Debug"
-    },
-    "contact_us": 'Contact Us',
-    "import_data": {
-      he: "ייבוא נתונים",
-      en: "Import Data"
-    },
-    "export_data": {
-      he: "ייצוא נתונים",
-      en: "Export Data"
-    },
-    "admin_login": {
-      he: "כניסת אדמין",
-      en: "Admin Login"
-    },
-    "green_wave_chart": {
-      he: "תרשים גל ירוק",
-      en: "Green Wave Chart"
-    }
+    app_title: 'Green Wave Calculator',
+    app_subtitle: 'A tool for optimal traffic light timing planning',
+    language: 'English',
+    cycle_time: 'Cycle Time (seconds)',
+    default_speed: 'Design Speed (km/h)',
+    weights: 'Optimization Weights',
+    intersections: 'Intersections',
+    add_intersection: 'Add Intersection',
+    add: 'Add',
+    draw_existing: 'Show Existing',
+    manual_calculation: 'Manual Calculation',
+    manual: 'Manual',
+    manual_offsets: 'Manual Offsets',
+    offsets_description: 'Set offsets manually for each intersection. The first intersection offset is always 0.',
+    intersection: 'Intersection',
+    calculate: 'Calculate',
+    calculate_green_wave: 'Calculate Green Wave',
+    import_data: 'Import Data',
+    export_data: 'Export Data',
+    admin_login: 'Admin Login',
+    green_wave_chart: 'Green Wave Chart',
+    graphic_comparison: 'Graphic Comparison',
+    best_experience_title: 'For the Best Experience',
+    mobile_warning_message: 'Green Wave Calculator works best on larger screens. Please use a desktop computer or tablet for the full experience.',
+    not_supported: 'Not Supported',
+    tablet: 'Tablet',
+    desktop: 'Desktop',
+    explore_anyway: 'Want to explore anyway?',
+    continue_anyway: 'Continue Anyway'
+  },
+  he: {
+    app_title: 'מחשבון גל ירוק',
+    app_subtitle: 'כלי לתכנון אופטימלי של תזמוני רמזורים',
+    language: 'עברית',
+    cycle_time: 'זמן מחזור (שניות)',
+    default_speed: 'מהירות תכן (קמ"ש)',
+    weights: 'משקולות אופטימיזציה',
+    intersections: 'צמתים',
+    add_intersection: 'הוסף צומת',
+    add: 'הוסף',
+    draw_existing: 'הצג קיים',
+    manual_calculation: 'חישוב ידני',
+    manual: 'ידני',
+    manual_offsets: 'היסטים ידניים',
+    offsets_description: 'קבע היסטים ידנית עבור כל צומת. ההיסט של הצומת הראשון הוא תמיד 0.',
+    intersection: 'צומת',
+    calculate: 'חשב',
+    calculate_green_wave: 'חשב גל ירוק',
+    import_data: 'ייבוא נתונים',
+    export_data: 'ייצוא נתונים',
+    admin_login: 'כניסת אדמין',
+    green_wave_chart: 'תרשים גל ירוק',
+    graphic_comparison: 'השוואה גרפית',
+    best_experience_title: 'לחוויה המיטבית',
+    mobile_warning_message: 'מחשבון גל ירוק עובד הכי טוב על מסכים גדולים. אנא השתמש במחשב שולחני או טאבלט לחוויה המלאה.',
+    not_supported: 'לא נתמך',
+    tablet: 'טאבלט',
+    desktop: 'מחשב',
+    explore_anyway: 'רוצה לנסות בכל זאת?',
+    continue_anyway: 'המשך בכל זאת'
   }
 };
 

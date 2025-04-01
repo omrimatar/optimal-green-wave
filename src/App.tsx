@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { MaintenanceProvider } from "@/contexts/MaintenanceContext";
 import { MaintenancePage } from "@/components/MaintenancePage";
+import { MobileDetectionDialog } from "@/components/MobileDetectionDialog";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { useMaintenanceMode } from "@/contexts/MaintenanceContext";
@@ -31,6 +32,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <MobileDetectionDialog />
           <BrowserRouter>
             <MaintenanceWrapper>
               <Routes>
