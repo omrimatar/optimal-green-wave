@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, Smartphone, Tablet, Monitor } from 'lucide-react';
+import { Smartphone, Tablet, Monitor } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,10 +42,6 @@ export const MobileDetectionDialog = () => {
           <DialogTitle className="text-center text-2xl font-bold text-purple-400">
             {t('best_experience_title')}
           </DialogTitle>
-          <X
-            className="absolute right-4 top-4 h-6 w-6 cursor-pointer opacity-70 transition-opacity hover:opacity-100"
-            onClick={handleDismiss}
-          />
         </DialogHeader>
         
         <div className="flex flex-col items-center justify-center space-y-6 py-4">
