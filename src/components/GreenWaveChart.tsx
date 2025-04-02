@@ -749,6 +749,233 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     });
   };
 
+  const renderSolidDiagonalLines = () => {
+    if (!calculationPerformed || (!diagonalPointsUp && !diagonalPointsDown)) {
+      return null;
+    }
+
+    const lines: React.ReactNode[] = [];
+    const epsilon = 1e-6;
+
+    if (diagonalPointsUp && diagonalPointsUp.length > 1) {
+      console.log("Rendering SOLID Upstream lines using diagonalPointsUp:", diagonalPointsUp);
+      for (let i = 0; i < diagonalPointsUp.length - 1; i++) {
+        const originPoint = diagonalPointsUp[i];
+        const destPoint = diagonalPointsUp[i + 1];
+
+        const originInter = intersections.find(inter => inter.id === originPoint.junction);
+        const destInter = intersections.find(inter => inter.id === destPoint.junction);
+
+        if (!originInter || !destInter) {
+           console.warn(`Solid Up: Could not find intersections for pair: ${originPoint.junction} -> ${destPoint.junction}`);
+           continue;
+        }
+
+        const originX = leftPadding + 25 + xScale(originInter.distance);
+        const destX = leftPadding + 25 + xScale(destInter.distance);
+
+        const originLowY = dimensions.height - 40 - yScale(originPoint.low);
+        const originHighY = dimensions.height - 40 - yScale(originPoint.top);
+        const destLowY = dimensions.height - 40 - yScale(destPoint.low);
+        const destHighY = dimensions.height - 40 - yScale(destPoint.top);
+
+        console.log(`Solid Up Pair ${originPoint.junction}->${destPoint.junction}:`);
+        console.log(`  Origin X: ${originX.toFixed(1)}, Dest X: ${destX.toFixed(1)}`);
+        console.log(`  Origin Times (low/high): ${originPoint.low.toFixed(1)} / ${originPoint.top.toFixed(1)}`);
+        console.log(`  Dest Times (low/high): ${destPoint.low.toFixed(1)} / ${destPoint.top.toFixed(1)}`);
+        console.log(`  Origin Y (low/high): ${originLowY.toFixed(1)} / ${originHighY.toFixed(1)}`);
+        console.log(`  Dest Y (low/high): ${destLowY.toFixed(1)} / ${destHighY.toFixed(1)}`);
+
+        if (originPoint.top > originPoint.low + epsilon && destPoint.top > destPoint.low + epsilon) {
+          lines.push(
+            <line
+              key={`solid-up-low-${i}`}
+              x1={originX}
+              y1={originLowY}
+              x2={destX}
+              y2={destLowY}
+              stroke="#4ADE80"
+              strokeWidth={2}
+              className="line-solid line-solid-upstream"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם (גלובלי)</p>
+                    <p>מצומת {originPoint.junction} לצומת {destPoint.junction}</p>
+                    <p>נקודה תחתונה</p>
+                    <p>זמן מוצא: {originPoint.low.toFixed(1)}</p>
+                    <p>זמן יעד: {destPoint.low.toFixed(1)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          
+          lines.push(
+            <line
+              key={`solid-up-high-${i}`}
+              x1={originX}
+              y1={originHighY}
+              x2={destX}
+              y2={destHighY}
+              stroke="#4ADE80"
+              strokeWidth={2}
+              className="line-solid line-solid-upstream"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם (גלובלי)</p>
+                    <p>מצומת {originPoint.junction} לצומת {destPoint.junction}</p>
+                    <p>נקודה עליונה</p>
+                    <p>זמן מוצא: {originPoint.top.toFixed(1)}</p>
+                    <p>זמן יעד: {destPoint.top.toFixed(1)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          
+          lines.push(
+            <polygon
+              key={`solid-up-fill-${i}`}
+              points={`${originX},${originLowY} ${destX},${destLowY} ${destX},${destHighY} ${originX},${originHighY}`}
+              fill="#A7F3D0"
+              opacity={0.2}
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם</p>
+                    <p>מצומת {originPoint.junction} לצומת {destPoint.junction}</p>
+                    <p>פס רציף גל ירוק</p>
+                    <p>רוחב פס: {Math.round(originPoint.top - originPoint.low)} שניות</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+        } else {
+          console.log(`  Skipping solid up drawing for ${originPoint.junction}->${destPoint.junction} due to zero bandwidth.`);
+        }
+      }
+    }
+
+    if (diagonalPointsDown && diagonalPointsDown.length > 1) {
+      console.log("Rendering SOLID Downstream lines using diagonalPointsDown:", diagonalPointsDown);
+      for (let i = 0; i < diagonalPointsDown.length - 1; i++) {
+        const originPoint = diagonalPointsDown[i];
+        const destPoint = diagonalPointsDown[i + 1];
+
+        const originInter = intersections.find(inter => inter.id === originPoint.junction);
+        const destInter = intersections.find(inter => inter.id === destPoint.junction);
+
+        if (!originInter || !destInter) {
+          console.warn(`Solid Down: Could not find intersections for pair: ${originPoint.junction} -> ${destPoint.junction}`);
+          continue;
+        }
+
+        const originX = leftPadding + 25 + xScale(originInter.distance);
+        const destX = leftPadding + 25 + xScale(destInter.distance);
+
+        const originLowY = dimensions.height - 40 - yScale(originPoint.low);
+        const originHighY = dimensions.height - 40 - yScale(originPoint.top);
+        const destLowY = dimensions.height - 40 - yScale(destPoint.low);
+        const destHighY = dimensions.height - 40 - yScale(destPoint.top);
+
+        console.log(`Solid Down Pair ${originPoint.junction}->${destPoint.junction}:`);
+        console.log(`  Origin X: ${originX.toFixed(1)}, Dest X: ${destX.toFixed(1)}`);
+        console.log(`  Origin Times (low/high): ${originPoint.low.toFixed(1)} / ${originPoint.top.toFixed(1)}`);
+        console.log(`  Dest Times (low/high): ${destPoint.low.toFixed(1)} / ${destPoint.top.toFixed(1)}`);
+        console.log(`  Origin Y (low/high): ${originLowY.toFixed(1)} / ${originHighY.toFixed(1)}`);
+        console.log(`  Dest Y (low/high): ${destLowY.toFixed(1)} / ${destHighY.toFixed(1)}`);
+
+        if (originPoint.top > originPoint.low + epsilon && destPoint.top > destPoint.low + epsilon) {
+          lines.push(
+            <line
+              key={`solid-down-low-${i}`}
+              x1={originX}
+              y1={originLowY}
+              x2={destX}
+              y2={destLowY}
+              stroke="#60A5FA"
+              strokeWidth={2}
+              className="line-solid line-solid-downstream"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם (גלובלי)</p>
+                    <p>מצומת {originPoint.junction} לצומת {destPoint.junction}</p>
+                    <p>נקודה תחתונה</p>
+                    <p>זמן מוצא: {originPoint.low.toFixed(1)}</p>
+                    <p>זמן יעד: {destPoint.low.toFixed(1)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          
+          lines.push(
+            <line
+              key={`solid-down-high-${i}`}
+              x1={originX}
+              y1={originHighY}
+              x2={destX}
+              y2={destHighY}
+              stroke="#60A5FA"
+              strokeWidth={2}
+              className="line-solid line-solid-downstream"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם (גלובלי)</p>
+                    <p>מצומת {originPoint.junction} לצומת {destPoint.junction}</p>
+                    <p>נקודה עליונה</p>
+                    <p>זמן מוצא: {originPoint.top.toFixed(1)}</p>
+                    <p>זמן יעד: {destPoint.top.toFixed(1)}</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          
+          lines.push(
+            <polygon
+              key={`solid-down-fill-${i}`}
+              points={`${originX},${originLowY} ${destX},${destLowY} ${destX},${destHighY} ${originX},${originHighY}`}
+              fill="#93C5FD"
+              opacity={0.2}
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם</p>
+                    <p>מצומת {originPoint.junction} לצומת {destPoint.junction}</p>
+                    <p>פס רציף גל ירוק</p>
+                    <p>רוחב פס: {Math.round(originPoint.top - originPoint.low)} שניות</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+        } else {
+          console.log(`  Skipping solid down drawing for ${originPoint.junction}->${destPoint.junction} due to zero bandwidth.`);
+        }
+      }
+    }
+
+    return lines;
+  };
+
   const renderIntersections = () => {
     return intersections.map((intersection, i) => {
       const offset = mode === 'display' ? 0 : (intersection.offset || 0);
@@ -922,7 +1149,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           <svg
             width={dimensions.width}
             height={dimensions.height}
-            className="overflow-visible"
+            className="overflow-visible w-full"
+            viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
+            preserveAspectRatio="xMidYMid meet"
           >
             {/* Y-axis grid lines */}
             {generateYGridLines()}
@@ -939,11 +1168,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             {/* Intersection green phases */}
             {renderIntersections()}
             
-            {/* Diagonal green wave lines - keep only the dashed lines */}
-            {renderDiagonalLines()}
-            
-            {/* Remove or comment out the solid diagonal lines */}
-            {/* {renderSolidDiagonalLines()} */}
+            {/* Render solid diagonal lines based on global times */}
+            {renderSolidDiagonalLines()}
             
             {/* Axes */}
             <line 
