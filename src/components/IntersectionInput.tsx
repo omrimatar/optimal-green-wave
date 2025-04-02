@@ -165,7 +165,8 @@ export const IntersectionInput = ({
         return;
       }
     } else if (field === 'duration') {
-      if (value < 1 || !Number.isInteger(value)) {
+      // Modified: Duration cannot exceed the effective cycle time
+      if (value < 1 || value > effectiveCycleTime || !Number.isInteger(value)) {
         toast.error(`${t('duration')} ${t('must_be_between')} 1 ${t('and')} ${effectiveCycleTime}`);
         
         setTempGreenPhaseValues(prev => ({
