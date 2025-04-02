@@ -782,35 +782,4 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         // If half cycle time is enabled, duplicate the phase at half cycle time distance
         if (intersection.useHalfCycleTime) {
           const halfCycleTime = intersection.cycleTime / 2;
-          let halfCycleStartTime = (startTime + halfCycleTime) % intersection.cycleTime;
-          let halfCycleEndTime = (halfCycleStartTime + phase.duration) % intersection.cycleTime;
-          
-          if (halfCycleEndTime === 0) halfCycleEndTime = intersection.cycleTime;
-          
-          const halfCycleWrappedPhase = halfCycleEndTime < halfCycleStartTime;
-          
-          console.log(`  Half-Cycle Phase ${j+1}:`);
-          console.log(`    Direction: ${phase.direction}`);
-          console.log(`    Half-Cycle Start: ${halfCycleStartTime}s`);
-          console.log(`    Half-Cycle End: ${halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime}s`);
-          console.log(`    Half-Cycle Wrapped: ${halfCycleWrappedPhase}`);
-          
-          phaseElements.push(
-            <React.Fragment key={`phase-${i}-${j}-half-cycle`}>
-              <GreenPhaseBar
-                x={x + xOffset}
-                startTime={halfCycleStartTime}
-                endTime={halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime}
-                cycleTime={intersection.cycleTime}
-                direction={phase.direction}
-                barWidth={15}
-                yScale={yScale}
-                chartHeight={dimensions.height - 40}
-                onMouseEnter={(e) => {
-                  const content = (
-                    <div>
-                      <p>צומת: {intersection.id}</p>
-                      <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
-                      <p>התחלה: {Math.round(halfCycleStartTime)} שניות (מחצית מחזור)</p>
-                      <p>סיום: {Math.round(halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime)} שניות</p>
-                      <p>
+          let halfCycleStartTime = (startTime + halfCycleTime) % intersection
