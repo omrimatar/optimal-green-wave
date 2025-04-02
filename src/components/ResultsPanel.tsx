@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { MetricsTable } from "./MetricsTable";
 import { OptimizationCharts } from "./OptimizationCharts";
 import { GreenWaveChart } from "./GreenWaveChart";
-import type { RunResult, PairBandPoint } from "@/types/traffic";
+import type { RunResult, PairBandPoint, DiagonalPoint } from "@/types/traffic";
 import { type Intersection, type GreenPhase } from "@/types/optimization";
 
 interface ResultsPanelProps {
@@ -44,7 +44,15 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
       ? results.baseline_results.pairs_band_points
       : comparisonResults.pairs_band_points;
   
+  const diagonalPointsUp: DiagonalPoint[] | undefined = 
+    comparisonResults.diagonal_points?.up;
+  
+  const diagonalPointsDown: DiagonalPoint[] | undefined = 
+    comparisonResults.diagonal_points?.down;
+  
   console.log("Using pair band points:", pairBandPoints);
+  console.log("Using diagonal points up:", diagonalPointsUp);
+  console.log("Using diagonal points down:", diagonalPointsDown);
   
   if (pairBandPoints && pairBandPoints.length > 0) {
     console.log(`======= BANDWIDTH DEBUG INFORMATION =======`);
@@ -90,7 +98,6 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
       comparisonResults.cycle_times[idx] : 
       90;
     
-    // Get the half cycle time flag from results or default to false
     const useHalfCycleTime = comparisonResults.use_half_cycle && comparisonResults.use_half_cycle[idx] !== undefined
       ? comparisonResults.use_half_cycle[idx]
       : false;
@@ -118,7 +125,6 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
       useHalfCycleTime
     });
     
-    // Create and return the Intersection object with all required properties
     const greenPhases: GreenPhase[] = [];
     
     if (comparisonResults.green_up && comparisonResults.green_up[idx]) {
@@ -178,6 +184,8 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
           pairBandPoints={pairBandPoints}
           calculationPerformed={calculationPerformed}
           comparisonResults={comparisonResults}
+          diagonalPointsUp={diagonalPointsUp}
+          diagonalPointsDown={diagonalPointsDown}
         />
       </Card>
       

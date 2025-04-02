@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -843,7 +844,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               onMouseEnter={(e) => {
                 const content = (
                   <div>
-                    <p>כי��ון: עם הזרם</p>
+                    <p>כיוון: עם הזרם</p>
                     <p>מצומת {originPoint.junction} לצומת {destPoint.junction}</p>
                     <p>פס רציף גל ירוק</p>
                     <p>רוחב פס: {Math.round(originPoint.top - originPoint.low)} שניות</p>
@@ -1078,4 +1079,129 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                       <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
                       <p>התחלה: {Math.round(halfCycleStartTime)} שניות (מחצית מחזור)</p>
                       <p>סיום: {Math.round(halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime)} שניות</p>
-                      <p>
+                      <p>היסט: {Math.round(offset)} שניות</p>
+                    </div>
+                  );
+                  handleShowTooltip(e.clientX, e.clientY, content);
+                }}
+                onMouseLeave={handleHideTooltip}
+              />
+              
+              {halfCycleWrappedPhase && (
+                <GreenPhaseBar
+                  x={x + xOffset}
+                  startTime={0}
+                  endTime={halfCycleEndTime}
+                  cycleTime={intersection.cycleTime}
+                  direction={phase.direction}
+                  barWidth={15}
+                  yScale={yScale}
+                  chartHeight={dimensions.height - 40}
+                  isHalfCycle={true}
+                  onMouseEnter={(e) => {
+                    const content = (
+                      <div>
+                        <p>צומת: {intersection.id}</p>
+                        <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
+                        <p>התחלה: 0 שניות (המשך חצי מחזור)</p>
+                        <p>סיום: {Math.round(halfCycleEndTime)} שניות</p>
+                        <p>היסט: {Math.round(offset)} שניות</p>
+                      </div>
+                    );
+                    handleShowTooltip(e.clientX, e.clientY, content);
+                  }}
+                  onMouseLeave={handleHideTooltip}
+                />
+              )}
+            </React.Fragment>
+          );
+        }
+        
+        return phaseElements;
+      });
+    });
+  };
+
+  return (
+    <div className="relative w-full" ref={chartRef}>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xl">תרשים גל ירוק</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="w-full relative">
+          <svg
+            width={dimensions.width}
+            height={dimensions.height}
+            className="overflow-visible"
+          >
+            {/* Y-axis grid lines */}
+            {generateYGridLines()}
+            
+            {/* X-axis grid lines */}
+            {generateXGridLines()}
+            
+            {/* Y-axis (time) labels */}
+            {generateYAxisLabels()}
+            
+            {/* X-axis (distance) labels */}
+            {generateXAxisLabels()}
+            
+            {/* Intersection green phases */}
+            {renderIntersections()}
+            
+            {/* Diagonal green wave lines */}
+            {renderDiagonalLines()}
+            
+            {/* Solid diagonal green wave lines */}
+            {renderSolidDiagonalLines()}
+            
+            {/* Axes */}
+            <line 
+              x1={leftPadding} 
+              y1={dimensions.height - 40} 
+              x2={dimensions.width - rightPadding} 
+              y2={dimensions.height - 40} 
+              stroke="#000" 
+              strokeWidth={1.5} 
+            />
+            <line 
+              x1={leftPadding} 
+              y1={40} 
+              x2={leftPadding} 
+              y2={dimensions.height - 40} 
+              stroke="#000" 
+              strokeWidth={1.5} 
+            />
+            
+            {/* Axis labels */}
+            <text 
+              x={dimensions.width / 2} 
+              y={dimensions.height - 5} 
+              textAnchor="middle" 
+              fontSize={12} 
+            >
+              מרחק (מטרים)
+            </text>
+            <text 
+              x={15} 
+              y={dimensions.height / 2} 
+              textAnchor="middle" 
+              transform={`rotate(-90, 15, ${dimensions.height / 2})`} 
+              fontSize={12} 
+            >
+              זמן (שניות)
+            </text>
+          </svg>
+          
+          {tooltipInfo.visible && (
+            <GreenWaveTooltip 
+              x={tooltipInfo.x} 
+              y={tooltipInfo.y} 
+              content={tooltipInfo.content} 
+            />
+          )}
+        </div>
+      </CardContent>
+    </div>
+  );
+};
