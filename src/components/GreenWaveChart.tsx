@@ -100,6 +100,71 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     setTooltipInfo(prev => ({ ...prev, visible: false }));
   };
 
+  const generateYAxisLabels = () => {
+    const interval = 10;
+    const labels = [];
+    
+    for (let t = 0; t <= maxCycleTime; t += interval) {
+      const y = dimensions.height - 40 - yScale(t);
+      labels.push(
+        <g key={`y-label-${t}`}>
+          <text
+            x={leftPadding - 10}
+            y={y}
+            textAnchor="end"
+            dominantBaseline="middle"
+            fontSize={isMobile ? 10 : 12}
+            fill="#6B7280"
+          >
+            {t}
+          </text>
+          <line 
+            x1={leftPadding - 5} 
+            y1={y} 
+            x2={leftPadding} 
+            y2={y} 
+            stroke="#6B7280" 
+            strokeWidth={1}
+          />
+        </g>
+      );
+    }
+    return labels;
+  };
+
+  const generateXAxisLabels = () => {
+    const interval = 100;
+    const labels = [];
+    
+    for (let d = 0; d <= maxDistance; d += interval) {
+      const x = originX + xScale(d);
+      if (x <= dimensions.width - rightPadding) {
+        labels.push(
+          <g key={`x-label-${d}`}>
+            <text
+              x={x}
+              y={dimensions.height - (isMobile ? 15 : 20)}
+              textAnchor="middle"
+              fontSize={isMobile ? 10 : 12}
+              fill="#6B7280"
+            >
+              {d}
+            </text>
+            <line 
+              x1={x} 
+              y1={dimensions.height - 40} 
+              x2={x} 
+              y2={dimensions.height - 35} 
+              stroke="#6B7280" 
+              strokeWidth={1}
+            />
+          </g>
+        );
+      }
+    }
+    return labels;
+  };
+
   const generateYGridLines = () => {
     const interval = 10;
     const lines = [];
@@ -648,6 +713,31 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               stroke="black" 
               strokeWidth={1} 
             />
+
+            {/* Add axis labels */}
+            {generateYAxisLabels()}
+            {generateXAxisLabels()}
+
+            {/* Add axis titles */}
+            <text
+              x={leftPadding - 50}
+              y={dimensions.height / 2}
+              textAnchor="middle"
+              transform={`rotate(-90, ${leftPadding - 50}, ${dimensions.height / 2})`}
+              fontSize={isMobile ? 12 : 14}
+              fill="#4B5563"
+            >
+              זמן (שניות)
+            </text>
+            <text
+              x={dimensions.width / 2}
+              y={dimensions.height - 5}
+              textAnchor="middle"
+              fontSize={isMobile ? 12 : 14}
+              fill="#4B5563"
+            >
+              מרחק (מטרים)
+            </text>
 
             {renderDiagonalLines()}
             {renderSolidDiagonalLines()}
