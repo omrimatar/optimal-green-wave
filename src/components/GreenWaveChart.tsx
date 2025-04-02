@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -42,6 +43,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   const leftPadding = isMobile ? 65 : 85;
   const originX = leftPadding + 25;
   const rightPadding = isMobile ? 80 : 110;
+
+  // Move Y label 10 pixels further left
+  const yLabelOffset = 20; // Changed from 10 to 20 (10px more to the left)
 
   useEffect(() => {
     setIsMobile(isMobileDevice());
@@ -114,7 +118,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             const content = (
               <div>
                 <p><strong>זמן: {t} שניות</strong></p>
-                <p>ערך במערכת קואורדינטות: Y={Math.round(y)}</p>
+                {/* Removed the coordinate system value */}
               </div>
             );
             handleShowTooltip(e.clientX, e.clientY, content);
@@ -122,7 +126,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           onMouseLeave={handleHideTooltip}
         >
           <text
-            x={leftPadding - 10}
+            x={leftPadding - yLabelOffset} // Increased offset by 10px
             y={y}
             textAnchor="end"
             dominantBaseline="middle"
@@ -916,10 +920,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
 
             {/* Add axis titles */}
             <text
-              x={leftPadding - 50}
+              x={leftPadding - 50 - 10} // Also moved 10px further left
               y={dimensions.height / 2}
               textAnchor="middle"
-              transform={`rotate(-90, ${leftPadding - 50}, ${dimensions.height / 2})`}
+              transform={`rotate(-90, ${leftPadding - 50 - 10}, ${dimensions.height / 2})`}
               fontSize={isMobile ? 12 : 14}
               fill="#4B5563"
               onMouseEnter={(e) => {
