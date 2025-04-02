@@ -782,4 +782,198 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         // If half cycle time is enabled, duplicate the phase at half cycle time distance
         if (intersection.useHalfCycleTime) {
           const halfCycleTime = intersection.cycleTime / 2;
-          let halfCycleStartTime = (startTime + halfCycleTime) % intersection
+          let halfCycleStartTime = (startTime + halfCycleTime) % intersection.cycleTime;
+          let halfCycleEndTime = (halfCycleStartTime + phase.duration) % intersection.cycleTime;
+          
+          if (halfCycleEndTime === 0) halfCycleEndTime = intersection.cycleTime;
+          
+          const halfCycleWrappedPhase = halfCycleEndTime < halfCycleStartTime;
+          
+          console.log(`  Half-Cycle Phase ${j+1}:`);
+          console.log(`    Direction: ${phase.direction}`);
+          console.log(`    Half-Cycle Start: ${halfCycleStartTime}s`);
+          console.log(`    Half-Cycle End: ${halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime}s`);
+          console.log(`    Half-Cycle Wrapped: ${halfCycleWrappedPhase}`);
+          
+          phaseElements.push(
+            <React.Fragment key={`phase-${i}-${j}-half-cycle`}>
+              <GreenPhaseBar
+                x={x + xOffset}
+                startTime={halfCycleStartTime}
+                endTime={halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime}
+                cycleTime={intersection.cycleTime}
+                direction={phase.direction}
+                barWidth={15}
+                yScale={yScale}
+                chartHeight={dimensions.height - 40}
+                isHalfCycle={true}
+                onMouseEnter={(e) => {
+                  const content = (
+                    <div>
+                      <p>צומת: {intersection.id}</p>
+                      <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
+                      <p>התחלה: {Math.round(halfCycleStartTime)} שניות (מחצית מחזור)</p>
+                      <p>סיום: {Math.round(halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime)} שניות</p>
+                      <p>היסט: {Math.round(offset)} שניות</p>
+                    </div>
+                  );
+                  handleShowTooltip(e.clientX, e.clientY, content);
+                }}
+                onMouseLeave={handleHideTooltip}
+              />
+              
+              {halfCycleWrappedPhase && (
+                <GreenPhaseBar
+                  x={x + xOffset}
+                  startTime={0}
+                  endTime={halfCycleEndTime}
+                  cycleTime={intersection.cycleTime}
+                  direction={phase.direction}
+                  barWidth={15}
+                  yScale={yScale}
+                  chartHeight={dimensions.height - 40}
+                  isHalfCycle={true}
+                  onMouseEnter={(e) => {
+                    const content = (
+                      <div>
+                        <p>צומת: {intersection.id}</p>
+                        <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
+                        <p>התחלה: 0 שניות (המש��, מחצית מחזור)</p>
+                        <p>סיום: {Math.round(halfCycleEndTime)} שניות</p>
+                        <p>היסט: {Math.round(offset)} שניות</p>
+                      </div>
+                    );
+                    handleShowTooltip(e.clientX, e.clientY, content);
+                  }}
+                  onMouseLeave={handleHideTooltip}
+                />
+              )}
+            </React.Fragment>
+          );
+        }
+        
+        return phaseElements;
+      });
+    });
+  };
+
+  return (
+    <>
+      <CardHeader className="flex flex-col sm:flex-row items-center justify-between p-3 md:p-6">
+        <CardTitle className="text-base md:text-lg mb-2 sm:mb-0">תרשים גל ירוק - {mode === 'manual' ? 'מצב ידני' : mode === 'calculate' ? 'אופטימיזציה' : 'מצב קיים'}</CardTitle>
+        
+        <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 sm:gap-4 text-xs">
+          <div className="flex items-center">
+            <div className="w-4 h-2 md:w-5 md:h-2.5 bg-[#A7F3D0] rounded-sm ml-1 md:ml-2 rtl:mr-2"></div>
+            <span className="text-xs">עם הזרם</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-2 md:w-5 md:h-2.5 bg-[#93C5FD] rounded-sm ml-1 md:ml-2 rtl:mr-2"></div>
+            <span className="text-xs">נגד הזרם</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 md:w-5 border-t-2 border-[#4ADE80] ml-1 md:ml-2 rtl:mr-2"></div>
+            <span className="text-xs">רוחב פס עם הזרם</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 md:w-5 border-t-2 border-[#60A5FA] ml-1 md:ml-2 rtl:mr-2"></div>
+            <span className="text-xs">רוחב פס נגד הזרם</span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-2 md:p-6">
+        <div className="relative w-full" ref={chartRef}>
+          <svg 
+            width={dimensions.width} 
+            height={dimensions.height}
+            className="overflow-visible w-full"
+            viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
+            preserveAspectRatio="xMidYMid meet"
+          >
+            {generateYGridLines()}
+            {generateXGridLines()}
+            
+            <line 
+              x1={leftPadding} 
+              y1={isMobile ? 30 : 40} 
+              x2={leftPadding} 
+              y2={dimensions.height - (isMobile ? 30 : 40)} 
+              stroke="black" 
+              strokeWidth={1} 
+            />
+            <line 
+              x1={leftPadding} 
+              y1={dimensions.height - (isMobile ? 30 : 40)} 
+              x2={dimensions.width - rightPadding} 
+              y2={dimensions.height - (isMobile ? 30 : 40)} 
+              stroke="black" 
+              strokeWidth={1} 
+            />
+
+            {/* Add axis labels */}
+            {generateYAxisLabels()}
+            {generateXAxisLabels()}
+
+            {/* Add axis titles */}
+            <text
+              x={leftPadding - 50}
+              y={dimensions.height / 2}
+              textAnchor="middle"
+              transform={`rotate(-90, ${leftPadding - 50}, ${dimensions.height / 2})`}
+              fontSize={isMobile ? 12 : 14}
+              fill="#4B5563"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p><strong>ציר Y: זמן</strong></p>
+                    <p>מציג את זמן המחזור בשניות</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            >
+              זמן (שניות)
+            </text>
+            <text
+              x={dimensions.width / 2}
+              y={dimensions.height - 5}
+              textAnchor="middle"
+              fontSize={isMobile ? 12 : 14}
+              fill="#4B5563"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p><strong>ציר X: מרחק</strong></p>
+                    <p>מציג את המרחק במטרים</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            >
+              מרחק (מטרים)
+            </text>
+
+            {/* Render green phase bars for each intersection */}
+            {renderIntersections()}
+            
+            {/* Render diagonal lines for bandwidth between intersections */}
+            {renderDiagonalLines()}
+            {renderSolidDiagonalLines()}
+          </svg>
+          
+          {/* Tooltip */}
+          {tooltipInfo.visible && (
+            <GreenWaveTooltip 
+              x={tooltipInfo.x} 
+              y={tooltipInfo.y} 
+              content={tooltipInfo.content}
+              isMobile={isMobile}
+            />
+          )}
+        </div>
+      </CardContent>
+    </>
+  );
+};
