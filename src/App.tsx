@@ -8,7 +8,6 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { MaintenanceProvider } from "@/contexts/MaintenanceContext";
 import { MaintenancePage } from "@/components/MaintenancePage";
 import { MobileDetectionDialog } from "@/components/MobileDetectionDialog";
-import { LanguageToggle } from "@/components/LanguageToggle";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { useMaintenanceMode } from "@/contexts/MaintenanceContext";
@@ -34,7 +33,6 @@ const App = () => (
           <Toaster />
           <Sonner />
           <MobileDetectionDialog />
-          <LanguageToggle />
           <BrowserRouter>
             <MaintenanceWrapper>
               <Routes>
