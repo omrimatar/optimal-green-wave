@@ -23,7 +23,7 @@ export const WeightsPanel = ({
   onToggleWeights,
   onResetWeights
 }: WeightsPanelProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [localWeights, setLocalWeights] = useState<OptimizationWeights>(weights);
   const formatNumber = (num: number) => num.toFixed(1);
 
@@ -182,7 +182,7 @@ export const WeightsPanel = ({
             max={100} // max 1.0
             step={1} 
           />
-          <div className="flex justify-between text-xs text-gray-500">
+          <div className={`flex justify-between text-xs text-gray-500 ${language === 'he' ? 'flex-row-reverse' : ''}`}>
             <span>{t('full_direction_balance')}</span>
             <span>{t('no_direction_balance')}</span>
           </div>
@@ -208,7 +208,7 @@ export const WeightsPanel = ({
             max={100} 
             step={1} 
           />
-          <div className="flex justify-between text-xs text-gray-500">
+          <div className={`flex justify-between text-xs text-gray-500 ${language === 'he' ? 'flex-row-reverse' : ''}`}>
             <span>{t('no_main_phase_priority')}</span>
             <span>{t('full_main_phase_priority')}</span>
           </div>
