@@ -86,66 +86,6 @@ export const WeightsPanel = ({
         <span></span>
       </div>
       
-      {/* First, show the special independent parameters */}
-      <div className="space-y-6 mb-6">
-        <h3 className="font-semibold text-lg">{t('special_parameters')}</h3>
-        
-        {/* Alpha parameter - direction balancing */}
-        <div className="space-y-3 p-3 bg-gray-50 rounded-md">
-          <div className="flex justify-between">
-            <Label className="font-medium text-base">{t('alpha_parameter')} ({formatNumber(localWeights.alpha || 0.5)})</Label>
-            <input 
-              type="number" 
-              value={parseFloat((localWeights.alpha || 0.5).toFixed(2))} 
-              min="0.1" 
-              max="1" 
-              step="0.1" 
-              onChange={e => handleInputChange('alpha', e.target.value)} 
-              className="w-16 text-right border rounded px-2" 
-            />
-          </div>
-          <Slider 
-            value={[(localWeights.alpha || 0.5) * 100]} 
-            onValueChange={value => handleWeightChange('alpha', value[0] / 100)} 
-            min={10} // min 0.1
-            max={100} // max 1.0
-            step={1} 
-          />
-          <div className="flex justify-between text-xs text-gray-500">
-            <span>{t('full_direction_balance')}</span>
-            <span>{t('no_direction_balance')}</span>
-          </div>
-        </div>
-        
-        {/* Beta parameter - secondary phase priority */}
-        <div className="space-y-3 p-3 bg-gray-50 rounded-md">
-          <div className="flex justify-between">
-            <Label className="font-medium text-base">{t('beta_parameter')} ({formatNumber(localWeights.beta || 1.0)})</Label>
-            <input 
-              type="number" 
-              value={parseFloat((localWeights.beta || 1.0).toFixed(2))} 
-              min="0" 
-              max="1" 
-              step="0.1" 
-              onChange={e => handleInputChange('beta', e.target.value)} 
-              className="w-16 text-right border rounded px-2" 
-            />
-          </div>
-          <Slider 
-            value={[(localWeights.beta || 1.0) * 100]} 
-            onValueChange={value => handleWeightChange('beta', value[0] / 100)} 
-            max={100} 
-            step={1} 
-          />
-          <div className="flex justify-between text-xs text-gray-500">
-            <span>{t('no_main_phase_priority')}</span>
-            <span>{t('full_main_phase_priority')}</span>
-          </div>
-        </div>
-      </div>
-      
-      <Separator className="my-6" />
-      
       <h3 className="font-semibold text-lg mb-4">{t('optimization_weights')}</h3>
       <div className="text-sm text-gray-500 mb-4">
         {t('weights_must_sum_to_1')}: {totalWeight.toFixed(2)}
@@ -216,6 +156,65 @@ export const WeightsPanel = ({
             <input type="number" value={parseFloat(localWeights.max_delay_down.toFixed(2))} min="0" max="1" step="0.1" onChange={e => handleInputChange('max_delay_down', e.target.value)} className="w-16 text-right border rounded px-2" />
           </div>
           <Slider value={[localWeights.max_delay_down * 100]} onValueChange={value => handleWeightChange('max_delay_down', value[0] / 100)} max={100} step={1} />
+        </div>
+      </div>
+      
+      <Separator className="my-6" />
+      
+      <div className="space-y-6">
+        <h3 className="font-semibold text-lg">{t('special_parameters')}</h3>
+        
+        {/* Alpha parameter - direction balancing */}
+        <div className="space-y-3 p-3 bg-gray-50 rounded-md">
+          <div className="flex justify-between">
+            <Label className="font-medium text-base">α {t('direction_balance')} ({formatNumber(localWeights.alpha || 0.5)})</Label>
+            <input 
+              type="number" 
+              value={parseFloat((localWeights.alpha || 0.5).toFixed(2))} 
+              min="0.1" 
+              max="1" 
+              step="0.1" 
+              onChange={e => handleInputChange('alpha', e.target.value)} 
+              className="w-16 text-right border rounded px-2" 
+            />
+          </div>
+          <Slider 
+            value={[(localWeights.alpha || 0.5) * 100]} 
+            onValueChange={value => handleWeightChange('alpha', value[0] / 100)} 
+            min={10} // min 0.1
+            max={100} // max 1.0
+            step={1} 
+          />
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>{t('full_direction_balance')}</span>
+            <span>{t('no_direction_balance')}</span>
+          </div>
+        </div>
+        
+        {/* Beta parameter - secondary phase priority */}
+        <div className="space-y-3 p-3 bg-gray-50 rounded-md">
+          <div className="flex justify-between">
+            <Label className="font-medium text-base">β {t('main_phase_priority')} ({formatNumber(localWeights.beta || 1.0)})</Label>
+            <input 
+              type="number" 
+              value={parseFloat((localWeights.beta || 1.0).toFixed(2))} 
+              min="0" 
+              max="1" 
+              step="0.1" 
+              onChange={e => handleInputChange('beta', e.target.value)} 
+              className="w-16 text-right border rounded px-2" 
+            />
+          </div>
+          <Slider 
+            value={[(localWeights.beta || 1.0) * 100]} 
+            onValueChange={value => handleWeightChange('beta', value[0] / 100)} 
+            max={100} 
+            step={1} 
+          />
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>{t('no_main_phase_priority')}</span>
+            <span>{t('full_main_phase_priority')}</span>
+          </div>
         </div>
       </div>
     </div>}

@@ -73,7 +73,17 @@ type TranslationKey =
   | 'manual_results'
   | 'optimization_results'
   | 'optimal'
-  | 'contact us';
+  | 'contact us'
+  | 'special_parameters'
+  | 'direction_balance'
+  | 'main_phase_priority'
+  | 'full_direction_balance'
+  | 'no_direction_balance'
+  | 'no_main_phase_priority'
+  | 'full_main_phase_priority'
+  | 'alpha_parameter'
+  | 'beta_parameter'
+  | 'weights_must_sum_to_1';
 
 interface LanguageContextType {
   language: Language;
@@ -152,7 +162,18 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     manual_results: 'Manual Results',
     optimization_results: 'Optimization Results',
     optimal: 'Optimal',
-    'contact us': 'Contact Us'
+    'contact us': 'Contact Us',
+    // New translations
+    'special_parameters': 'Special Parameters',
+    'direction_balance': 'Direction Balance',
+    'main_phase_priority': 'Main Phase Priority',
+    'full_direction_balance': 'Full Direction Balance',
+    'no_direction_balance': 'No Direction Balance',
+    'no_main_phase_priority': 'No Main Phase Priority',
+    'full_main_phase_priority': 'Full Main Phase Priority',
+    'alpha_parameter': 'Alpha Parameter',
+    'beta_parameter': 'Beta Parameter',
+    'weights_must_sum_to_1': 'Weights must sum to 1'
   },
   he: {
     app_title: 'מחשבון גל ירוק',
@@ -224,7 +245,18 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     manual_results: 'תוצאות ידניות',
     optimization_results: 'תוצאות אופטימיזציה',
     optimal: 'אופטימלי',
-    'contact us': 'צור קשר'
+    'contact us': 'צור קשר',
+    // New translations
+    'special_parameters': 'פרמטרים מיוחדים',
+    'direction_balance': 'איזון בין כיוונים',
+    'main_phase_priority': 'עדיפות למופע ראשי',
+    'full_direction_balance': 'איזון מלא בין כיוונים',
+    'no_direction_balance': 'ללא איזון בין כיוונים',
+    'no_main_phase_priority': 'ללא עדיפות למופעים ראשיים',
+    'full_main_phase_priority': 'עדיפות מלאה למופע ראשי',
+    'alpha_parameter': 'פרמטר אלפא',
+    'beta_parameter': 'פרמטר בטא',
+    'weights_must_sum_to_1': 'המשקלות חייבים להסתכם ל-1'
   }
 };
 
