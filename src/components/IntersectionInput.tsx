@@ -149,8 +149,24 @@ export const IntersectionInput = ({
         
         return;
       }
+
+      // Validate that startTime doesn't exceed effective cycle time
+      if (value >= effectiveCycleTime) {
+        toast.error(`${t('start_time')} ${t('must_be_less_than')} ${effectiveCycleTime}`);
+        
+        setTempGreenPhaseValues(prev => ({
+          ...prev,
+          [phaseIndex]: {
+            ...prev[phaseIndex],
+            startTime: intersection.greenPhases[phaseIndex].startTime.toString()
+          }
+        }));
+        
+        return;
+      }
     } else if (field === 'duration') {
-      if (value < 1 || !Number.isInteger(value)) {
+      // Modified: Duration cannot exceed the effective cycle time
+      if (value < 1 || value > effectiveCycleTime || !Number.isInteger(value)) {
         toast.error(`${t('duration')} ${t('must_be_between')} 1 ${t('and')} ${effectiveCycleTime}`);
         
         setTempGreenPhaseValues(prev => ({
@@ -190,35 +206,6 @@ export const IntersectionInput = ({
         
         return;
       }
-    }
-    
-    // Validate that startTime + duration doesn't exceed effective cycle time
-    if (newStartTime >= effectiveCycleTime) {
-      toast.error(`${t('start_time')} ${t('must_be_less_than')} ${effectiveCycleTime}`);
-      
-      setTempGreenPhaseValues(prev => ({
-        ...prev,
-        [phaseIndex]: {
-          ...prev[phaseIndex],
-          startTime: currentPhase.startTime.toString()
-        }
-      }));
-      
-      return;
-    }
-    
-    if (newStartTime + newDuration > effectiveCycleTime && newStartTime < effectiveCycleTime) {
-      toast.error(`${t('start_time')} + ${t('duration')} ${t('must_not_exceed')} ${effectiveCycleTime}`);
-      
-      setTempGreenPhaseValues(prev => ({
-        ...prev,
-        [phaseIndex]: {
-          startTime: currentPhase.startTime.toString(),
-          duration: currentPhase.duration.toString()
-        }
-      }));
-      
-      return;
     }
     
     updatedGreenPhases[phaseIndex] = {
