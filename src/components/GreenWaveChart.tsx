@@ -13,6 +13,8 @@ interface GreenWaveChartProps {
   pairBandPoints?: PairBandPoint[];
   calculationPerformed?: boolean;
   comparisonResults?: RunResult;
+  diagonalPointsUp?: DiagonalPoint[];
+  diagonalPointsDown?: DiagonalPoint[];
 }
 
 export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({ 
@@ -21,7 +23,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   speed,
   pairBandPoints,
   calculationPerformed = false,
-  comparisonResults
+  comparisonResults,
+  diagonalPointsUp,
+  diagonalPointsDown
 }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 600 });
@@ -53,10 +57,12 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     console.log("GreenWaveChart speed:", speed);
     console.log("GreenWaveChart pairBandPoints:", pairBandPoints);
     console.log("GreenWaveChart comparisonResults:", comparisonResults);
+    console.log("GreenWaveChart diagonalPointsUp:", diagonalPointsUp);
+    console.log("GreenWaveChart diagonalPointsDown:", diagonalPointsDown);
     console.log("Left padding:", leftPadding);
     console.log("Origin X:", originX);
     console.log("Right padding:", rightPadding);
-  }, [intersections, mode, speed, pairBandPoints, comparisonResults, leftPadding, originX, rightPadding]);
+  }, [intersections, mode, speed, pairBandPoints, comparisonResults, diagonalPointsUp, diagonalPointsDown, leftPadding, originX, rightPadding]);
 
   const maxDistance = Math.max(...intersections.map(i => i.distance));
   const maxCycleTime = Math.max(...intersections.map(i => i.cycleTime));
@@ -744,7 +750,212 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   };
 
   const renderSolidDiagonalLines = () => {
-    return null;
+    if (!calculationPerformed || (!diagonalPointsUp && !diagonalPointsDown)) {
+      return null;
+    }
+
+    const lines: React.ReactNode[] = [];
+
+    // --- Upstream Lines ---
+    if (diagonalPointsUp && diagonalPointsUp.length > 1) {
+      for (let i = 0; i < diagonalPointsUp.length - 1; i++) {
+        const originPoint = diagonalPointsUp[i];
+        const destPoint = diagonalPointsUp[i + 1];
+
+        // Find corresponding intersections to get distances
+        const originInter = intersections.find(inter => inter.id === originPoint.junction);
+        const destInter = intersections.find(inter => inter.id === destPoint.junction);
+
+        if (!originInter || !destInter) continue; // Skip if intersection not found
+
+        // Calculate X coordinates based on distance
+        const originX = leftPadding + 25 + xScale(originInter.distance);
+        const destX = leftPadding + 25 + xScale(destInter.distance);
+
+        // Calculate Y coordinates based on GLOBAL time (low and top)
+        const originLowY = dimensions.height - 40 - yScale(originPoint.low);
+        const originHighY = dimensions.height - 40 - yScale(originPoint.top);
+        const destLowY = dimensions.height - 40 - yScale(destPoint.low);
+        const destHighY = dimensions.height - 40 - yScale(destPoint.top);
+
+        // Check if the band has positive width before drawing
+        if (originPoint.top > originPoint.low + 1e-6 && destPoint.top > destPoint.low + 1e-6) {
+          // Draw the lower bound line
+          lines.push(
+            <line
+              key={`solid-up-low-${i}`}
+              x1={originX}
+              y1={originLowY}
+              x2={destX}
+              y2={destLowY}
+              stroke="#4ADE80" // Upstream color (adjust as needed)
+              strokeWidth={2}
+              // Add Tooltip
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם</p>
+                    <p>מצומת {originPoint.junction} לצומת {destPoint.junction}</p>
+                    <p>קו תחתון של פס רציף</p>
+                    <p>זמן מקור: {Math.round(originPoint.low)} שניות</p>
+                    <p>זמן יעד: {Math.round(destPoint.low)} שניות</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+
+          // Draw the upper bound line
+          lines.push(
+            <line
+              key={`solid-up-high-${i}`}
+              x1={originX}
+              y1={originHighY}
+              x2={destX}
+              y2={destHighY}
+              stroke="#4ADE80" // Upstream color (adjust as needed)
+              strokeWidth={2}
+              // Add Tooltip
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: עם הזרם</p>
+                    <p>מצומת {originPoint.junction} לצומת {destPoint.junction}</p>
+                    <p>קו עליון של פס רציף</p>
+                    <p>זמן מקור: {Math.round(originPoint.top)} שניות</p>
+                    <p>זמן יעד: {Math.round(destPoint.top)} שניות</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          // Optional: Draw a filled polygon between the lines for visual effect
+          lines.push(
+            <polygon
+              key={`solid-up-poly-${i}`}
+              points={`${originX},${originLowY} ${destX},${destLowY} ${destX},${destHighY} ${originX},${originHighY}`}
+              fill="#A7F3D0"
+              opacity={0.2}
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כי��ון: עם הזרם</p>
+                    <p>מצומת {originPoint.junction} לצומת {destPoint.junction}</p>
+                    <p>פס רציף גל ירוק</p>
+                    <p>רוחב פס: {Math.round(originPoint.top - originPoint.low)} שניות</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+        }
+      }
+    }
+
+    // --- Downstream Lines ---
+    if (diagonalPointsDown && diagonalPointsDown.length > 1) {
+      for (let i = 0; i < diagonalPointsDown.length - 1; i++) {
+        // For downstream, we keep the natural order of points from first to last intersection
+        // But we need to note that traffic flow is in the opposite direction (from higher to lower intersections)
+        const originPoint = diagonalPointsDown[i + 1]; // Intersection with higher ID number
+        const destPoint = diagonalPointsDown[i];      // Intersection with lower ID number
+
+        const originInter = intersections.find(inter => inter.id === originPoint.junction);
+        const destInter = intersections.find(inter => inter.id === destPoint.junction);
+
+        if (!originInter || !destInter) continue;
+
+        const originX = leftPadding + 25 + xScale(originInter.distance); // Junction with higher ID
+        const destX = leftPadding + 25 + xScale(destInter.distance);    // Junction with lower ID
+
+        const originLowY = dimensions.height - 40 - yScale(originPoint.low);
+        const originHighY = dimensions.height - 40 - yScale(originPoint.top);
+        const destLowY = dimensions.height - 40 - yScale(destPoint.low);
+        const destHighY = dimensions.height - 40 - yScale(destPoint.top);
+
+        if (originPoint.top > originPoint.low + 1e-6 && destPoint.top > destPoint.low + 1e-6) {
+          lines.push(
+            <line
+              key={`solid-down-low-${i}`}
+              x1={originX} // Start at higher junction ID
+              y1={originLowY}
+              x2={destX}   // End at lower junction ID
+              y2={destLowY}
+              stroke="#60A5FA" // Downstream color
+              strokeWidth={2}
+              // Add Tooltip
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם</p>
+                    <p>מצומת {originPoint.junction} לצומת {destPoint.junction}</p>
+                    <p>קו תחתון של פס רציף</p>
+                    <p>זמן מקור: {Math.round(originPoint.low)} שניות</p>
+                    <p>זמן יעד: {Math.round(destPoint.low)} שניות</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          lines.push(
+            <line
+              key={`solid-down-high-${i}`}
+              x1={originX} // Start at higher junction ID
+              y1={originHighY}
+              x2={destX}   // End at lower junction ID
+              y2={destHighY}
+              stroke="#60A5FA" // Downstream color
+              strokeWidth={2}
+              // Add Tooltip
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם</p>
+                    <p>מצומת {originPoint.junction} לצומת {destPoint.junction}</p>
+                    <p>קו עליון של פס רציף</p>
+                    <p>זמן מקור: {Math.round(originPoint.top)} שניות</p>
+                    <p>זמן יעד: {Math.round(destPoint.top)} שניות</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+          // Optional: Draw a filled polygon between the lines for visual effect
+          lines.push(
+            <polygon
+              key={`solid-down-poly-${i}`}
+              points={`${originX},${originLowY} ${destX},${destLowY} ${destX},${destHighY} ${originX},${originHighY}`}
+              fill="#93C5FD"
+              opacity={0.2}
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p>כיוון: נגד הזרם</p>
+                    <p>מצומת {originPoint.junction} לצומת {destPoint.junction}</p>
+                    <p>פס רציף גל ירוק</p>
+                    <p>רוחב פס: {Math.round(originPoint.top - originPoint.low)} שניות</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            />
+          );
+        }
+      }
+    }
+
+    return lines;
   };
 
   const renderIntersections = () => {
@@ -867,161 +1078,4 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                       <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
                       <p>התחלה: {Math.round(halfCycleStartTime)} שניות (מחצית מחזור)</p>
                       <p>סיום: {Math.round(halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime)} שניות</p>
-                      <p>היסט: {Math.round(offset)} שניות</p>
-                    </div>
-                  );
-                  handleShowTooltip(e.clientX, e.clientY, content);
-                }}
-                onMouseLeave={handleHideTooltip}
-              />
-              
-              {halfCycleWrappedPhase && (
-                <GreenPhaseBar
-                  x={x + xOffset}
-                  startTime={0}
-                  endTime={halfCycleEndTime}
-                  cycleTime={intersection.cycleTime}
-                  direction={phase.direction}
-                  barWidth={15}
-                  yScale={yScale}
-                  chartHeight={dimensions.height - 40}
-                  isHalfCycle={true}
-                  onMouseEnter={(e) => {
-                    const content = (
-                      <div>
-                        <p>צומת: {intersection.id}</p>
-                        <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
-                        <p>התחלה: 0 שניות (המש��, מחצית מחזור)</p>
-                        <p>סיום: {Math.round(halfCycleEndTime)} שניות</p>
-                        <p>היסט: {Math.round(offset)} שניות</p>
-                      </div>
-                    );
-                    handleShowTooltip(e.clientX, e.clientY, content);
-                  }}
-                  onMouseLeave={handleHideTooltip}
-                />
-              )}
-            </React.Fragment>
-          );
-        }
-        
-        return phaseElements;
-      });
-    });
-  };
-
-  return (
-    <>
-      <CardHeader className="flex flex-col sm:flex-row items-center justify-between p-3 md:p-6">
-        <CardTitle className="text-base md:text-lg mb-2 sm:mb-0">תרשים גל ירוק - {mode === 'manual' ? 'מצב ידני' : mode === 'calculate' ? 'אופטימיזציה' : 'מצב קיים'}</CardTitle>
-        
-        <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 sm:gap-4 text-xs">
-          <div className="flex items-center">
-            <div className="w-4 h-2 md:w-5 md:h-2.5 bg-[#A7F3D0] rounded-sm ml-1 md:ml-2 rtl:mr-2"></div>
-            <span className="text-xs">עם הזרם</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-4 h-2 md:w-5 md:h-2.5 bg-[#93C5FD] rounded-sm ml-1 md:ml-2 rtl:mr-2"></div>
-            <span className="text-xs">נגד הזרם</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-4 md:w-5 border-t-2 border-[#4ADE80] ml-1 md:ml-2 rtl:mr-2"></div>
-            <span className="text-xs">רוחב פס עם הזרם</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-4 md:w-5 border-t-2 border-[#60A5FA] ml-1 md:ml-2 rtl:mr-2"></div>
-            <span className="text-xs">רוחב פס נגד הזרם</span>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-2 md:p-6">
-        <div className="relative w-full" ref={chartRef}>
-          <svg 
-            width={dimensions.width} 
-            height={dimensions.height}
-            className="overflow-visible w-full"
-            viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
-            preserveAspectRatio="xMidYMid meet"
-          >
-            {generateYGridLines()}
-            {generateXGridLines()}
-            
-            <line 
-              x1={leftPadding} 
-              y1={isMobile ? 30 : 40} 
-              x2={leftPadding} 
-              y2={dimensions.height - (isMobile ? 30 : 40)} 
-              stroke="black" 
-              strokeWidth={1} 
-            />
-            <line 
-              x1={leftPadding} 
-              y1={dimensions.height - (isMobile ? 30 : 40)} 
-              x2={dimensions.width - rightPadding} 
-              y2={dimensions.height - (isMobile ? 30 : 40)} 
-              stroke="black" 
-              strokeWidth={1} 
-            />
-
-            {generateYAxisLabels()}
-            {generateXAxisLabels()}
-
-            <text
-              x={leftPadding - 50 - 10}
-              y={dimensions.height / 2}
-              textAnchor="middle"
-              transform={`rotate(-90, ${leftPadding - 50 - 10}, ${dimensions.height / 2})`}
-              fontSize={isMobile ? 12 : 14}
-              fill="#4B5563"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p><strong>ציר Y: זמן</strong></p>
-                    <p>מציג את זמן המחזור בשניות</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            >
-              זמן (שניות)
-            </text>
-            <text
-              x={dimensions.width / 2}
-              y={dimensions.height - 5}
-              textAnchor="middle"
-              fontSize={isMobile ? 12 : 14}
-              fill="#4B5563"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p><strong>ציר X: מרחק</strong></p>
-                    <p>מציג את המרחק במטרים</p>
-                  </div>
-                );
-                handleShowTooltip(e.clientX, e.clientY, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            >
-              מרחק (מטרים)
-            </text>
-
-            {renderIntersections()}
-            
-            {renderDiagonalLines()}
-            {renderSolidDiagonalLines()}
-          </svg>
-          
-          {tooltipInfo.visible && (
-            <GreenWaveTooltip 
-              x={tooltipInfo.x} 
-              y={tooltipInfo.y} 
-              content={tooltipInfo.content}
-              isMobile={isMobile}
-            />
-          )}
-        </div>
-      </CardContent>
-    </>
-  );
-};
+                      <p>

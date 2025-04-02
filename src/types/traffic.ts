@@ -1,3 +1,4 @@
+
 // Input types for the Lambda function
 export interface LambdaGreenPhase {
   start: number;
