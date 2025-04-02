@@ -10,7 +10,7 @@ interface GreenPhaseBarProps {
   barWidth: number;
   yScale: (value: number) => number;
   chartHeight: number;
-  onMouseEnter: (e: React.MouseEvent) => void;
+  onMouseEnter: (e: React.MouseEvent, additionalInfo?: Record<string, any>) => void;
   onMouseLeave: () => void;
   isHalfCycle?: boolean;
 }
@@ -42,6 +42,18 @@ export const GreenPhaseBar: React.FC<GreenPhaseBarProps> = ({
     ? isHalfCycle ? '#34D399' : '#10B981'  // Lighter border for half-cycle
     : isHalfCycle ? '#60A5FA' : '#3B82F6'; // Lighter border for half-cycle
 
+  const duration = Math.abs(endTime - startTime);
+  const phaseInfo = {
+    startTime: Math.round(startTime * 100) / 100,
+    endTime: Math.round(endTime * 100) / 100,
+    duration: Math.round(duration * 100) / 100,
+    direction,
+    isHalfCycle: isHalfCycle || false,
+    height: Math.round(height * 100) / 100,
+    y1: Math.round(y1 * 100) / 100,
+    y2: Math.round(y2 * 100) / 100,
+  };
+
   return (
     <rect
       x={x - barWidth / 2}
@@ -53,7 +65,7 @@ export const GreenPhaseBar: React.FC<GreenPhaseBarProps> = ({
       strokeWidth={1}
       rx={3}
       ry={3}
-      onMouseEnter={onMouseEnter}
+      onMouseEnter={(e) => onMouseEnter(e, phaseInfo)}
       onMouseLeave={onMouseLeave}
       style={{ cursor: 'pointer' }}
     />

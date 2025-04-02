@@ -22,7 +22,9 @@ export const GreenWaveTooltip: React.FC<GreenWaveTooltipProps> = ({ x, y, conten
         minWidth: isMobile ? '120px' : '150px',
         maxWidth: isMobile ? '200px' : '250px',
         direction: 'rtl',
-        fontSize: isMobile ? '0.85rem' : '1rem'
+        fontSize: isMobile ? '0.85rem' : '1rem',
+        color: '#333',
+        lineHeight: '1.4'
       }}
     >
       {content}

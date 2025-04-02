@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -38,6 +37,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     content: null
   });
   const [isMobile, setIsMobile] = useState(false);
+  const [hoveredElement, setHoveredElement] = useState<string | null>(null);
 
   const leftPadding = isMobile ? 65 : 85;
   const originX = leftPadding + 25;
@@ -98,6 +98,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
 
   const handleHideTooltip = () => {
     setTooltipInfo(prev => ({ ...prev, visible: false }));
+    setHoveredElement(null);
   };
 
   const generateYAxisLabels = () => {
@@ -107,14 +108,27 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     for (let t = 0; t <= maxCycleTime; t += interval) {
       const y = dimensions.height - 40 - yScale(t);
       labels.push(
-        <g key={`y-label-${t}`}>
+        <g key={`y-label-${t}`}
+          onMouseEnter={(e) => {
+            setHoveredElement(`y-label-${t}`);
+            const content = (
+              <div>
+                <p><strong>זמן: {t} שניות</strong></p>
+                <p>ערך במערכת קואורדינטות: Y={Math.round(y)}</p>
+              </div>
+            );
+            handleShowTooltip(e.clientX, e.clientY, content);
+          }}
+          onMouseLeave={handleHideTooltip}
+        >
           <text
             x={leftPadding - 10}
             y={y}
             textAnchor="end"
             dominantBaseline="middle"
             fontSize={isMobile ? 10 : 12}
-            fill="#6B7280"
+            fill={hoveredElement === `y-label-${t}` ? "#000" : "#6B7280"}
+            style={{ fontWeight: hoveredElement === `y-label-${t}` ? 'bold' : 'normal' }}
           >
             {t}
           </text>
@@ -123,8 +137,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             y1={y} 
             x2={leftPadding} 
             y2={y} 
-            stroke="#6B7280" 
-            strokeWidth={1}
+            stroke={hoveredElement === `y-label-${t}` ? "#000" : "#6B7280"} 
+            strokeWidth={hoveredElement === `y-label-${t}` ? 2 : 1}
           />
         </g>
       );
@@ -140,13 +154,29 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       const x = originX + xScale(d);
       if (x <= dimensions.width - rightPadding) {
         labels.push(
-          <g key={`x-label-${d}`}>
+          <g key={`x-label-${d}`}
+            onMouseEnter={(e) => {
+              setHoveredElement(`x-label-${d}`);
+              const content = (
+                <div>
+                  <p><strong>מרחק: {d} מטרים</strong></p>
+                  <p>ערך במערכת קואורדינטות: X={Math.round(x)}</p>
+                  {speed && (
+                    <p>זמן נסיעה משוער בהינתן מהירות {speed} קמ"ש: {Math.round(d / speed * 3.6)} שניות</p>
+                  )}
+                </div>
+              );
+              handleShowTooltip(e.clientX, e.clientY, content);
+            }}
+            onMouseLeave={handleHideTooltip}
+          >
             <text
               x={x}
               y={dimensions.height - (isMobile ? 15 : 20)}
               textAnchor="middle"
               fontSize={isMobile ? 10 : 12}
-              fill="#6B7280"
+              fill={hoveredElement === `x-label-${d}` ? "#000" : "#6B7280"}
+              style={{ fontWeight: hoveredElement === `x-label-${d}` ? 'bold' : 'normal' }}
             >
               {d}
             </text>
@@ -155,8 +185,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y1={dimensions.height - 40} 
               x2={x} 
               y2={dimensions.height - 35} 
-              stroke="#6B7280" 
-              strokeWidth={1}
+              stroke={hoveredElement === `x-label-${d}` ? "#000" : "#6B7280"}
+              strokeWidth={hoveredElement === `x-label-${d}` ? 2 : 1}
             />
           </g>
         );
@@ -726,6 +756,16 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               transform={`rotate(-90, ${leftPadding - 50}, ${dimensions.height / 2})`}
               fontSize={isMobile ? 12 : 14}
               fill="#4B5563"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p><strong>ציר Y: זמן</strong></p>
+                    <p>מציג את זמן המחזור בשניות</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
             >
               זמן (שניות)
             </text>
@@ -735,187 +775,4 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               textAnchor="middle"
               fontSize={isMobile ? 12 : 14}
               fill="#4B5563"
-            >
-              מרחק (מטרים)
-            </text>
-
-            {renderDiagonalLines()}
-            {renderSolidDiagonalLines()}
-
-            {intersections.map((intersection, i) => {
-              const offset = mode === 'display' ? 0 : (intersection.offset || 0);
-              
-              console.log(`Rendering intersection ${i+1} (ID: ${intersection.id}):`);
-              console.log(`  Distance: ${intersection.distance}m`);
-              console.log(`  Cycle Time: ${intersection.cycleTime}s`);
-              console.log(`  Offset: ${offset}s`);
-              console.log(`  Green Phases:`, intersection.greenPhases);
-              console.log(`  UseHalfCycleTime: ${intersection.useHalfCycleTime}`);
-              
-              return intersection.greenPhases.map((phase, j) => {
-                const x = originX + xScale(intersection.distance);
-                const xOffset = phase.direction === 'upstream' ? -10 : 10;
-                
-                let startTime = (phase.startTime + offset) % intersection.cycleTime;
-                let endTime = (startTime + phase.duration) % intersection.cycleTime;
-                
-                if (endTime === 0) endTime = intersection.cycleTime;
-                
-                const wrappedPhase = endTime < startTime;
-                
-                console.log(`  Phase ${j+1}:`);
-                console.log(`    Direction: ${phase.direction}`);
-                console.log(`    Original Start: ${phase.startTime}s`);
-                console.log(`    Duration: ${phase.duration}s`);
-                console.log(`    Adjusted Start: ${startTime}s`);
-                console.log(`    Adjusted End: ${wrappedPhase ? intersection.cycleTime : endTime}s`);
-                console.log(`    Wrapped: ${wrappedPhase}`);
-                
-                // Generate phases for the original representation
-                const phaseElements = [];
-                
-                // Add the original phase
-                phaseElements.push(
-                  <React.Fragment key={`phase-${i}-${j}-original`}>
-                    <GreenPhaseBar
-                      x={x + xOffset}
-                      startTime={startTime}
-                      endTime={wrappedPhase ? intersection.cycleTime : endTime}
-                      cycleTime={intersection.cycleTime}
-                      direction={phase.direction}
-                      barWidth={15}
-                      yScale={yScale}
-                      chartHeight={dimensions.height - 40}
-                      onMouseEnter={(e) => {
-                        const content = (
-                          <div>
-                            <p>צומת: {intersection.id}</p>
-                            <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
-                            <p>התחלה: {Math.round(startTime)} שניות</p>
-                            <p>סיום: {Math.round(wrappedPhase ? intersection.cycleTime : endTime)} שניות</p>
-                            <p>היסט: {Math.round(offset)} שניות</p>
-                          </div>
-                        );
-                        handleShowTooltip(e.clientX, e.clientY, content);
-                      }}
-                      onMouseLeave={handleHideTooltip}
-                    />
-                    
-                    {wrappedPhase && (
-                      <GreenPhaseBar
-                        x={x + xOffset}
-                        startTime={0}
-                        endTime={endTime}
-                        cycleTime={intersection.cycleTime}
-                        direction={phase.direction}
-                        barWidth={15}
-                        yScale={yScale}
-                        chartHeight={dimensions.height - 40}
-                        onMouseEnter={(e) => {
-                          const content = (
-                            <div>
-                              <p>צומת: {intersection.id}</p>
-                              <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
-                              <p>התחלה: 0 שניות (המשך)</p>
-                              <p>סיום: {Math.round(endTime)} שניות</p>
-                              <p>היסט: {Math.round(offset)} שניות</p>
-                            </div>
-                          );
-                          handleShowTooltip(e.clientX, e.clientY, content);
-                        }}
-                        onMouseLeave={handleHideTooltip}
-                      />
-                    )}
-                  </React.Fragment>
-                );
-                
-                // If half cycle time is enabled, duplicate the phase at half cycle time distance
-                if (intersection.useHalfCycleTime) {
-                  const halfCycleTime = intersection.cycleTime / 2;
-                  let halfCycleStartTime = (startTime + halfCycleTime) % intersection.cycleTime;
-                  let halfCycleEndTime = (halfCycleStartTime + phase.duration) % intersection.cycleTime;
-                  
-                  if (halfCycleEndTime === 0) halfCycleEndTime = intersection.cycleTime;
-                  
-                  const halfCycleWrappedPhase = halfCycleEndTime < halfCycleStartTime;
-                  
-                  console.log(`  Half-Cycle Phase ${j+1}:`);
-                  console.log(`    Direction: ${phase.direction}`);
-                  console.log(`    Half-Cycle Start: ${halfCycleStartTime}s`);
-                  console.log(`    Half-Cycle End: ${halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime}s`);
-                  console.log(`    Half-Cycle Wrapped: ${halfCycleWrappedPhase}`);
-                  
-                  phaseElements.push(
-                    <React.Fragment key={`phase-${i}-${j}-half-cycle`}>
-                      <GreenPhaseBar
-                        x={x + xOffset}
-                        startTime={halfCycleStartTime}
-                        endTime={halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime}
-                        cycleTime={intersection.cycleTime}
-                        direction={phase.direction}
-                        barWidth={15}
-                        yScale={yScale}
-                        chartHeight={dimensions.height - 40}
-                        isHalfCycle={true}
-                        onMouseEnter={(e) => {
-                          const content = (
-                            <div>
-                              <p>צומת: {intersection.id}</p>
-                              <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
-                              <p>התחלה: {Math.round(halfCycleStartTime)} שניות (מופע חוזר)</p>
-                              <p>סיום: {Math.round(halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime)} שניות</p>
-                              <p>היסט: {Math.round(offset)} שניות</p>
-                            </div>
-                          );
-                          handleShowTooltip(e.clientX, e.clientY, content);
-                        }}
-                        onMouseLeave={handleHideTooltip}
-                      />
-                      
-                      {halfCycleWrappedPhase && (
-                        <GreenPhaseBar
-                          x={x + xOffset}
-                          startTime={0}
-                          endTime={halfCycleEndTime}
-                          cycleTime={intersection.cycleTime}
-                          direction={phase.direction}
-                          barWidth={15}
-                          yScale={yScale}
-                          chartHeight={dimensions.height - 40}
-                          isHalfCycle={true}
-                          onMouseEnter={(e) => {
-                            const content = (
-                              <div>
-                                <p>צומת: {intersection.id}</p>
-                                <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
-                                <p>התחלה: 0 שניות (המשך מופע חוזר)</p>
-                                <p>סיום: {Math.round(halfCycleEndTime)} שניות</p>
-                                <p>היסט: {Math.round(offset)} שניות</p>
-                              </div>
-                            );
-                            handleShowTooltip(e.clientX, e.clientY, content);
-                          }}
-                          onMouseLeave={handleHideTooltip}
-                        />
-                      )}
-                    </React.Fragment>
-                  );
-                }
-                
-                return phaseElements;
-              });
-            })}
-          </svg>
-        </div>
-      </CardContent>
-      
-      {tooltipInfo.visible && (
-        <GreenWaveTooltip 
-          x={tooltipInfo.x} 
-          y={tooltipInfo.y} 
-          content={tooltipInfo.content} 
-        />
-      )}
-    </>
-  );
-};
+              onMouseEnter={(e) =>
