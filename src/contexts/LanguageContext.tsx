@@ -32,29 +32,7 @@ type TranslationKey =
   | 'tablet'
   | 'desktop'
   | 'explore_anyway'
-  | 'continue_anyway'
-  | 'show_weights'
-  | 'hide_weights'
-  | 'reset'
-  | 'corridor_wave'
-  | 'upstream'
-  | 'downstream'
-  | 'pair_bandwidth'
-  | 'average_delay'
-  | 'maximum_delay'
-  | 'half_cycle_time'
-  | 'effective_cycle_time'
-  | 'seconds'
-  | 'upstream_speed'
-  | 'downstream_speed'
-  | 'green_phases'
-  | 'upstream_phase'
-  | 'downstream_phase'
-  | 'add_upstream_phase'
-  | 'add_downstream_phase'
-  | 'start_time'
-  | 'duration'
-  | 'distance';
+  | 'continue_anyway';
 
 interface LanguageContextType {
   language: Language;
@@ -92,29 +70,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     tablet: 'Tablet',
     desktop: 'Desktop',
     explore_anyway: 'Want to explore anyway?',
-    continue_anyway: 'Continue Anyway',
-    show_weights: 'Show Weights',
-    hide_weights: 'Hide Weights',
-    reset: 'Reset',
-    corridor_wave: 'Corridor Wave',
-    upstream: 'Upstream',
-    downstream: 'Downstream',
-    pair_bandwidth: 'Pair Bandwidth',
-    average_delay: 'Average Delay',
-    maximum_delay: 'Maximum Delay',
-    half_cycle_time: 'Half Cycle Time',
-    effective_cycle_time: 'Effective Cycle Time',
-    seconds: 'seconds',
-    upstream_speed: 'Upstream Speed',
-    downstream_speed: 'Downstream Speed',
-    green_phases: 'Green Phases',
-    upstream_phase: 'Upstream Phase',
-    downstream_phase: 'Downstream Phase',
-    add_upstream_phase: 'Add Upstream',
-    add_downstream_phase: 'Add Downstream',
-    start_time: 'Start Time',
-    duration: 'Duration',
-    distance: 'Distance'
+    continue_anyway: 'Continue Anyway'
   },
   he: {
     app_title: 'מחשבון גל ירוק',
@@ -145,29 +101,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     tablet: 'טאבלט',
     desktop: 'מחשב',
     explore_anyway: 'רוצה לנסות בכל זאת?',
-    continue_anyway: 'המשך בכל זאת',
-    show_weights: 'הצג משקולות',
-    hide_weights: 'הסתר משקולות',
-    reset: 'איפוס',
-    corridor_wave: 'גל מסדרון',
-    upstream: 'במעלה הזרם',
-    downstream: 'במורד הזרם',
-    pair_bandwidth: 'רוחב פס צמדים',
-    average_delay: 'עיכוב ממוצע',
-    maximum_delay: 'עיכוב מקסימלי',
-    half_cycle_time: 'חצי זמן מחזור',
-    effective_cycle_time: 'זמן מחזור אפקטיבי',
-    seconds: 'שניות',
-    upstream_speed: 'מהירות במעלה הזרם',
-    downstream_speed: 'מהירות במורד הזרם',
-    green_phases: 'פאזות ירוקות',
-    upstream_phase: 'פאזה במעלה הזרם',
-    downstream_phase: 'פאזה במורד הזרם',
-    add_upstream_phase: 'הוסף במעלה',
-    add_downstream_phase: 'הוסף במורד',
-    start_time: 'זמן התחלה',
-    duration: 'משך',
-    distance: 'מרחק'
+    continue_anyway: 'המשך בכל זאת'
   }
 };
 
