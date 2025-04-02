@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 type Language = 'en' | 'he';
@@ -82,13 +83,8 @@ type TranslationKey =
   | 'full_main_phase_priority'
   | 'alpha_parameter'
   | 'beta_parameter'
+  | 'optimization_weights'
   | 'weights_must_sum_to_1';
-
-interface LanguageContextType {
-  language: Language;
-  toggleLanguage: () => void;
-  t: (key: string) => string;
-}
 
 const translations: Record<Language, Record<TranslationKey, string>> = {
   en: {
@@ -172,6 +168,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'full_main_phase_priority': 'Full Main Phase Priority',
     'alpha_parameter': 'Alpha Parameter',
     'beta_parameter': 'Beta Parameter',
+    'optimization_weights': 'Optimization Weights',
     'weights_must_sum_to_1': 'Weights must sum to 1'
   },
   he: {
@@ -255,6 +252,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'full_main_phase_priority': 'עדיפות מלאה למופע ראשי',
     'alpha_parameter': 'פרמטר אלפא',
     'beta_parameter': 'פרמטר בטא',
+    'optimization_weights': 'משקולות לאופטימזיציה',
     'weights_must_sum_to_1': 'משקולות לאופטימזיציה'
   }
 };
