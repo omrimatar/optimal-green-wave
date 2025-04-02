@@ -25,10 +25,17 @@ export const FileActions = ({ speed, intersections, weights, onLoadInput }: File
   const { t } = useLanguage();
 
   const handleExport = () => {
+    // Ensure alpha and beta parameters are included in the export
+    const formattedWeights = weights ? {
+      ...weights,
+      alpha: weights.alpha ?? 0.5, // Ensure alpha has a value
+      beta: weights.beta ?? 1.0     // Ensure beta has a value
+    } : undefined;
+    
     const data = {
       speed,
       intersections,
-      weights
+      weights: formattedWeights
     };
     
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });

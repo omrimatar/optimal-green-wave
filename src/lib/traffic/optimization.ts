@@ -66,7 +66,9 @@ export async function greenWaveOptimization(
         avg_delay_down: weights.avg_delay_down,
         max_delay_down: weights.max_delay_down,
         corridor_bandwidth_up: weights.corridor_up,
-        corridor_bandwidth_down: weights.corridor_down
+        corridor_bandwidth_down: weights.corridor_down,
+        alpha: weights.alpha,          // Pass the alpha parameter
+        beta: weights.beta             // Pass the beta parameter
       }
     };
 

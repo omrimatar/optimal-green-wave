@@ -6,6 +6,7 @@ import { SlidersHorizontal, RotateCcw } from "lucide-react";
 import { OptimizationWeights, normalizeWeights, modifiedWeights, resetModifiedFlags } from "@/types/optimization";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Separator } from "@/components/ui/separator";
 
 interface WeightsPanelProps {
   weights: OptimizationWeights;
@@ -35,6 +36,11 @@ export const WeightsPanel = ({
     // Make sure value is between 0 and 1
     value = Math.max(0, Math.min(1, value));
 
+    // For alpha, restrict to 0.1-1.0 range
+    if (category === 'alpha') {
+      value = Math.max(0.1, value);
+    }
+
     // Normalize weights so they sum to 1
     const updatedWeights = normalizeWeights(localWeights, category, value);
 
@@ -59,7 +65,9 @@ export const WeightsPanel = ({
   };
 
   // Ensure weights sum to 1
-  const totalWeight = Object.values(localWeights).reduce((sum, val) => sum + val, 0);
+  const totalWeight = Object.entries(localWeights)
+    .filter(([key]) => key !== 'alpha' && key !== 'beta')
+    .reduce((sum, [_, val]) => sum + val, 0);
 
   return <>
     <div className="flex gap-2">
@@ -76,6 +84,71 @@ export const WeightsPanel = ({
     {showWeights && <div className="space-y-6 p-4 border rounded-lg">
       <div className="mb-2 flex justify-between items-center text-sm">
         <span></span>
+      </div>
+      
+      {/* First, show the special independent parameters */}
+      <div className="space-y-6 mb-6">
+        <h3 className="font-semibold text-lg">{t('special_parameters')}</h3>
+        
+        {/* Alpha parameter - direction balancing */}
+        <div className="space-y-3 p-3 bg-gray-50 rounded-md">
+          <div className="flex justify-between">
+            <Label className="font-medium text-base">{t('alpha_parameter')} ({formatNumber(localWeights.alpha || 0.5)})</Label>
+            <input 
+              type="number" 
+              value={parseFloat((localWeights.alpha || 0.5).toFixed(2))} 
+              min="0.1" 
+              max="1" 
+              step="0.1" 
+              onChange={e => handleInputChange('alpha', e.target.value)} 
+              className="w-16 text-right border rounded px-2" 
+            />
+          </div>
+          <Slider 
+            value={[(localWeights.alpha || 0.5) * 100]} 
+            onValueChange={value => handleWeightChange('alpha', value[0] / 100)} 
+            min={10} // min 0.1
+            max={100} // max 1.0
+            step={1} 
+          />
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>{t('full_direction_balance')}</span>
+            <span>{t('no_direction_balance')}</span>
+          </div>
+        </div>
+        
+        {/* Beta parameter - secondary phase priority */}
+        <div className="space-y-3 p-3 bg-gray-50 rounded-md">
+          <div className="flex justify-between">
+            <Label className="font-medium text-base">{t('beta_parameter')} ({formatNumber(localWeights.beta || 1.0)})</Label>
+            <input 
+              type="number" 
+              value={parseFloat((localWeights.beta || 1.0).toFixed(2))} 
+              min="0" 
+              max="1" 
+              step="0.1" 
+              onChange={e => handleInputChange('beta', e.target.value)} 
+              className="w-16 text-right border rounded px-2" 
+            />
+          </div>
+          <Slider 
+            value={[(localWeights.beta || 1.0) * 100]} 
+            onValueChange={value => handleWeightChange('beta', value[0] / 100)} 
+            max={100} 
+            step={1} 
+          />
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>{t('no_main_phase_priority')}</span>
+            <span>{t('full_main_phase_priority')}</span>
+          </div>
+        </div>
+      </div>
+      
+      <Separator className="my-6" />
+      
+      <h3 className="font-semibold text-lg mb-4">{t('optimization_weights')}</h3>
+      <div className="text-sm text-gray-500 mb-4">
+        {t('weights_must_sum_to_1')}: {totalWeight.toFixed(2)}
       </div>
       
       <div className="space-y-4">

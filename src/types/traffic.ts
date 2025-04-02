@@ -1,3 +1,4 @@
+
 // Input types for the Lambda function
 export interface LambdaGreenPhase {
   start: number;
@@ -27,6 +28,8 @@ export interface LambdaWeights {
   max_delay_down: number;
   corridor_bandwidth_up: number;
   corridor_bandwidth_down: number;
+  alpha?: number;  // New parameter for direction balancing
+  beta?: number;   // New parameter for secondary phase priority
 }
 
 export interface LambdaRequest {
@@ -147,4 +150,6 @@ export interface Weights {
   max_delay_down: number;
   corridor_up: number;
   corridor_down: number;
+  alpha?: number;  // New parameter for direction balancing
+  beta?: number;   // New parameter for secondary phase priority
 }
