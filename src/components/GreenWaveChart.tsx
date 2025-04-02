@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -164,7 +163,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               const content = (
                 <div>
                   <p><strong>מרחק: {d} מטרים</strong></p>
-                  <p>ערך במערכת קואורדינטות: X={Math.round(x)}</p>
                   {speed && (
                     <p>זמן נסיעה משוער בהינתן מהירות {speed} קמ"ש: {Math.round(d / speed * 3.6)} שניות</p>
                   )}
