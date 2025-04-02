@@ -21,15 +21,18 @@ export const GreenWaveTooltip: React.FC<GreenWaveTooltipProps> = ({ x, y, conten
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
       
-      // Check if tooltip would extend beyond the right edge
+      // Check if tooltip would extend beyond edges
       const rightOverflow = (x + tooltipRect.width + 20) > viewportWidth;
-      // Check if tooltip would extend beyond the bottom edge
       const bottomOverflow = (y + tooltipRect.height + 20) > viewportHeight;
       
-      // Calculate new position
-      let newLeft = rightOverflow ? 
-        Math.max(10, x - tooltipRect.width - 10) : // Position to the left of cursor
-        x + 10; // Position to the right of cursor
+      // Prioritize showing tooltip to the left of cursor when near the right edge
+      // or when specifically requested to appear more left (toward X=0)
+      let newLeft = Math.max(10, x - tooltipRect.width - 10); // Default to left of cursor
+      
+      // Only position to the right if there's plenty of room
+      if (!rightOverflow && x < viewportWidth / 2) {
+        newLeft = x + 10;
+      }
       
       let newTop = bottomOverflow ? 
         Math.max(10, y - tooltipRect.height - 10) : // Position above cursor
