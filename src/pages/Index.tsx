@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,35 +25,35 @@ const Index = () => {
   const [intersections, setIntersections] = useState<Intersection[]>([{
     id: 1,
     distance: 0,
-    cycleTime: 90,
+    cycleTime: 100,
     greenPhases: [{
       direction: 'upstream',
       startTime: 0,
-      duration: 45
+      duration: 40
     }, {
       direction: 'downstream',
-      startTime: 45,
-      duration: 45
+      startTime: 40,
+      duration: 40
     }],
     upstreamSpeed: 50,
     downstreamSpeed: 50
   }, {
     id: 2,
     distance: 300,
-    cycleTime: 90,
+    cycleTime: 100,
     greenPhases: [{
       direction: 'upstream',
       startTime: 0,
-      duration: 45
+      duration: 40
     }, {
       direction: 'downstream',
-      startTime: 45,
-      duration: 45
+      startTime: 40,
+      duration: 40
     }],
     upstreamSpeed: 50,
     downstreamSpeed: 50
   }]);
-  const [globalCycleTime, setGlobalCycleTime] = useState(90);
+  const [globalCycleTime, setGlobalCycleTime] = useState(100);
   const [speed, setSpeed] = useState(50);
   const [results, setResults] = useState<any>(null);
   const [mode, setMode] = useState<'display' | 'calculate' | 'manual'>('calculate');
@@ -125,11 +126,11 @@ const Index = () => {
       greenPhases: [{
         direction: 'upstream' as const,
         startTime: 0,
-        duration: Math.floor(globalCycleTime / 2)
+        duration: 40
       }, {
         direction: 'downstream' as const,
-        startTime: Math.floor(globalCycleTime / 2),
-        duration: Math.floor(globalCycleTime / 2)
+        startTime: 40,
+        duration: 40
       }],
       upstreamSpeed: speed,
       downstreamSpeed: speed
@@ -577,3 +578,4 @@ const Index = () => {
 };
 
 export default Index;
+
