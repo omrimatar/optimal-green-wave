@@ -43,8 +43,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   const originX = leftPadding + 25;
   const rightPadding = isMobile ? 80 : 110;
 
-  // Move Y label 10 pixels further left
-  const yLabelOffset = 20; // Changed from 10 to 20 (10px more to the left)
+  const yLabelOffset = 20;
 
   useEffect(() => {
     setIsMobile(isMobileDevice());
@@ -117,7 +116,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             const content = (
               <div>
                 <p><strong>זמן: {t} שניות</strong></p>
-                {/* Removed the coordinate system value */}
               </div>
             );
             handleShowTooltip(e.clientX, e.clientY, content);
@@ -125,7 +123,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           onMouseLeave={handleHideTooltip}
         >
           <text
-            x={leftPadding - yLabelOffset} // Increased offset by 10px
+            x={leftPadding - yLabelOffset}
             y={y}
             textAnchor="end"
             dominantBaseline="middle"
@@ -194,6 +192,62 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         );
       }
     }
+
+    if (intersections.length > 0) {
+      const lastIntersectionDistance = intersections[intersections.length - 1].distance;
+      const lastIntersectionX = originX + xScale(lastIntersectionDistance);
+      
+      const isAlreadyLabeled = labels.some(label => {
+        const labelKey = label.key;
+        if (typeof labelKey === 'string') {
+          const distanceMatch = labelKey.match(/x-label-(\d+)/);
+          if (distanceMatch && parseInt(distanceMatch[1]) === lastIntersectionDistance) {
+            return true;
+          }
+        }
+        return false;
+      });
+      
+      if (!isAlreadyLabeled && lastIntersectionX <= dimensions.width - rightPadding) {
+        labels.push(
+          <g key={`x-label-${lastIntersectionDistance}`}
+            onMouseEnter={(e) => {
+              setHoveredElement(`x-label-${lastIntersectionDistance}`);
+              const content = (
+                <div>
+                  <p><strong>מרחק: {lastIntersectionDistance} מטרים</strong></p>
+                  {speed && (
+                    <p>זמן נסיעה משוער בהינתן מהירות {speed} קמ"ש: {Math.round(lastIntersectionDistance / speed * 3.6)} שניות</p>
+                  )}
+                </div>
+              );
+              handleShowTooltip(e.clientX, e.clientY, content);
+            }}
+            onMouseLeave={handleHideTooltip}
+          >
+            <text
+              x={lastIntersectionX}
+              y={dimensions.height - (isMobile ? 15 : 20)}
+              textAnchor="middle"
+              fontSize={isMobile ? 10 : 12}
+              fill={hoveredElement === `x-label-${lastIntersectionDistance}` ? "#000" : "#6B7280"}
+              style={{ fontWeight: hoveredElement === `x-label-${lastIntersectionDistance}` ? 'bold' : 'normal' }}
+            >
+              {lastIntersectionDistance}
+            </text>
+            <line 
+              x1={lastIntersectionX} 
+              y1={dimensions.height - 40} 
+              x2={lastIntersectionX} 
+              y2={dimensions.height - 35} 
+              stroke={hoveredElement === `x-label-${lastIntersectionDistance}` ? "#000" : "#6B7280"}
+              strokeWidth={hoveredElement === `x-label-${lastIntersectionDistance}` ? 2 : 1}
+            />
+          </g>
+        );
+      }
+    }
+    
     return labels;
   };
 
@@ -723,10 +777,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         console.log(`    Adjusted End: ${wrappedPhase ? intersection.cycleTime : endTime}s`);
         console.log(`    Wrapped: ${wrappedPhase}`);
         
-        // Generate phases for the original representation
         const phaseElements = [];
         
-        // Add the original phase
         phaseElements.push(
           <React.Fragment key={`phase-${i}-${j}-original`}>
             <GreenPhaseBar
@@ -781,7 +833,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           </React.Fragment>
         );
         
-        // If half cycle time is enabled, duplicate the phase at half cycle time distance
         if (intersection.useHalfCycleTime) {
           const halfCycleTime = intersection.cycleTime / 2;
           let halfCycleStartTime = (startTime + halfCycleTime) % intersection.cycleTime;
@@ -912,13 +963,11 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               strokeWidth={1} 
             />
 
-            {/* Add axis labels */}
             {generateYAxisLabels()}
             {generateXAxisLabels()}
 
-            {/* Add axis titles */}
             <text
-              x={leftPadding - 50 - 10} // Also moved 10px further left
+              x={leftPadding - 50 - 10}
               y={dimensions.height / 2}
               textAnchor="middle"
               transform={`rotate(-90, ${leftPadding - 50 - 10}, ${dimensions.height / 2})`}
@@ -957,15 +1006,12 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               מרחק (מטרים)
             </text>
 
-            {/* Render green phase bars for each intersection */}
             {renderIntersections()}
             
-            {/* Render diagonal lines for bandwidth between intersections */}
             {renderDiagonalLines()}
             {renderSolidDiagonalLines()}
           </svg>
           
-          {/* Tooltip */}
           {tooltipInfo.visible && (
             <GreenWaveTooltip 
               x={tooltipInfo.x} 
