@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 type Language = 'en' | 'he';
@@ -246,7 +245,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     optimization_results: 'תוצאות אופטימיזציה',
     optimal: 'אופטימלי',
     'contact us': 'צור קשר',
-    // New translations
+    // Modified translations
     'special_parameters': 'פרמטרים מיוחדים',
     'direction_balance': 'איזון בין כיוונים',
     'main_phase_priority': 'עדיפות למופע ראשי',
@@ -256,7 +255,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'full_main_phase_priority': 'עדיפות מלאה למופע ראשי',
     'alpha_parameter': 'פרמטר אלפא',
     'beta_parameter': 'פרמטר בטא',
-    'weights_must_sum_to_1': 'המשקלות חייבים להסתכם ל-1'
+    'weights_must_sum_to_1': 'משקולות לאופטימזיציה'
   }
 };
 

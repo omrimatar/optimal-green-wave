@@ -87,9 +87,6 @@ export const WeightsPanel = ({
       </div>
       
       <h3 className="font-semibold text-lg mb-4">{t('optimization_weights')}</h3>
-      <div className="text-sm text-gray-500 mb-4">
-        {t('weights_must_sum_to_1')}: {totalWeight.toFixed(2)}
-      </div>
       
       <div className="space-y-4">
         <h3 className="font-semibold">{t('corridor_wave')}</h3>
