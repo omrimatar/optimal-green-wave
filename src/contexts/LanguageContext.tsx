@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 type Language = 'en' | 'he';
@@ -86,6 +85,12 @@ type TranslationKey =
   | 'optimization_weights'
   | 'weights_must_sum_to_1';
 
+interface LanguageContextType {
+  language: Language;
+  toggleLanguage: () => void;
+  t: (key: string) => string;
+}
+
 const translations: Record<Language, Record<TranslationKey, string>> = {
   en: {
     app_title: 'Green Wave Calculator',
@@ -158,7 +163,6 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     optimization_results: 'Optimization Results',
     optimal: 'Optimal',
     'contact us': 'Contact Us',
-    // New translations
     'special_parameters': 'Special Parameters',
     'direction_balance': 'Direction Balance',
     'main_phase_priority': 'Main Phase Priority',
@@ -242,7 +246,6 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     optimization_results: 'תוצאות אופטימיזציה',
     optimal: 'אופטימלי',
     'contact us': 'צור קשר',
-    // Modified translations
     'special_parameters': 'פרמטרים מיוחדים',
     'direction_balance': 'איזון בין כיוונים',
     'main_phase_priority': 'עדיפות למופע ראשי',
