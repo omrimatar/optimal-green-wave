@@ -6,8 +6,7 @@ import type {
   Weights, 
   RunResult, 
   LambdaRequest, 
-  LambdaResponse,
-  DiagonalPoint
+  LambdaResponse 
 } from "@/types/traffic";
 
 /**
