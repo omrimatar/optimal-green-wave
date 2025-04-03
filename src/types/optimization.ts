@@ -3,6 +3,7 @@ export interface GreenPhase {
   direction: 'upstream' | 'downstream';
   startTime: number;
   duration: number;
+  phaseNumber?: number; // Added phaseNumber field
 }
 
 export interface Intersection {

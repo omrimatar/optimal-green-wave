@@ -819,6 +819,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         console.log(`    Adjusted Start: ${startTime}s`);
         console.log(`    Adjusted End: ${wrappedPhase ? intersection.cycleTime : endTime}s`);
         console.log(`    Wrapped: ${wrappedPhase}`);
+        console.log(`    Phase Number: ${phase.phaseNumber || 'N/A'}`);
         
         const phaseElements = [];
         
@@ -833,7 +834,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               barWidth={15}
               yScale={yScale}
               chartHeight={dimensions.height - 40}
-              onMouseEnter={(e) => {
+              onMouseEnter={(e, info) => {
                 const content = (
                   <div>
                     <p>צומת: {intersection.id}</p>
@@ -841,11 +842,13 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>התחלה: {Math.round(startTime)} שניות</p>
                     <p>סיום: {Math.round(wrappedPhase ? intersection.cycleTime : endTime)} שניות</p>
                     <p>היסט: {Math.round(offset)} שניות</p>
+                    {phase.phaseNumber && <p>מספר מופע: {phase.phaseNumber}</p>}
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
               }}
               onMouseLeave={handleHideTooltip}
+              phaseNumber={phase.phaseNumber}
             />
             
             {wrappedPhase && (
@@ -858,7 +861,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 barWidth={15}
                 yScale={yScale}
                 chartHeight={dimensions.height - 40}
-                onMouseEnter={(e) => {
+                onMouseEnter={(e, info) => {
                   const content = (
                     <div>
                       <p>צומת: {intersection.id}</p>
@@ -866,11 +869,13 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                       <p>התחלה: 0 שניות (המשך)</p>
                       <p>סיום: {Math.round(endTime)} שניות</p>
                       <p>היסט: {Math.round(offset)} שניות</p>
+                      {phase.phaseNumber && <p>מספר מופע: {phase.phaseNumber}</p>}
                     </div>
                   );
                   handleShowTooltip(e.clientX, e.clientY, content);
                 }}
                 onMouseLeave={handleHideTooltip}
+                phaseNumber={phase.phaseNumber}
               />
             )}
           </React.Fragment>
@@ -903,7 +908,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 yScale={yScale}
                 chartHeight={dimensions.height - 40}
                 isHalfCycle={true}
-                onMouseEnter={(e) => {
+                onMouseEnter={(e, info) => {
                   const content = (
                     <div>
                       <p>צומת: {intersection.id}</p>
@@ -911,11 +916,13 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                       <p>התחלה: {Math.round(halfCycleStartTime)} שניות (מחצית מחזור)</p>
                       <p>סיום: {Math.round(halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime)} שניות</p>
                       <p>היסט: {Math.round(offset)} שניות</p>
+                      {phase.phaseNumber && <p>מספר מופע: {phase.phaseNumber}</p>}
                     </div>
                   );
                   handleShowTooltip(e.clientX, e.clientY, content);
                 }}
                 onMouseLeave={handleHideTooltip}
+                phaseNumber={phase.phaseNumber}
               />
               
               {halfCycleWrappedPhase && (
@@ -929,19 +936,21 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                   yScale={yScale}
                   chartHeight={dimensions.height - 40}
                   isHalfCycle={true}
-                  onMouseEnter={(e) => {
+                  onMouseEnter={(e, info) => {
                     const content = (
                       <div>
                         <p>צומת: {intersection.id}</p>
                         <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
-                        <p>��תחלה: 0 שניות (המש��, מחצית מחזור)</p>
+                        <p>התחלה: 0 שניות (המשך, מחצית מחזור)</p>
                         <p>סיום: {Math.round(halfCycleEndTime)} שניות</p>
                         <p>היסט: {Math.round(offset)} שניות</p>
+                        {phase.phaseNumber && <p>מספר מופע: {phase.phaseNumber}</p>}
                       </div>
                     );
                     handleShowTooltip(e.clientX, e.clientY, content);
                   }}
                   onMouseLeave={handleHideTooltip}
+                  phaseNumber={phase.phaseNumber}
                 />
               )}
             </React.Fragment>
