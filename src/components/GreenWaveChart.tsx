@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -58,13 +59,18 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     console.log("Right padding:", rightPadding);
   }, [intersections, mode, speed, pairBandPoints, comparisonResults, leftPadding, originX, rightPadding]);
 
-  const maxDistance = Math.max(...intersections.map(i => i.distance));
+  // Calculate maxDistance with additional 20 meters past the last intersection
+  const lastIntersectionDistance = intersections.length > 0 ? 
+    intersections[intersections.length - 1].distance : 0;
+  const maxDistance = Math.max(...intersections.map(i => i.distance)) + 20; // Add 20 meters
   const maxCycleTime = Math.max(...intersections.map(i => i.cycleTime));
   
   useEffect(() => {
     console.log("Computed maxDistance:", maxDistance);
+    console.log("Last intersection distance:", lastIntersectionDistance);
+    console.log("Extended by 20 meters:", lastIntersectionDistance + 20);
     console.log("Computed maxCycleTime:", maxCycleTime);
-  }, [maxDistance, maxCycleTime]);
+  }, [maxDistance, lastIntersectionDistance, maxCycleTime]);
 
   const xScale = (value: number) => (value / maxDistance) * (dimensions.width - leftPadding - rightPadding);
   const yScale = (value: number) => (value / maxCycleTime) * (dimensions.height - (isMobile ? 60 : 80));
@@ -193,10 +199,11 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       }
     }
 
+    // Always add a label for the last intersection
     if (intersections.length > 0) {
-      const lastIntersectionDistance = intersections[intersections.length - 1].distance;
       const lastIntersectionX = originX + xScale(lastIntersectionDistance);
       
+      // Check if the last intersection already has a label from the loop above
       const isAlreadyLabeled = labels.some(label => {
         const labelKey = label.key;
         if (typeof labelKey === 'string') {
@@ -208,6 +215,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         return false;
       });
       
+      // Only add if no label exists yet and it fits within the chart
       if (!isAlreadyLabeled && lastIntersectionX <= dimensions.width - rightPadding) {
         labels.push(
           <g key={`x-label-${lastIntersectionDistance}`}
@@ -242,6 +250,47 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               y2={dimensions.height - 35} 
               stroke={hoveredElement === `x-label-${lastIntersectionDistance}` ? "#000" : "#6B7280"}
               strokeWidth={hoveredElement === `x-label-${lastIntersectionDistance}` ? 2 : 1}
+            />
+          </g>
+        );
+      }
+
+      // Also add a label for last intersection + 20m (the extended view)
+      const extendedX = originX + xScale(lastIntersectionDistance + 20);
+      if (extendedX <= dimensions.width - rightPadding) {
+        labels.push(
+          <g key={`x-label-${lastIntersectionDistance + 20}`}
+            onMouseEnter={(e) => {
+              setHoveredElement(`x-label-${lastIntersectionDistance + 20}`);
+              const content = (
+                <div>
+                  <p><strong>מרחק: {lastIntersectionDistance + 20} מטרים</strong></p>
+                  {speed && (
+                    <p>זמן נסיעה משוער בהינתן מהירות {speed} קמ"ש: {Math.round((lastIntersectionDistance + 20) / speed * 3.6)} שניות</p>
+                  )}
+                </div>
+              );
+              handleShowTooltip(e.clientX, e.clientY, content);
+            }}
+            onMouseLeave={handleHideTooltip}
+          >
+            <text
+              x={extendedX}
+              y={dimensions.height - (isMobile ? 15 : 20)}
+              textAnchor="middle"
+              fontSize={isMobile ? 10 : 12}
+              fill={hoveredElement === `x-label-${lastIntersectionDistance + 20}` ? "#000" : "#6B7280"}
+              style={{ fontWeight: hoveredElement === `x-label-${lastIntersectionDistance + 20}` ? 'bold' : 'normal' }}
+            >
+              {lastIntersectionDistance + 20}
+            </text>
+            <line 
+              x1={extendedX} 
+              y1={dimensions.height - 40} 
+              x2={extendedX} 
+              y2={dimensions.height - 35} 
+              stroke={hoveredElement === `x-label-${lastIntersectionDistance + 20}` ? "#000" : "#6B7280"}
+              strokeWidth={hoveredElement === `x-label-${lastIntersectionDistance + 20}` ? 2 : 1}
             />
           </g>
         );
