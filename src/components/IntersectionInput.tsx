@@ -73,6 +73,53 @@ export const IntersectionInput = ({
     setTempPhaseNumbers(initialPhaseNumbers);
   }, [intersection.greenPhases.length]);
 
+  const handlePhaseNumberChange = (phaseIndex: number, value: string) => {
+    setTempPhaseNumbers(prev => ({
+      ...prev,
+      [phaseIndex]: value
+    }));
+  };
+
+  const validateAndUpdatePhaseNumber = (phaseIndex: number) => {
+    const value = tempPhaseNumbers[phaseIndex];
+    
+    if (!value || value.trim() === '') {
+      const updatedGreenPhases = [...intersection.greenPhases];
+      updatedGreenPhases[phaseIndex] = {
+        ...updatedGreenPhases[phaseIndex],
+        phaseNumber: undefined
+      };
+      
+      onChange({
+        ...intersection,
+        greenPhases: updatedGreenPhases
+      });
+      return;
+    }
+    
+    const numValue = parseInt(value);
+    if (isNaN(numValue) || numValue < 1 || numValue > 100 || !Number.isInteger(numValue)) {
+      toast.error(`${t('phase_number')} ${t('must_be_between')} 1 ${t('and')} 100`);
+      
+      setTempPhaseNumbers(prev => ({
+        ...prev,
+        [phaseIndex]: intersection.greenPhases[phaseIndex].phaseNumber?.toString() || ''
+      }));
+      return;
+    }
+    
+    const updatedGreenPhases = [...intersection.greenPhases];
+    updatedGreenPhases[phaseIndex] = {
+      ...updatedGreenPhases[phaseIndex],
+      phaseNumber: numValue
+    };
+    
+    onChange({
+      ...intersection,
+      greenPhases: updatedGreenPhases
+    });
+  };
+
   const phasesOverlap = (phase1Start: number, phase1Duration: number, phase2Start: number, phase2Duration: number, cycleTime: number) => {
     const effectiveCycleTime = useHalfCycleTime ? cycleTime / 2 : cycleTime;
     
