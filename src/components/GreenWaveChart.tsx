@@ -361,16 +361,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       const upstreamBandwidth = comparisonResults.pair_bandwidth_up?.[pairIndex] || 0;
       const downstreamBandwidth = comparisonResults.pair_bandwidth_down?.[pairIndex] || 0;
       
-      console.log(`Rendering diagonal lines for pair ${pair.from_junction}->${pair.to_junction}:`);
-      console.log(`Upstream bandwidth: ${upstreamBandwidth}, Downstream bandwidth: ${downstreamBandwidth}`);
-      console.log(`Upstream data: origin_low=${pair.up.origin_low.toFixed(2)}, origin_high=${pair.up.origin_high.toFixed(2)}, dest_low=${pair.up.dest_low.toFixed(2)}, dest_high=${pair.up.dest_high.toFixed(2)}`);
-      console.log(`Downstream data: origin_low=${pair.down.origin_low.toFixed(2)}, origin_high=${pair.down.origin_high.toFixed(2)}, dest_low=${pair.down.dest_low.toFixed(2)}, dest_high=${pair.down.dest_high.toFixed(2)}`);
-      
-      const cycleTime = Math.max(
-        intersections[originIdx].cycleTime || 90,
-        intersections[destIdx].cycleTime || 90
-      );
-      
       if (upstreamBandwidth > 0) {
         const upOriginLowY = dimensions.height - 40 - yScale(pair.up.origin_low);
         const upOriginHighY = dimensions.height - 40 - yScale(pair.up.origin_high);
@@ -379,7 +369,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         
         const upLowWrapsAround = pair.up.dest_low < pair.up.origin_low;
         const upHighWrapsAround = pair.up.dest_high < pair.up.origin_high;
-
+        
         console.log(`Upstream low line: origin=${pair.up.origin_low.toFixed(2)}, dest=${pair.up.dest_low.toFixed(2)}, wraps=${upLowWrapsAround}`);
         console.log(`Upstream high line: origin=${pair.up.origin_high.toFixed(2)}, dest=${pair.up.dest_high.toFixed(2)}, wraps=${upHighWrapsAround}`);
         
@@ -779,4 +769,173 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           );
         }
       } else {
-        console.log(`Skipping downstream lines
+        console.log(`Skipping downstream lines for ${pair.from_junction}->${pair.to_junction} due to zero or negative bandwidth: ${downstreamBandwidth}`);
+      }
+
+      return lines;
+    });
+  };
+
+  const renderGreenPhases = () => {
+    const phases: JSX.Element[] = [];
+    
+    intersections.forEach((intersection, idx) => {
+      const x = leftPadding + 25 + xScale(intersection.distance);
+      const cycleTime = intersection.cycleTime;
+      const useHalfCycle = intersection.useHalfCycleTime;
+      
+      intersection.greenPhases.forEach((phase, phaseIdx) => {
+        const startTime = phase.startTime + (intersection.offset || 0);
+        // Convert to cycle time
+        const effectiveStartTime = startTime % cycleTime;
+        const endTime = effectiveStartTime + phase.duration;
+        const isHalfCycle = useHalfCycle;
+        
+        phases.push(
+          <GreenPhaseBar
+            key={`phase-${idx}-${phaseIdx}`}
+            x={x}
+            startTime={effectiveStartTime}
+            endTime={endTime}
+            cycleTime={cycleTime}
+            direction={phase.direction}
+            barWidth={30}
+            yScale={yScale}
+            chartHeight={dimensions.height - 40}
+            onMouseEnter={(e, info) => {
+              const content = (
+                <div>
+                  <p><strong>{phase.direction === 'upstream' ? 'מעלה הזרם' : 'מורד הזרם'}</strong></p>
+                  <p>צומת: {intersection.id}</p>
+                  <p>זמן התחלה: {Math.round(effectiveStartTime * 10) / 10} שניות</p>
+                  <p>זמן סיום: {Math.round((endTime > cycleTime ? endTime - cycleTime : endTime) * 10) / 10} שניות</p>
+                  <p>משך: {Math.round(phase.duration * 10) / 10} שניות</p>
+                  {phase.phaseNumber && <p>מספר מופע: {phase.phaseNumber}</p>}
+                  {intersection.offset ? <p>היסט: {Math.round(intersection.offset * 10) / 10} שניות</p> : null}
+                  {isHalfCycle && <p>שימוש בחצי מחזור</p>}
+                </div>
+              );
+              handleShowTooltip(e.clientX, e.clientY, content);
+            }}
+            onMouseLeave={handleHideTooltip}
+            isHalfCycle={isHalfCycle}
+            phaseNumber={phase.phaseNumber}
+          />
+        );
+        
+        // If the phase wraps around the cycle, render an additional phase
+        if (endTime > cycleTime) {
+          phases.push(
+            <GreenPhaseBar
+              key={`phase-${idx}-${phaseIdx}-wrap`}
+              x={x}
+              startTime={0}
+              endTime={endTime - cycleTime}
+              cycleTime={cycleTime}
+              direction={phase.direction}
+              barWidth={30}
+              yScale={yScale}
+              chartHeight={dimensions.height - 40}
+              onMouseEnter={(e, info) => {
+                const content = (
+                  <div>
+                    <p><strong>{phase.direction === 'upstream' ? 'מעלה הזרם' : 'מורד הזרם'}</strong></p>
+                    <p>צומת: {intersection.id}</p>
+                    <p>זמן התחלה: 0 שניות (המשך מסוף המחזור)</p>
+                    <p>זמן סיום: {Math.round((endTime - cycleTime) * 10) / 10} שניות</p>
+                    <p>משך כולל: {Math.round(phase.duration * 10) / 10} שניות</p>
+                    {phase.phaseNumber && <p>מספר מופע: {phase.phaseNumber}</p>}
+                    {intersection.offset ? <p>היסט: {Math.round(intersection.offset * 10) / 10} שניות</p> : null}
+                    {isHalfCycle && <p>שימוש בחצי מחזור</p>}
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+              isHalfCycle={isHalfCycle}
+              phaseNumber={phase.phaseNumber}
+            />
+          );
+        }
+      });
+    });
+    
+    return phases;
+  };
+
+  return (
+    <div ref={chartRef} className="relative w-full h-full">
+      <svg
+        width={dimensions.width}
+        height={dimensions.height}
+        className="w-full"
+        style={{ direction: 'ltr' }}
+      >
+        {/* Y-axis grid lines */}
+        {generateYGridLines()}
+        
+        {/* X-axis grid lines */}
+        {generateXGridLines()}
+        
+        {/* Main axes */}
+        <line 
+          x1={leftPadding} 
+          y1={dimensions.height - 40} 
+          x2={dimensions.width - rightPadding} 
+          y2={dimensions.height - 40} 
+          stroke="#000" 
+          strokeWidth={2} 
+        />
+        <line 
+          x1={leftPadding} 
+          y1={40} 
+          x2={leftPadding} 
+          y2={dimensions.height - 40} 
+          stroke="#000" 
+          strokeWidth={2} 
+        />
+        
+        {/* Y-axis labels */}
+        <text
+          x={leftPadding / 2}
+          y={dimensions.height / 2}
+          textAnchor="middle"
+          transform={`rotate(-90, ${leftPadding / 2}, ${dimensions.height / 2})`}
+          fontSize={isMobile ? 12 : 14}
+          fontWeight="bold"
+        >
+          זמן (שניות)
+        </text>
+        {generateYAxisLabels()}
+        
+        {/* X-axis labels */}
+        <text
+          x={dimensions.width / 2}
+          y={dimensions.height - 5}
+          textAnchor="middle"
+          fontSize={isMobile ? 12 : 14}
+          fontWeight="bold"
+        >
+          מרחק (מטרים)
+        </text>
+        {generateXAxisLabels()}
+        
+        {/* Diagonal lines */}
+        {renderDiagonalLines()}
+        
+        {/* Green phase bars */}
+        {renderGreenPhases()}
+      </svg>
+      
+      {/* Tooltip */}
+      <GreenWaveTooltip 
+        isVisible={tooltipInfo.visible}
+        x={tooltipInfo.x}
+        y={tooltipInfo.y}
+        parentRef={chartRef}
+      >
+        {tooltipInfo.content}
+      </GreenWaveTooltip>
+    </div>
+  );
+};
