@@ -170,15 +170,17 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
   
   return (
     <div className="space-y-6">
-      <Card className="p-6 w-full">
-        <GreenWaveChart 
-          intersections={chartIntersections}
-          mode={mode}
-          speed={chartSpeed}
-          pairBandPoints={pairBandPoints}
-          calculationPerformed={calculationPerformed}
-          comparisonResults={comparisonResults}
-        />
+      <Card className="p-6 w-full overflow-x-auto">
+        <div className="min-w-[900px]">
+          <GreenWaveChart 
+            intersections={chartIntersections}
+            mode={mode}
+            speed={chartSpeed}
+            pairBandPoints={pairBandPoints}
+            calculationPerformed={calculationPerformed}
+            comparisonResults={comparisonResults}
+          />
+        </div>
       </Card>
       
       <Card className="p-6">

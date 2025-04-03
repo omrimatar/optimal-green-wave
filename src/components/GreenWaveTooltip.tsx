@@ -51,7 +51,7 @@ export const GreenWaveTooltip: React.FC<GreenWaveTooltipProps> = ({ x, y, conten
         left: position.left,
         top: position.top,
         minWidth: isMobile ? '120px' : '150px',
-        maxWidth: isMobile ? '200px' : '250px',
+        maxWidth: isMobile ? '200px' : '300px', // Increased max width for better readability
         direction: 'rtl',
         fontSize: isMobile ? '0.85rem' : '1rem',
         color: '#333',

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -25,7 +24,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   comparisonResults
 }) => {
   const chartRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 1200, height: 600 });
+  const [dimensions, setDimensions] = useState({ width: 1500, height: 600 });
   const [tooltipInfo, setTooltipInfo] = useState<{
     visible: boolean;
     x: number;
@@ -42,7 +41,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
 
   const leftPadding = isMobile ? 65 : 85;
   const originX = leftPadding + 25;
-  const rightPadding = isMobile ? 80 : 110;
+  const rightPadding = isMobile ? 80 : 70;
 
   const yLabelOffset = 20;
 
@@ -59,10 +58,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     console.log("Right padding:", rightPadding);
   }, [intersections, mode, speed, pairBandPoints, comparisonResults, leftPadding, originX, rightPadding]);
 
-  // Calculate maxDistance with additional 20 meters past the last intersection
   const lastIntersectionDistance = intersections.length > 0 ? 
     intersections[intersections.length - 1].distance : 0;
-  const maxDistance = Math.max(...intersections.map(i => i.distance)) + 20; // Add 20 meters
+  const maxDistance = Math.max(...intersections.map(i => i.distance)) + 20;
   const maxCycleTime = Math.max(...intersections.map(i => i.cycleTime));
   
   useEffect(() => {
@@ -79,7 +77,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     const handleResize = () => {
       if (chartRef.current) {
         const width = chartRef.current.clientWidth;
-        const heightRatio = isMobileDevice() ? 0.7 : 0.5;
+        const heightRatio = isMobileDevice() ? 0.6 : 0.45;
         const height = Math.min(600, Math.max(300, width * heightRatio));
         
         setDimensions({
@@ -199,11 +197,9 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       }
     }
 
-    // Always add a label for the last intersection
     if (intersections.length > 0) {
       const lastIntersectionX = originX + xScale(lastIntersectionDistance);
       
-      // Check if the last intersection already has a label from the loop above
       const isAlreadyLabeled = labels.some(label => {
         const labelKey = label.key;
         if (typeof labelKey === 'string') {
@@ -215,7 +211,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         return false;
       });
       
-      // Only add if no label exists yet and it fits within the chart
       if (!isAlreadyLabeled && lastIntersectionX <= dimensions.width - rightPadding) {
         labels.push(
           <g key={`x-label-${lastIntersectionDistance}`}
@@ -255,7 +250,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         );
       }
 
-      // Also add a label for last intersection + 20m (the extended view)
       const extendedX = originX + xScale(lastIntersectionDistance + 20);
       if (extendedX <= dimensions.width - rightPadding) {
         labels.push(
