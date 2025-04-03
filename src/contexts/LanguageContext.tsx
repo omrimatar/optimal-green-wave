@@ -83,13 +83,11 @@ type TranslationKey =
   | 'alpha_parameter'
   | 'beta_parameter'
   | 'optimization_weights'
-  | 'weights_must_sum_to_1';
-
-interface LanguageContextType {
-  language: Language;
-  toggleLanguage: () => void;
-  t: (key: string) => string;
-}
+  | 'weights_must_sum_to_1'
+  | 'phase_number'
+  | 'optional'
+  | 'must_be_between'
+  | 'and';
 
 const translations: Record<Language, Record<TranslationKey, string>> = {
   en: {
@@ -173,7 +171,11 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'alpha_parameter': 'Alpha Parameter',
     'beta_parameter': 'Beta Parameter',
     'optimization_weights': 'Optimization Weights',
-    'weights_must_sum_to_1': 'Weights must sum to 1'
+    'weights_must_sum_to_1': 'Weights must sum to 1',
+    'phase_number': 'Phase Number',
+    'optional': 'Optional',
+    'must_be_between': 'must be between',
+    'and': 'and'
   },
   he: {
     app_title: 'מחשבון גל ירוק',
@@ -256,7 +258,11 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'alpha_parameter': 'פרמטר אלפא',
     'beta_parameter': 'פרמטר בטא',
     'optimization_weights': 'משקולות לאופטימזיציה',
-    'weights_must_sum_to_1': 'משקולות לאופטימזיציה'
+    'weights_must_sum_to_1': 'משקולות לאופטימזיציה',
+    'phase_number': 'מספר מופע',
+    'optional': 'לא חובה',
+    'must_be_between': 'חייב להיות בין',
+    'and': 'ל-'
   }
 };
 

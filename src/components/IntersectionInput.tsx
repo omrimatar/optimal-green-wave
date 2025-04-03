@@ -13,8 +13,8 @@ interface IntersectionInputProps {
   intersection: Intersection;
   onChange: (updated: Intersection) => void;
   onDelete: () => void;
-  allIntersections: Intersection[]; // Added prop to access all intersections for validation
-  defaultSpeed: number; // Default speed from design speed
+  allIntersections: Intersection[];
+  defaultSpeed: number;
 }
 
 export const IntersectionInput = ({ 
@@ -577,6 +577,24 @@ export const IntersectionInput = ({
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div>
+                <Label className="text-sm">{t('phase_number')}</Label>
+                <Input
+                  type="number"
+                  value={tempPhaseNumbers[index] || ''}
+                  placeholder={t('optional')}
+                  min={1}
+                  max={100}
+                  className="w-20"
+                  onChange={e => handlePhaseNumberChange(index, e.target.value)}
+                  onBlur={() => validateAndUpdatePhaseNumber(index)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      validateAndUpdatePhaseNumber(index);
+                    }
+                  }}
+                />
+              </div>
+              <div>
                 <Label className="text-sm">{t('start_time')}</Label>
                 <Input
                   type="number"
@@ -604,23 +622,6 @@ export const IntersectionInput = ({
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
                       validateAndUpdateGreenPhase(index, 'duration');
-                    }
-                  }}
-                />
-              </div>
-              <div>
-                <Label className="text-sm">{t('phase_number') || 'מספר מופע'}</Label>
-                <Input
-                  type="number"
-                  value={tempPhaseNumbers[index] || ''}
-                  placeholder={t('optional') || 'לא חובה'}
-                  min={1}
-                  max={100}
-                  onChange={e => handlePhaseNumberChange(index, e.target.value)}
-                  onBlur={() => validateAndUpdatePhaseNumber(index)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      validateAndUpdatePhaseNumber(index);
                     }
                   }}
                 />
