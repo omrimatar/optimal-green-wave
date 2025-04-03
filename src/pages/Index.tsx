@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,6 +18,7 @@ import { DebugDialog } from '@/components/DebugDialog';
 import { useMaintenanceMode } from '@/contexts/MaintenanceContext';
 import { AdminLoginDialog } from '@/components/AdminLoginDialog';
 import { ContactButton } from '@/components/ContactButton';
+import { trackVisit } from '@/lib/tracking';
 
 const Index = () => {
   const { t, language } = useLanguage();
@@ -142,32 +142,20 @@ const Index = () => {
     clearResults();
   };
 
-  const handleManualCalculate = async () => {
+  const handleGreenWave = async (action: 'show-existing' | 'manual' | 'optimize') => {
     try {
-      const currentOffsets = [...manualOffsets];
-      while (currentOffsets.length < intersections.length) {
-        currentOffsets.push(0);
-      }
-      while (currentOffsets.length > intersections.length) {
-        currentOffsets.pop();
-      }
-      currentOffsets[0] = 0;
+      trackVisit().catch(err => console.error("Failed to track visit:", err));
       
-      const calculationResults = await calculateGreenWave(intersections, speed, weights, currentOffsets);
-      console.log("Manual calculation results received:", calculationResults);
-      
-      if (!calculationResults.manual_results) {
-        throw new Error("No manual results received from calculation");
+      if (action === 'show-existing') {
+        await handleShowExisting();
+      } else if (action === 'manual') {
+        await handleManualCalculate();
+      } else {
+        await handleCalculate();
       }
-      
-      setResults(calculationResults);
-      setMode('manual');
-      setShowManualDialog(false);
-      setCalculationPerformed(true);
-      toast.success("חישוב הגל הירוק במצב ידני הושלם בהצלחה");
     } catch (error) {
-      console.error("Error in manual calculation:", error);
-      toast.error("שגיאה בחישוב הגל הירוק במצב ידני");
+      console.error(`Error in ${action}:`, error);
+      toast.error(`שגיאה בפעולה ${action}`);
       setCalculationPerformed(true);
     }
   };
@@ -228,6 +216,36 @@ const Index = () => {
     } catch (error) {
       console.error("Error in calculation:", error);
       toast.error("שגיאה בחישוב הגל הירוק");
+      setCalculationPerformed(true);
+    }
+  };
+
+  const handleManualCalculate = async () => {
+    try {
+      const currentOffsets = [...manualOffsets];
+      while (currentOffsets.length < intersections.length) {
+        currentOffsets.push(0);
+      }
+      while (currentOffsets.length > intersections.length) {
+        currentOffsets.pop();
+      }
+      currentOffsets[0] = 0;
+      
+      const calculationResults = await calculateGreenWave(intersections, speed, weights, currentOffsets);
+      console.log("Manual calculation results received:", calculationResults);
+      
+      if (!calculationResults.manual_results) {
+        throw new Error("No manual results received from calculation");
+      }
+      
+      setResults(calculationResults);
+      setMode('manual');
+      setShowManualDialog(false);
+      setCalculationPerformed(true);
+      toast.success("חישוב הגל הירוק במצב ידני הושלם בהצלחה");
+    } catch (error) {
+      console.error("Error in manual calculation:", error);
+      toast.error("שגיאה בחישוב הגל הירוק במצב ידני");
       setCalculationPerformed(true);
     }
   };
@@ -479,7 +497,11 @@ const Index = () => {
             </div>
 
             <div className="flex flex-wrap gap-2 md:gap-4">
-              <Button variant="outline" onClick={handleShowExisting} className="flex items-center gap-1 md:gap-2 bg-orange-500 hover:bg-orange-600 text-white text-xs md:text-sm">
+              <Button 
+                variant="outline" 
+                onClick={() => handleGreenWave('show-existing')} 
+                className="flex items-center gap-1 md:gap-2 bg-orange-500 hover:bg-orange-600 text-white text-xs md:text-sm"
+              >
                 <Play size={14} className="md:w-4 md:h-4" />
                 <span className="hidden sm:inline">{t('draw_existing')}</span>
                 <span className="sm:hidden">{t('draw_existing')}</span>
@@ -522,12 +544,15 @@ const Index = () => {
                     ))}
                   </div>
                   <DialogFooter className={language === 'he' ? "" : "flex-row-reverse"}>
-                    <Button onClick={handleManualCalculate}>{t('calculate')}</Button>
+                    <Button onClick={() => handleGreenWave('manual')}>{t('calculate')}</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
 
-              <Button onClick={handleCalculate} className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white text-xs md:text-sm">
+              <Button 
+                onClick={() => handleGreenWave('optimize')} 
+                className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white text-xs md:text-sm"
+              >
                 <span className="sm:hidden">{t('calculate')}</span>
                 <span className="hidden sm:inline">{t('calculate_green_wave')}</span>
                 <ArrowRight className={`${language === 'he' ? "mr-2" : "ml-2"} w-3 h-3 md:w-4 md:h-4`} size={16} />
@@ -578,4 +603,3 @@ const Index = () => {
 };
 
 export default Index;
-
