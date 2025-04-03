@@ -25,17 +25,14 @@ export const IntersectionInput = ({
   defaultSpeed 
 }: IntersectionInputProps) => {
   const { t } = useLanguage();
-  // Add local state to track if the distance input is being edited
   const [isEditingDistance, setIsEditingDistance] = useState(false);
   const [tempDistance, setTempDistance] = useState<string>(intersection.distance.toString());
   const [useHalfCycleTime, setUseHalfCycleTime] = useState(intersection.useHalfCycleTime || false);
   
-  // Add state for temporary green phase values
   const [tempGreenPhaseValues, setTempGreenPhaseValues] = useState<{
     [key: number]: { startTime: string; duration: string }
   }>({});
   
-  // Add state for temporary speed values
   const [tempUpstreamSpeed, setTempUpstreamSpeed] = useState<string>(
     intersection.upstreamSpeed !== undefined ? intersection.upstreamSpeed.toString() : defaultSpeed.toString()
   );
@@ -43,10 +40,7 @@ export const IntersectionInput = ({
     intersection.downstreamSpeed !== undefined ? intersection.downstreamSpeed.toString() : defaultSpeed.toString()
   );
   
-  // Add effect to update temporary speeds when defaultSpeed changes
   useEffect(() => {
-    // Only update temporary speed fields if they match the previous default speed
-    // or if they were undefined
     if (intersection.upstreamSpeed === undefined || intersection.upstreamSpeed === defaultSpeed) {
       setTempUpstreamSpeed(defaultSpeed.toString());
     }
@@ -56,7 +50,6 @@ export const IntersectionInput = ({
     }
   }, [defaultSpeed, intersection.upstreamSpeed, intersection.downstreamSpeed]);
   
-  // Initialize temp phase values
   useEffect(() => {
     const initialPhaseValues: {[key: number]: { startTime: string; duration: string }} = {};
     intersection.greenPhases.forEach((phase, index) => {
@@ -68,15 +61,24 @@ export const IntersectionInput = ({
     setTempGreenPhaseValues(initialPhaseValues);
   }, [intersection.greenPhases.length]);
 
-  // Check if two phases overlap
+  const [tempPhaseNumbers, setTempPhaseNumbers] = useState<{
+    [key: number]: string
+  }>({});
+
+  useEffect(() => {
+    const initialPhaseNumbers: {[key: number]: string} = {};
+    intersection.greenPhases.forEach((phase, index) => {
+      initialPhaseNumbers[index] = phase.phaseNumber?.toString() || '';
+    });
+    setTempPhaseNumbers(initialPhaseNumbers);
+  }, [intersection.greenPhases.length]);
+
   const phasesOverlap = (phase1Start: number, phase1Duration: number, phase2Start: number, phase2Duration: number, cycleTime: number) => {
     const effectiveCycleTime = useHalfCycleTime ? cycleTime / 2 : cycleTime;
     
-    // Calculate end times
     const phase1End = (phase1Start + phase1Duration) % effectiveCycleTime;
     const phase2End = (phase2Start + phase2Duration) % effectiveCycleTime;
     
-    // Handle cases where the phase wraps around the cycle
     if (phase1Start < phase1End && phase2Start < phase2End) {
       return (phase1Start < phase2End && phase2Start < phase1End);
     } else if (phase1Start >= phase1End && phase2Start < phase2End) {
@@ -84,15 +86,13 @@ export const IntersectionInput = ({
     } else if (phase1Start < phase1End && phase2Start >= phase2End) {
       return (phase1Start < phase2End || phase1End > phase2Start);
     } else {
-      return true; // They must overlap in this case
+      return true;
     }
   };
 
-  // Check if a new phase would overlap with existing phases of the same direction
   const wouldOverlapWithExistingPhases = (direction: 'upstream' | 'downstream', startTime: number, duration: number) => {
     const effectiveCycleTime = useHalfCycleTime ? intersection.cycleTime / 2 : intersection.cycleTime;
     
-    // Get existing phases with the same direction
     const existingPhasesInSameDirection = intersection.greenPhases.filter(
       phase => phase.direction === direction
     );
@@ -150,7 +150,6 @@ export const IntersectionInput = ({
         return;
       }
 
-      // Validate that startTime doesn't exceed effective cycle time
       if (value >= effectiveCycleTime) {
         toast.error(`${t('start_time')} ${t('must_be_less_than')} ${effectiveCycleTime}`);
         
@@ -165,7 +164,6 @@ export const IntersectionInput = ({
         return;
       }
     } else if (field === 'duration') {
-      // Modified: Duration cannot exceed the effective cycle time
       if (value < 1 || value > effectiveCycleTime || !Number.isInteger(value)) {
         toast.error(`${t('duration')} ${t('must_be_between')} 1 ${t('and')} ${effectiveCycleTime}`);
         
@@ -187,12 +185,9 @@ export const IntersectionInput = ({
     const newStartTime = field === 'startTime' ? value : currentPhase.startTime;
     const newDuration = field === 'duration' ? value : currentPhase.duration;
     
-    // Check if the updated phase would overlap with other phases in the same direction
-    const otherPhasesInSameDirection = updatedGreenPhases.filter(
+    for (const otherPhase of updatedGreenPhases.filter(
       (phase, idx) => phase.direction === currentPhase.direction && idx !== phaseIndex
-    );
-    
-    for (const otherPhase of otherPhasesInSameDirection) {
+    )) {
       if (phasesOverlap(newStartTime, newDuration, otherPhase.startTime, otherPhase.duration, effectiveCycleTime)) {
         toast.error(`${t('phase_overlap_error')} ${currentPhase.direction === 'upstream' ? t('upstream_phase') : t('downstream_phase')}`);
         
@@ -222,16 +217,13 @@ export const IntersectionInput = ({
   const handleAddPhase = (direction: 'upstream' | 'downstream') => {
     const effectiveCycleTime = useHalfCycleTime ? intersection.cycleTime / 2 : intersection.cycleTime;
     
-    // Find existing phases with the same direction
     const phasesInSameDirection = intersection.greenPhases.filter(phase => phase.direction === direction);
     
-    // Find a non-overlapping time slot
     let newStartTime = 0;
     let newDuration = Math.min(30, effectiveCycleTime);
     let attemptCount = 0;
     const maxAttempts = effectiveCycleTime;
     
-    // Try to find a non-overlapping slot by moving startTime
     while (attemptCount < maxAttempts) {
       if (!wouldOverlapWithExistingPhases(direction, newStartTime, newDuration)) {
         break;
@@ -240,7 +232,6 @@ export const IntersectionInput = ({
       newStartTime = (newStartTime + 5) % effectiveCycleTime;
       attemptCount++;
       
-      // If we can't find a non-overlapping slot, try reducing the duration
       if (attemptCount === maxAttempts - 1 && newDuration > 5) {
         newDuration = 5;
         attemptCount = 0;
@@ -289,10 +280,8 @@ export const IntersectionInput = ({
       return;
     }
     
-    // Find the current index of this intersection
     const currentIndex = allIntersections.findIndex(i => i.id === intersection.id);
     
-    // Check if distance is valid compared to previous and next intersections
     if (currentIndex > 0) {
       const prevIntersection = allIntersections[currentIndex - 1];
       if (numValue < prevIntersection.distance) {
@@ -318,11 +307,10 @@ export const IntersectionInput = ({
   };
 
   const validatePhasesForHalfCycle = (checked: boolean): boolean => {
-    if (!checked) return true; // No validation needed when unchecking
+    if (!checked) return true;
     
     const halfCycleTime = intersection.cycleTime / 2;
     
-    // Check if any phase would be invalid with half cycle time
     for (const phase of intersection.greenPhases) {
       if (phase.startTime >= halfCycleTime) {
         toast.error(`${t('cannot_enable_half_cycle')} - ${t('phase_starts_after_half_cycle')}`);
@@ -340,7 +328,6 @@ export const IntersectionInput = ({
     
     setUseHalfCycleTime(checked);
     
-    // Update the intersection with the useHalfCycleTime flag
     onChange({
       ...intersection,
       useHalfCycleTime: checked
@@ -371,7 +358,6 @@ export const IntersectionInput = ({
       return;
     }
     
-    // If the input is valid, update the intersection with the new speed
     if (direction === 'upstream') {
       onChange({
         ...intersection,
@@ -385,13 +371,10 @@ export const IntersectionInput = ({
     }
   };
 
-  // Get the phase counts per direction for numbering
   const getPhaseNumber = (index: number, direction: 'upstream' | 'downstream'): number => {
-    // Count phases with the same direction that appear before this one
     const phasesInSameDirection = intersection.greenPhases
       .filter(phase => phase.direction === direction);
     
-    // Find the position of the current phase in the filtered array
     const currentPhase = intersection.greenPhases[index];
     const positionInDirection = phasesInSameDirection.findIndex(
       phase => phase.startTime === currentPhase.startTime && phase.duration === currentPhase.duration
@@ -400,16 +383,13 @@ export const IntersectionInput = ({
     return positionInDirection + 1;
   };
 
-  // Determine if a phase is primary (first) or secondary
   const isSecondaryPhase = (index: number, direction: 'upstream' | 'downstream'): boolean => {
     return getPhaseNumber(index, direction) > 1;
   };
 
-  // Get effective speeds (either specific speeds or default)
   const upstreamSpeed = intersection.upstreamSpeed !== undefined ? intersection.upstreamSpeed : defaultSpeed;
   const downstreamSpeed = intersection.downstreamSpeed !== undefined ? intersection.downstreamSpeed : defaultSpeed;
 
-  // Get effective cycle time
   const effectiveCycleTime = useHalfCycleTime ? intersection.cycleTime / 2 : intersection.cycleTime;
 
   return (
@@ -548,7 +528,7 @@ export const IntersectionInput = ({
                 </Button>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <div>
                 <Label className="text-sm">{t('start_time')}</Label>
                 <Input
@@ -577,6 +557,23 @@ export const IntersectionInput = ({
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
                       validateAndUpdateGreenPhase(index, 'duration');
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <Label className="text-sm">{t('phase_number') || 'מספר מופע'}</Label>
+                <Input
+                  type="number"
+                  value={tempPhaseNumbers[index] || ''}
+                  placeholder={t('optional') || 'לא חובה'}
+                  min={1}
+                  max={100}
+                  onChange={e => handlePhaseNumberChange(index, e.target.value)}
+                  onBlur={() => validateAndUpdatePhaseNumber(index)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      validateAndUpdatePhaseNumber(index);
                     }
                   }}
                 />
