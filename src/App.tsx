@@ -11,7 +11,6 @@ import { MobileDetectionDialog } from "@/components/MobileDetectionDialog";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import LogsPage from "./pages/LogsPage";
 import { useMaintenanceMode } from "@/contexts/MaintenanceContext";
 
 const queryClient = new QueryClient();
@@ -40,7 +39,6 @@ const App = () => (
             <MaintenanceWrapper>
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/logs" element={<LogsPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
