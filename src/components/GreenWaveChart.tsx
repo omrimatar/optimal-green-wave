@@ -361,6 +361,16 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       const upstreamBandwidth = comparisonResults.pair_bandwidth_up?.[pairIndex] || 0;
       const downstreamBandwidth = comparisonResults.pair_bandwidth_down?.[pairIndex] || 0;
       
+      console.log(`Rendering diagonal lines for pair ${pair.from_junction}->${pair.to_junction}:`);
+      console.log(`Upstream bandwidth: ${upstreamBandwidth}, Downstream bandwidth: ${downstreamBandwidth}`);
+      console.log(`Upstream data: origin_low=${pair.up.origin_low.toFixed(2)}, origin_high=${pair.up.origin_high.toFixed(2)}, dest_low=${pair.up.dest_low.toFixed(2)}, dest_high=${pair.up.dest_high.toFixed(2)}`);
+      console.log(`Downstream data: origin_low=${pair.down.origin_low.toFixed(2)}, origin_high=${pair.down.origin_high.toFixed(2)}, dest_low=${pair.down.dest_low.toFixed(2)}, dest_high=${pair.down.dest_high.toFixed(2)}`);
+      
+      const cycleTime = Math.max(
+        intersections[originIdx].cycleTime || 90,
+        intersections[destIdx].cycleTime || 90
+      );
+      
       if (upstreamBandwidth > 0) {
         const upOriginLowY = dimensions.height - 40 - yScale(pair.up.origin_low);
         const upOriginHighY = dimensions.height - 40 - yScale(pair.up.origin_high);
@@ -369,7 +379,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         
         const upLowWrapsAround = pair.up.dest_low < pair.up.origin_low;
         const upHighWrapsAround = pair.up.dest_high < pair.up.origin_high;
-        
+
         console.log(`Upstream low line: origin=${pair.up.origin_low.toFixed(2)}, dest=${pair.up.dest_low.toFixed(2)}, wraps=${upLowWrapsAround}`);
         console.log(`Upstream high line: origin=${pair.up.origin_high.toFixed(2)}, dest=${pair.up.dest_high.toFixed(2)}, wraps=${upHighWrapsAround}`);
         
@@ -769,173 +779,291 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           );
         }
       } else {
-        console.log(`Skipping downstream lines for ${pair.from_junction}->${pair.to_junction} due to zero or negative bandwidth: ${downstreamBandwidth}`);
+        console.log(`Skipping downstream lines for ${pair.to_junction}->${pair.from_junction} due to zero or negative bandwidth: ${downstreamBandwidth}`);
       }
 
       return lines;
     });
   };
 
-  const renderGreenPhases = () => {
-    const phases: JSX.Element[] = [];
-    
-    intersections.forEach((intersection, idx) => {
-      const x = leftPadding + 25 + xScale(intersection.distance);
-      const cycleTime = intersection.cycleTime;
-      const useHalfCycle = intersection.useHalfCycleTime;
+  const renderSolidDiagonalLines = () => {
+    return null;
+  };
+
+  const renderIntersections = () => {
+    return intersections.map((intersection, i) => {
+      const offset = mode === 'display' ? 0 : (intersection.offset || 0);
       
-      intersection.greenPhases.forEach((phase, phaseIdx) => {
-        const startTime = phase.startTime + (intersection.offset || 0);
-        // Convert to cycle time
-        const effectiveStartTime = startTime % cycleTime;
-        const endTime = effectiveStartTime + phase.duration;
-        const isHalfCycle = useHalfCycle;
+      console.log(`Rendering intersection ${i+1} (ID: ${intersection.id}):`);
+      console.log(`  Distance: ${intersection.distance}m`);
+      console.log(`  Cycle Time: ${intersection.cycleTime}s`);
+      console.log(`  Offset: ${offset}s`);
+      console.log(`  Green Phases:`, intersection.greenPhases);
+      console.log(`  UseHalfCycleTime: ${intersection.useHalfCycleTime}`);
+      
+      return intersection.greenPhases.map((phase, j) => {
+        const x = originX + xScale(intersection.distance);
+        const xOffset = phase.direction === 'upstream' ? -10 : 10;
         
-        phases.push(
-          <GreenPhaseBar
-            key={`phase-${idx}-${phaseIdx}`}
-            x={x}
-            startTime={effectiveStartTime}
-            endTime={endTime}
-            cycleTime={cycleTime}
-            direction={phase.direction}
-            barWidth={30}
-            yScale={yScale}
-            chartHeight={dimensions.height - 40}
-            onMouseEnter={(e, info) => {
-              const content = (
-                <div>
-                  <p><strong>{phase.direction === 'upstream' ? 'מעלה הזרם' : 'מורד הזרם'}</strong></p>
-                  <p>צומת: {intersection.id}</p>
-                  <p>זמן התחלה: {Math.round(effectiveStartTime * 10) / 10} שניות</p>
-                  <p>זמן סיום: {Math.round((endTime > cycleTime ? endTime - cycleTime : endTime) * 10) / 10} שניות</p>
-                  <p>משך: {Math.round(phase.duration * 10) / 10} שניות</p>
-                  {phase.phaseNumber && <p>מספר מופע: {phase.phaseNumber}</p>}
-                  {intersection.offset ? <p>היסט: {Math.round(intersection.offset * 10) / 10} שניות</p> : null}
-                  {isHalfCycle && <p>שימוש בחצי מחזור</p>}
-                </div>
-              );
-              handleShowTooltip(e.clientX, e.clientY, content);
-            }}
-            onMouseLeave={handleHideTooltip}
-            isHalfCycle={isHalfCycle}
-            phaseNumber={phase.phaseNumber}
-          />
-        );
+        let startTime = (phase.startTime + offset) % intersection.cycleTime;
+        let endTime = (startTime + phase.duration) % intersection.cycleTime;
         
-        // If the phase wraps around the cycle, render an additional phase
-        if (endTime > cycleTime) {
-          phases.push(
+        if (endTime === 0) endTime = intersection.cycleTime;
+        
+        const wrappedPhase = endTime < startTime;
+        
+        console.log(`  Phase ${j+1}:`);
+        console.log(`    Direction: ${phase.direction}`);
+        console.log(`    Original Start: ${phase.startTime}s`);
+        console.log(`    Duration: ${phase.duration}s`);
+        console.log(`    Adjusted Start: ${startTime}s`);
+        console.log(`    Adjusted End: ${wrappedPhase ? intersection.cycleTime : endTime}s`);
+        console.log(`    Wrapped: ${wrappedPhase}`);
+        
+        const phaseElements = [];
+        
+        phaseElements.push(
+          <React.Fragment key={`phase-${i}-${j}-original`}>
             <GreenPhaseBar
-              key={`phase-${idx}-${phaseIdx}-wrap`}
-              x={x}
-              startTime={0}
-              endTime={endTime - cycleTime}
-              cycleTime={cycleTime}
+              x={x + xOffset}
+              startTime={startTime}
+              endTime={wrappedPhase ? intersection.cycleTime : endTime}
+              cycleTime={intersection.cycleTime}
               direction={phase.direction}
-              barWidth={30}
+              barWidth={15}
               yScale={yScale}
               chartHeight={dimensions.height - 40}
-              onMouseEnter={(e, info) => {
+              onMouseEnter={(e) => {
                 const content = (
                   <div>
-                    <p><strong>{phase.direction === 'upstream' ? 'מעלה הזרם' : 'מורד הזרם'}</strong></p>
                     <p>צומת: {intersection.id}</p>
-                    <p>זמן התחלה: 0 שניות (המשך מסוף המחזור)</p>
-                    <p>זמן סיום: {Math.round((endTime - cycleTime) * 10) / 10} שניות</p>
-                    <p>משך כולל: {Math.round(phase.duration * 10) / 10} שניות</p>
-                    {phase.phaseNumber && <p>מספר מופע: {phase.phaseNumber}</p>}
-                    {intersection.offset ? <p>היסט: {Math.round(intersection.offset * 10) / 10} שניות</p> : null}
-                    {isHalfCycle && <p>שימוש בחצי מחזור</p>}
+                    <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
+                    <p>התחלה: {Math.round(startTime)} שניות</p>
+                    <p>סיום: {Math.round(wrappedPhase ? intersection.cycleTime : endTime)} שניות</p>
+                    <p>היסט: {Math.round(offset)} שניות</p>
                   </div>
                 );
                 handleShowTooltip(e.clientX, e.clientY, content);
               }}
               onMouseLeave={handleHideTooltip}
-              isHalfCycle={isHalfCycle}
-              phaseNumber={phase.phaseNumber}
             />
+            
+            {wrappedPhase && (
+              <GreenPhaseBar
+                x={x + xOffset}
+                startTime={0}
+                endTime={endTime}
+                cycleTime={intersection.cycleTime}
+                direction={phase.direction}
+                barWidth={15}
+                yScale={yScale}
+                chartHeight={dimensions.height - 40}
+                onMouseEnter={(e) => {
+                  const content = (
+                    <div>
+                      <p>צומת: {intersection.id}</p>
+                      <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
+                      <p>התחלה: 0 שניות (המשך)</p>
+                      <p>סיום: {Math.round(endTime)} שניות</p>
+                      <p>היסט: {Math.round(offset)} שניות</p>
+                    </div>
+                  );
+                  handleShowTooltip(e.clientX, e.clientY, content);
+                }}
+                onMouseLeave={handleHideTooltip}
+              />
+            )}
+          </React.Fragment>
+        );
+        
+        if (intersection.useHalfCycleTime) {
+          const halfCycleTime = intersection.cycleTime / 2;
+          let halfCycleStartTime = (startTime + halfCycleTime) % intersection.cycleTime;
+          let halfCycleEndTime = (halfCycleStartTime + phase.duration) % intersection.cycleTime;
+          
+          if (halfCycleEndTime === 0) halfCycleEndTime = intersection.cycleTime;
+          
+          const halfCycleWrappedPhase = halfCycleEndTime < halfCycleStartTime;
+          
+          console.log(`  Half-Cycle Phase ${j+1}:`);
+          console.log(`    Direction: ${phase.direction}`);
+          console.log(`    Half-Cycle Start: ${halfCycleStartTime}s`);
+          console.log(`    Half-Cycle End: ${halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime}s`);
+          console.log(`    Half-Cycle Wrapped: ${halfCycleWrappedPhase}`);
+          
+          phaseElements.push(
+            <React.Fragment key={`phase-${i}-${j}-half-cycle`}>
+              <GreenPhaseBar
+                x={x + xOffset}
+                startTime={halfCycleStartTime}
+                endTime={halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime}
+                cycleTime={intersection.cycleTime}
+                direction={phase.direction}
+                barWidth={15}
+                yScale={yScale}
+                chartHeight={dimensions.height - 40}
+                isHalfCycle={true}
+                onMouseEnter={(e) => {
+                  const content = (
+                    <div>
+                      <p>צומת: {intersection.id}</p>
+                      <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
+                      <p>התחלה: {Math.round(halfCycleStartTime)} שניות (מחצית מחזור)</p>
+                      <p>סיום: {Math.round(halfCycleWrappedPhase ? intersection.cycleTime : halfCycleEndTime)} שניות</p>
+                      <p>היסט: {Math.round(offset)} שניות</p>
+                    </div>
+                  );
+                  handleShowTooltip(e.clientX, e.clientY, content);
+                }}
+                onMouseLeave={handleHideTooltip}
+              />
+              
+              {halfCycleWrappedPhase && (
+                <GreenPhaseBar
+                  x={x + xOffset}
+                  startTime={0}
+                  endTime={halfCycleEndTime}
+                  cycleTime={intersection.cycleTime}
+                  direction={phase.direction}
+                  barWidth={15}
+                  yScale={yScale}
+                  chartHeight={dimensions.height - 40}
+                  isHalfCycle={true}
+                  onMouseEnter={(e) => {
+                    const content = (
+                      <div>
+                        <p>צומת: {intersection.id}</p>
+                        <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
+                        <p>��תחלה: 0 שניות (המש��, מחצית מחזור)</p>
+                        <p>סיום: {Math.round(halfCycleEndTime)} שניות</p>
+                        <p>היסט: {Math.round(offset)} שניות</p>
+                      </div>
+                    );
+                    handleShowTooltip(e.clientX, e.clientY, content);
+                  }}
+                  onMouseLeave={handleHideTooltip}
+                />
+              )}
+            </React.Fragment>
           );
         }
+        
+        return phaseElements;
       });
     });
-    
-    return phases;
   };
 
   return (
-    <div ref={chartRef} className="relative w-full h-full">
-      <svg
-        width={dimensions.width}
-        height={dimensions.height}
-        className="w-full"
-        style={{ direction: 'ltr' }}
-      >
-        {/* Y-axis grid lines */}
-        {generateYGridLines()}
+    <>
+      <CardHeader className="flex flex-col sm:flex-row items-center justify-between p-3 md:p-6">
+        <CardTitle className="text-base md:text-lg mb-2 sm:mb-0">תרשים גל ירוק - {mode === 'manual' ? 'מצב ידני' : mode === 'calculate' ? 'אופטימיזציה' : 'מצב קיים'}</CardTitle>
         
-        {/* X-axis grid lines */}
-        {generateXGridLines()}
-        
-        {/* Main axes */}
-        <line 
-          x1={leftPadding} 
-          y1={dimensions.height - 40} 
-          x2={dimensions.width - rightPadding} 
-          y2={dimensions.height - 40} 
-          stroke="#000" 
-          strokeWidth={2} 
-        />
-        <line 
-          x1={leftPadding} 
-          y1={40} 
-          x2={leftPadding} 
-          y2={dimensions.height - 40} 
-          stroke="#000" 
-          strokeWidth={2} 
-        />
-        
-        {/* Y-axis labels */}
-        <text
-          x={leftPadding / 2}
-          y={dimensions.height / 2}
-          textAnchor="middle"
-          transform={`rotate(-90, ${leftPadding / 2}, ${dimensions.height / 2})`}
-          fontSize={isMobile ? 12 : 14}
-          fontWeight="bold"
-        >
-          זמן (שניות)
-        </text>
-        {generateYAxisLabels()}
-        
-        {/* X-axis labels */}
-        <text
-          x={dimensions.width / 2}
-          y={dimensions.height - 5}
-          textAnchor="middle"
-          fontSize={isMobile ? 12 : 14}
-          fontWeight="bold"
-        >
-          מרחק (מטרים)
-        </text>
-        {generateXAxisLabels()}
-        
-        {/* Diagonal lines */}
-        {renderDiagonalLines()}
-        
-        {/* Green phase bars */}
-        {renderGreenPhases()}
-      </svg>
-      
-      {/* Tooltip */}
-      <GreenWaveTooltip 
-        isVisible={tooltipInfo.visible}
-        x={tooltipInfo.x}
-        y={tooltipInfo.y}
-        parentRef={chartRef}
-      >
-        {tooltipInfo.content}
-      </GreenWaveTooltip>
-    </div>
+        <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 sm:gap-4 text-xs">
+          <div className="flex items-center">
+            <div className="w-4 h-2 md:w-5 md:h-2.5 bg-[#A7F3D0] rounded-sm ml-1 md:ml-2 rtl:mr-2"></div>
+            <span className="text-xs">עם הזרם</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-2 md:w-5 md:h-2.5 bg-[#93C5FD] rounded-sm ml-1 md:ml-2 rtl:mr-2"></div>
+            <span className="text-xs">נגד הזרם</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 md:w-5 border-t-2 border-[#4ADE80] ml-1 md:ml-2 rtl:mr-2"></div>
+            <span className="text-xs">רוחב פס עם הזרם</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 md:w-5 border-t-2 border-[#60A5FA] ml-1 md:ml-2 rtl:mr-2"></div>
+            <span className="text-xs">רוחב פס נגד הזרם</span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-2 md:p-6">
+        <div className="relative w-full" ref={chartRef}>
+          <svg 
+            width="100%" 
+            height={dimensions.height}
+            className="overflow-visible"
+            preserveAspectRatio="xMinYMin meet"
+          >
+            {generateYGridLines()}
+            {generateXGridLines()}
+            
+            <line 
+              x1={leftPadding} 
+              y1={isMobile ? 30 : 40} 
+              x2={leftPadding} 
+              y2={dimensions.height - (isMobile ? 30 : 40)} 
+              stroke="black" 
+              strokeWidth={1} 
+            />
+            <line 
+              x1={leftPadding} 
+              y1={dimensions.height - (isMobile ? 30 : 40)} 
+              x2={dimensions.width - rightPadding} 
+              y2={dimensions.height - (isMobile ? 30 : 40)} 
+              stroke="black" 
+              strokeWidth={1} 
+            />
+
+            {generateYAxisLabels()}
+            {generateXAxisLabels()}
+
+            <text
+              x={leftPadding - 50 - 10}
+              y={dimensions.height / 2}
+              textAnchor="middle"
+              transform={`rotate(-90, ${leftPadding - 50 - 10}, ${dimensions.height / 2})`}
+              fontSize={isMobile ? 12 : 14}
+              fill="#4B5563"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p><strong>ציר Y: זמן</strong></p>
+                    <p>מציג את זמן המחזור בשניות</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            >
+              זמן (שניות)
+            </text>
+            <text
+              x={dimensions.width / 2}
+              y={dimensions.height - 5}
+              textAnchor="middle"
+              fontSize={isMobile ? 12 : 14}
+              fill="#4B5563"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p><strong>ציר X: מרחק</strong></p>
+                    <p>מציג את המרחק במטרים</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            >
+              מרחק (מטרים)
+            </text>
+
+            {renderIntersections()}
+            
+            {renderDiagonalLines()}
+            {renderSolidDiagonalLines()}
+          </svg>
+          
+          {tooltipInfo.visible && (
+            <GreenWaveTooltip 
+              x={tooltipInfo.x} 
+              y={tooltipInfo.y} 
+              content={tooltipInfo.content}
+              isMobile={isMobile}
+            />
+          )}
+        </div>
+      </CardContent>
+    </>
   );
 };

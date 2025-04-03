@@ -1,8 +1,8 @@
+
 export interface GreenPhase {
   direction: 'upstream' | 'downstream';
   startTime: number;
   duration: number;
-  phaseNumber?: number;
 }
 
 export interface Intersection {

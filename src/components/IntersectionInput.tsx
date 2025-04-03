@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,7 +32,7 @@ export const IntersectionInput = ({
   
   // Add state for temporary green phase values
   const [tempGreenPhaseValues, setTempGreenPhaseValues] = useState<{
-    [key: number]: { startTime: string; duration: string; phaseNumber?: string }
+    [key: number]: { startTime: string; duration: string }
   }>({});
   
   // Add state for temporary speed values
@@ -59,12 +58,11 @@ export const IntersectionInput = ({
   
   // Initialize temp phase values
   useEffect(() => {
-    const initialPhaseValues: {[key: number]: { startTime: string; duration: string; phaseNumber?: string }} = {};
+    const initialPhaseValues: {[key: number]: { startTime: string; duration: string }} = {};
     intersection.greenPhases.forEach((phase, index) => {
       initialPhaseValues[index] = {
         startTime: phase.startTime.toString(),
-        duration: phase.duration.toString(),
-        phaseNumber: phase.phaseNumber?.toString() || ''
+        duration: phase.duration.toString()
       };
     });
     setTempGreenPhaseValues(initialPhaseValues);
@@ -108,7 +106,7 @@ export const IntersectionInput = ({
     return false;
   };
 
-  const handleGreenPhaseChange = (phaseIndex: number, field: 'startTime' | 'duration' | 'phaseNumber', value: string) => {
+  const handleGreenPhaseChange = (phaseIndex: number, field: 'startTime' | 'duration', value: string) => {
     setTempGreenPhaseValues(prev => ({
       ...prev,
       [phaseIndex]: {
@@ -118,55 +116,7 @@ export const IntersectionInput = ({
     }));
   };
   
-  const validateAndUpdateGreenPhase = (phaseIndex: number, field: 'startTime' | 'duration' | 'phaseNumber') => {
-    if (field === 'phaseNumber') {
-      const value = tempGreenPhaseValues[phaseIndex].phaseNumber || '';
-      
-      if (value === '') {
-        // Empty value is allowed (means no phase number)
-        const updatedGreenPhases = [...intersection.greenPhases];
-        updatedGreenPhases[phaseIndex] = {
-          ...updatedGreenPhases[phaseIndex],
-          phaseNumber: undefined
-        };
-        
-        onChange({
-          ...intersection,
-          greenPhases: updatedGreenPhases
-        });
-        return;
-      }
-      
-      const phaseNumber = parseInt(value);
-      
-      if (isNaN(phaseNumber) || phaseNumber < 1 || phaseNumber > 100 || !Number.isInteger(phaseNumber)) {
-        toast.error(`${t('phase_number')} ${t('must_be_between')} 1 ${t('and')} 100`);
-        
-        setTempGreenPhaseValues(prev => ({
-          ...prev,
-          [phaseIndex]: {
-            ...prev[phaseIndex],
-            phaseNumber: intersection.greenPhases[phaseIndex].phaseNumber?.toString() || ''
-          }
-        }));
-        
-        return;
-      }
-      
-      const updatedGreenPhases = [...intersection.greenPhases];
-      updatedGreenPhases[phaseIndex] = {
-        ...updatedGreenPhases[phaseIndex],
-        phaseNumber: phaseNumber
-      };
-      
-      onChange({
-        ...intersection,
-        greenPhases: updatedGreenPhases
-      });
-      
-      return;
-    }
-    
+  const validateAndUpdateGreenPhase = (phaseIndex: number, field: 'startTime' | 'duration') => {
     const effectiveCycleTime = useHalfCycleTime ? intersection.cycleTime / 2 : intersection.cycleTime;
     
     const value = parseInt(tempGreenPhaseValues[phaseIndex][field]);
@@ -250,8 +200,7 @@ export const IntersectionInput = ({
           ...prev,
           [phaseIndex]: {
             startTime: currentPhase.startTime.toString(),
-            duration: currentPhase.duration.toString(),
-            phaseNumber: prev[phaseIndex].phaseNumber
+            duration: currentPhase.duration.toString()
           }
         }));
         
@@ -599,7 +548,7 @@ export const IntersectionInput = ({
                 </Button>
               )}
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-sm">{t('start_time')}</Label>
                 <Input
@@ -628,23 +577,6 @@ export const IntersectionInput = ({
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
                       validateAndUpdateGreenPhase(index, 'duration');
-                    }
-                  }}
-                />
-              </div>
-              <div>
-                <Label className="text-sm">{t('phase_number') || "מספר מופע"}</Label>
-                <Input
-                  type="number"
-                  value={tempGreenPhaseValues[index]?.phaseNumber || ''}
-                  placeholder=""
-                  min={1}
-                  max={100}
-                  onChange={e => handleGreenPhaseChange(index, 'phaseNumber', e.target.value)}
-                  onBlur={() => validateAndUpdateGreenPhase(index, 'phaseNumber')}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      validateAndUpdateGreenPhase(index, 'phaseNumber');
                     }
                   }}
                 />
