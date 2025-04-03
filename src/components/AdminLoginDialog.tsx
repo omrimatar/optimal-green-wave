@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMaintenanceMode } from '@/contexts/MaintenanceContext';
 import { 
   Dialog, 
@@ -11,9 +11,10 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Lock, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Lock, ToggleLeft, ToggleRight, BarChart2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface AdminLoginDialogProps {
   open: boolean;
@@ -22,8 +23,9 @@ interface AdminLoginDialogProps {
 
 export const AdminLoginDialog = ({ open, onOpenChange }: AdminLoginDialogProps) => {
   const [password, setPassword] = useState('');
-  const { isAdmin, setIsAdmin, isMaintenanceMode, toggleMaintenanceMode } = useMaintenanceMode();
+  const { isAdmin, setIsAdmin, isMaintenanceMode, toggleMaintenanceMode, setShowAnalytics } = useMaintenanceMode();
   const { language } = useLanguage();
+  const navigate = useNavigate();
   
   // Correct password: "omri2205"
   const handleLogin = () => {
@@ -45,6 +47,11 @@ export const AdminLoginDialog = ({ open, onOpenChange }: AdminLoginDialogProps) 
   const handleToggleMaintenance = () => {
     toggleMaintenanceMode();
     toast.info(isMaintenanceMode ? "מצב תחזוקה בוטל" : "מצב תחזוקה הופעל");
+  };
+
+  const handleOpenAnalytics = () => {
+    onOpenChange(false);
+    navigate('/analytics');
   };
 
   return (
@@ -105,6 +112,16 @@ export const AdminLoginDialog = ({ open, onOpenChange }: AdminLoginDialogProps) 
                   </>
                 )}
               </Button>
+              
+              <Button 
+                onClick={handleOpenAnalytics} 
+                variant="default"
+                className={`flex items-center gap-2 ${language === 'he' ? "mr-auto" : "ml-auto"}`}
+              >
+                <BarChart2 className="h-5 w-5" />
+                צפה בנתוני אנליטיקה
+              </Button>
+              
               <Button 
                 onClick={handleLogout} 
                 variant="outline"

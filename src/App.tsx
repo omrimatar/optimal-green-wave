@@ -9,6 +9,7 @@ import { MaintenanceProvider } from "@/contexts/MaintenanceContext";
 import { MaintenancePage } from "@/components/MaintenancePage";
 import { MobileDetectionDialog } from "@/components/MobileDetectionDialog";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { AdminAnalytics } from "@/components/AdminAnalytics";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { useMaintenanceMode } from "@/contexts/MaintenanceContext";
@@ -21,6 +22,17 @@ const MaintenanceWrapper = ({ children }: { children: React.ReactNode }) => {
   
   if (isMaintenanceMode && !isAdmin) {
     return <MaintenancePage />;
+  }
+  
+  return <>{children}</>;
+};
+
+// Component to conditionally render admin-only content
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAdmin } = useMaintenanceMode();
+  
+  if (!isAdmin) {
+    return <NotFound />;
   }
   
   return <>{children}</>;
@@ -39,6 +51,11 @@ const App = () => (
             <MaintenanceWrapper>
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/analytics" element={
+                  <AdminRoute>
+                    <AdminAnalytics />
+                  </AdminRoute>
+                } />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
