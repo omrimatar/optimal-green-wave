@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 type Language = 'en' | 'he';
@@ -88,6 +89,13 @@ type TranslationKey =
   | 'optional'
   | 'must_be_between'
   | 'and';
+
+// Re-add the missing interface
+interface LanguageContextType {
+  language: Language;
+  toggleLanguage: () => void;
+  t: (key: string) => string;
+}
 
 const translations: Record<Language, Record<TranslationKey, string>> = {
   en: {
