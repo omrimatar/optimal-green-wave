@@ -5,7 +5,6 @@ import { GreenWaveTooltip } from './GreenWaveTooltip';
 import { type Intersection } from "@/types/optimization";
 import { type PairBandPoint, type RunResult, type DiagonalPoint } from "@/types/traffic";
 import { isMobileDevice, getMobileScale } from '@/lib/traffic';
-import { trackVisit } from '@/lib/tracking';
 
 interface GreenWaveChartProps {
   intersections: Intersection[];
@@ -48,8 +47,6 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
 
   useEffect(() => {
     setIsMobile(isMobileDevice());
-    
-    trackVisit().catch(err => console.error("Failed to track visit:", err));
     
     console.log("GreenWaveChart received intersections:", intersections);
     console.log("GreenWaveChart mode:", mode);
@@ -96,11 +93,11 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleShowTooltip = (e: React.MouseEvent, content: React.ReactNode, additionalInfo?: Record<string, any>) => {
+  const handleShowTooltip = (x: number, y: number, content: React.ReactNode) => {
     setTooltipInfo({
       visible: true,
-      x: e.clientX,
-      y: e.clientY,
+      x,
+      y,
       content
     });
   };
@@ -347,20 +344,19 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       return null;
     }
 
-    const elements: JSX.Element[] = [];
-
-    pairBandPoints.forEach((pair, index) => {
+    return pairBandPoints.map((pair, index) => {
       const originIdx = intersections.findIndex(i => i.id === pair.from_junction);
       const destIdx = intersections.findIndex(i => i.id === pair.to_junction);
 
       if (originIdx < 0 || destIdx < 0) {
         console.warn(`Could not find intersections for pair: ${pair.from_junction} -> ${pair.to_junction}`);
-        return;
+        return null;
       }
 
       const originX = leftPadding + 25 + xScale(intersections[originIdx].distance);
       const destX = leftPadding + 25 + xScale(intersections[destIdx].distance);
-      
+      const lines = [];
+
       const pairIndex = pair.from_junction - 1;
       const upstreamBandwidth = comparisonResults.pair_bandwidth_up?.[pairIndex] || 0;
       const downstreamBandwidth = comparisonResults.pair_bandwidth_down?.[pairIndex] || 0;
@@ -387,36 +383,13 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
         console.log(`Upstream low line: origin=${pair.up.origin_low.toFixed(2)}, dest=${pair.up.dest_low.toFixed(2)}, wraps=${upLowWrapsAround}`);
         console.log(`Upstream high line: origin=${pair.up.origin_high.toFixed(2)}, dest=${pair.up.dest_high.toFixed(2)}, wraps=${upHighWrapsAround}`);
         
-        if (!upLowWrapsAround && !upHighWrapsAround) {
-          elements.push(
-            <polygon
-              key={`polygon-up-${index}`}
-              points={`${originX},${upOriginLowY} ${destX},${upDestLowY} ${destX},${upDestHighY} ${originX},${upOriginHighY}`}
-              fill="#4ADE80"
-              fillOpacity="0.2"
-              stroke="none"
-              onMouseEnter={(e) => {
-                const content = (
-                  <div>
-                    <p>כיוון: עם הזרם</p>
-                    <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                    <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                  </div>
-                );
-                handleShowTooltip(e, content);
-              }}
-              onMouseLeave={handleHideTooltip}
-            />
-          );
-        }
-        
         if (upLowWrapsAround) {
           const totalTimeDiff = cycleTime - pair.up.origin_low + pair.up.dest_low;
           const timeToCycleEnd = cycleTime - pair.up.origin_low;
           const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
           const distanceToTravel = destX - originX;
           const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
-          const lowXAtCycleEnd = originX + distanceToCycleEnd;
+          const xAtCycleEnd = originX + distanceToCycleEnd;
           
           const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
           const upCycleStartY = dimensions.height - 40 - yScale(0);
@@ -427,19 +400,19 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             proportionToCycleEnd,
             distanceToTravel,
             distanceToCycleEnd,
-            xAtCycleEnd: lowXAtCycleEnd,
+            xAtCycleEnd,
             upOriginLowY,
             upCycleEndY,
             upCycleStartY,
             upDestLowY
           });
           
-          elements.push(
+          lines.push(
             <line
               key={`up-low-part1-${index}`}
               x1={originX}
               y1={upOriginLowY}
-              x2={lowXAtCycleEnd}
+              x2={xAtCycleEnd}
               y2={upCycleEndY}
               className="line-groove line-groove-upstream"
               onMouseEnter={(e) => {
@@ -451,16 +424,16 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
                   </div>
                 );
-                handleShowTooltip(e, content);
+                handleShowTooltip(e.clientX, e.clientY, content);
               }}
               onMouseLeave={handleHideTooltip}
             />
           );
           
-          elements.push(
+          lines.push(
             <line
               key={`up-low-part2-${index}`}
-              x1={lowXAtCycleEnd}
+              x1={xAtCycleEnd}
               y1={upCycleStartY}
               x2={destX}
               y2={upDestLowY}
@@ -474,13 +447,13 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
                   </div>
                 );
-                handleShowTooltip(e, content);
+                handleShowTooltip(e.clientX, e.clientY, content);
               }}
               onMouseLeave={handleHideTooltip}
             />
           );
         } else {
-          elements.push(
+          lines.push(
             <line
               key={`up-low-${index}`}
               x1={originX}
@@ -497,7 +470,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
                   </div>
                 );
-                handleShowTooltip(e, content);
+                handleShowTooltip(e.clientX, e.clientY, content);
               }}
               onMouseLeave={handleHideTooltip}
             />
@@ -510,7 +483,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
           const distanceToTravel = destX - originX;
           const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
-          const highXAtCycleEnd = originX + distanceToCycleEnd;
+          const xAtCycleEnd = originX + distanceToCycleEnd;
           
           const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
           const upCycleStartY = dimensions.height - 40 - yScale(0);
@@ -526,19 +499,19 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             distanceToCycleEnd,
             originX,
             destX,
-            xAtCycleEnd: highXAtCycleEnd,
+            xAtCycleEnd,
             upOriginHighY,
             upCycleEndY,
             upCycleStartY,
             upDestHighY
           });
           
-          elements.push(
+          lines.push(
             <line
               key={`up-high-part1-${index}`}
               x1={originX}
               y1={upOriginHighY}
-              x2={highXAtCycleEnd}
+              x2={xAtCycleEnd}
               y2={upCycleEndY}
               className="line-ridge line-ridge-upstream"
               onMouseEnter={(e) => {
@@ -550,16 +523,16 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
                   </div>
                 );
-                handleShowTooltip(e, content);
+                handleShowTooltip(e.clientX, e.clientY, content);
               }}
               onMouseLeave={handleHideTooltip}
             />
           );
           
-          elements.push(
+          lines.push(
             <line
               key={`up-high-part2-${index}`}
-              x1={highXAtCycleEnd}
+              x1={xAtCycleEnd}
               y1={upCycleStartY}
               x2={destX}
               y2={upDestHighY}
@@ -573,13 +546,13 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
                   </div>
                 );
-                handleShowTooltip(e, content);
+                handleShowTooltip(e.clientX, e.clientY, content);
               }}
               onMouseLeave={handleHideTooltip}
             />
           );
         } else {
-          elements.push(
+          lines.push(
             <line
               key={`up-high-${index}`}
               x1={originX}
@@ -596,79 +569,14 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
                   </div>
                 );
-                handleShowTooltip(e, content);
+                handleShowTooltip(e.clientX, e.clientY, content);
               }}
               onMouseLeave={handleHideTooltip}
             />
           );
         }
-        
-        if (upLowWrapsAround || upHighWrapsAround) {
-          if (upLowWrapsAround && upHighWrapsAround) {
-            const lowTotalTimeDiff = cycleTime - pair.up.origin_low + pair.up.dest_low;
-            const lowTimeToCycleEnd = cycleTime - pair.up.origin_low;
-            const lowProportionToCycleEnd = lowTimeToCycleEnd / lowTotalTimeDiff;
-            const lowDistanceToCycleEnd = (destX - originX) * lowProportionToCycleEnd;
-            const lowXAtCycleEnd = originX + lowDistanceToCycleEnd;
-            
-            const highTotalTimeDiff = cycleTime - pair.up.origin_high + pair.up.dest_high;
-            const highTimeToCycleEnd = cycleTime - pair.up.origin_high;
-            const highProportionToCycleEnd = highTimeToCycleEnd / highTotalTimeDiff;
-            const highDistanceToCycleEnd = (destX - originX) * highProportionToCycleEnd;
-            const highXAtCycleEnd = originX + highDistanceToCycleEnd;
-            
-            const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
-            const upCycleStartY = dimensions.height - 40 - yScale(0);
-            
-            elements.push(
-              <polygon
-                key={`polygon-up-part1-${index}`}
-                points={`${originX},${upOriginLowY} ${lowXAtCycleEnd},${upCycleEndY} ${highXAtCycleEnd},${upCycleEndY} ${originX},${upOriginHighY}`}
-                fill="#4ADE80"
-                fillOpacity="0.2"
-                stroke="none"
-                onMouseEnter={(e) => {
-                  const content = (
-                    <div>
-                      <p>כיוון: עם הזרם</p>
-                      <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                      <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                      <p>חלק 1 (עד סוף המחזור)</p>
-                    </div>
-                  );
-                  handleShowTooltip(e, content);
-                }}
-                onMouseLeave={handleHideTooltip}
-              />
-            );
-            
-            elements.push(
-              <polygon
-                key={`polygon-up-part2-${index}`}
-                points={`${lowXAtCycleEnd},${upCycleStartY} ${destX},${upDestLowY} ${destX},${upDestHighY} ${highXAtCycleEnd},${upCycleStartY}`}
-                fill="#4ADE80"
-                fillOpacity="0.2"
-                stroke="none"
-                onMouseEnter={(e) => {
-                  const content = (
-                    <div>
-                      <p>כיוון: עם הזרם</p>
-                      <p>מצומת {pair.from_junction} לצומת {pair.to_junction}</p>
-                      <p>רוחב פס: {upstreamBandwidth.toFixed(2)}</p>
-                      <p>חלק 2 (מתחילת המחזור)</p>
-                    </div>
-                  );
-                  handleShowTooltip(e, content);
-                }}
-                onMouseLeave={handleHideTooltip}
-              />
-            );
-          } else if (upLowWrapsAround) {
-            // Add more polygon handling here as needed
-          } else if (upHighWrapsAround) {
-            // Add more polygon handling here as needed
-          }
-        }
+      } else {
+        console.log(`Skipping upstream lines for ${pair.from_junction}->${pair.to_junction} due to zero or negative bandwidth: ${upstreamBandwidth}`);
       }
 
       if (downstreamBandwidth > 0) {
@@ -707,7 +615,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             downDestLowY
           });
           
-          elements.push(
+          lines.push(
             <line
               key={`down-low-part1-${index}`}
               x1={destX}
@@ -724,13 +632,13 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
                   </div>
                 );
-                handleShowTooltip(e, content);
+                handleShowTooltip(e.clientX, e.clientY, content);
               }}
               onMouseLeave={handleHideTooltip}
             />
           );
           
-          elements.push(
+          lines.push(
             <line
               key={`down-low-part2-${index}`}
               x1={xAtCycleEnd}
@@ -747,13 +655,13 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
                   </div>
                 );
-                handleShowTooltip(e, content);
+                handleShowTooltip(e.clientX, e.clientY, content);
               }}
               onMouseLeave={handleHideTooltip}
             />
           );
         } else {
-          elements.push(
+          lines.push(
             <line
               key={`down-low-${index}`}
               x1={destX}
@@ -770,7 +678,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
                   </div>
                 );
-                handleShowTooltip(e, content);
+                handleShowTooltip(e.clientX, e.clientY, content);
               }}
               onMouseLeave={handleHideTooltip}
             />
@@ -801,7 +709,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
             downDestHighY
           });
           
-          elements.push(
+          lines.push(
             <line
               key={`down-high-part1-${index}`}
               x1={destX}
@@ -818,13 +726,13 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
                   </div>
                 );
-                handleShowTooltip(e, content);
+                handleShowTooltip(e.clientX, e.clientY, content);
               }}
               onMouseLeave={handleHideTooltip}
             />
           );
           
-          elements.push(
+          lines.push(
             <line
               key={`down-high-part2-${index}`}
               x1={xAtCycleEnd}
@@ -841,13 +749,13 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
                   </div>
                 );
-                handleShowTooltip(e, content);
+                handleShowTooltip(e.clientX, e.clientY, content);
               }}
               onMouseLeave={handleHideTooltip}
             />
           );
         } else {
-          elements.push(
+          lines.push(
             <line
               key={`down-high-${index}`}
               x1={destX}
@@ -864,16 +772,18 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                     <p>רוחב פס: {downstreamBandwidth.toFixed(2)}</p>
                   </div>
                 );
-                handleShowTooltip(e, content);
+                handleShowTooltip(e.clientX, e.clientY, content);
               }}
               onMouseLeave={handleHideTooltip}
             />
           );
         }
+      } else {
+        console.log(`Skipping downstream lines for ${pair.to_junction}->${pair.from_junction} due to zero or negative bandwidth: ${downstreamBandwidth}`);
       }
-    });
 
-    return elements;
+      return lines;
+    });
   };
 
   const renderSolidDiagonalLines = () => {
@@ -1033,4 +943,136 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                         <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
                         <p>התחלה: 0 שניות (המשך, מחצית מחזור)</p>
                         <p>סיום: {Math.round(halfCycleEndTime)} שניות</p>
-                        <p>
+                        <p>היסט: {Math.round(offset)} שניות</p>
+                        {phase.phaseNumber && <p>מספר מופע: {phase.phaseNumber}</p>}
+                      </div>
+                    );
+                    handleShowTooltip(e.clientX, e.clientY, content);
+                  }}
+                  onMouseLeave={handleHideTooltip}
+                  phaseNumber={phase.phaseNumber}
+                />
+              )}
+            </React.Fragment>
+          );
+        }
+        
+        return phaseElements;
+      });
+    });
+  };
+
+  return (
+    <>
+      <CardHeader className="flex flex-col sm:flex-row items-center justify-between p-3 md:p-6">
+        <CardTitle className="text-base md:text-lg mb-2 sm:mb-0">תרשים גל ירוק - {mode === 'manual' ? 'מצב ידני' : mode === 'calculate' ? 'אופטימיזציה' : 'מצב קיים'}</CardTitle>
+        
+        <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 sm:gap-4 text-xs">
+          <div className="flex items-center">
+            <div className="w-4 h-2 md:w-5 md:h-2.5 bg-[#A7F3D0] rounded-sm ml-1 md:ml-2 rtl:mr-2"></div>
+            <span className="text-xs">עם הזרם</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-2 md:w-5 md:h-2.5 bg-[#93C5FD] rounded-sm ml-1 md:ml-2 rtl:mr-2"></div>
+            <span className="text-xs">נגד הזרם</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 md:w-5 border-t-2 border-[#4ADE80] ml-1 md:ml-2 rtl:mr-2"></div>
+            <span className="text-xs">רוחב פס עם הזרם</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 md:w-5 border-t-2 border-[#60A5FA] ml-1 md:ml-2 rtl:mr-2"></div>
+            <span className="text-xs">רוחב פס נגד הזרם</span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-2 md:p-6">
+        <div className="relative w-full" ref={chartRef}>
+          <svg 
+            width="100%" 
+            height={dimensions.height}
+            className="overflow-visible"
+            preserveAspectRatio="xMinYMin meet"
+          >
+            {generateYGridLines()}
+            {generateXGridLines()}
+            
+            <line 
+              x1={leftPadding} 
+              y1={isMobile ? 30 : 40} 
+              x2={leftPadding} 
+              y2={dimensions.height - (isMobile ? 30 : 40)} 
+              stroke="black" 
+              strokeWidth={1} 
+            />
+            <line 
+              x1={leftPadding} 
+              y1={dimensions.height - (isMobile ? 30 : 40)} 
+              x2={dimensions.width - rightPadding} 
+              y2={dimensions.height - (isMobile ? 30 : 40)} 
+              stroke="black" 
+              strokeWidth={1} 
+            />
+
+            {generateYAxisLabels()}
+            {generateXAxisLabels()}
+
+            <text
+              x={leftPadding - 50 - 10}
+              y={dimensions.height / 2}
+              textAnchor="middle"
+              transform={`rotate(-90, ${leftPadding - 50 - 10}, ${dimensions.height / 2})`}
+              fontSize={isMobile ? 12 : 14}
+              fill="#4B5563"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p><strong>ציר Y: זמן</strong></p>
+                    <p>מציג את זמן המחזור בשניות</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            >
+              זמן (שניות)
+            </text>
+            <text
+              x={dimensions.width / 2}
+              y={dimensions.height - 5}
+              textAnchor="middle"
+              fontSize={isMobile ? 12 : 14}
+              fill="#4B5563"
+              onMouseEnter={(e) => {
+                const content = (
+                  <div>
+                    <p><strong>ציר X: מרחק</strong></p>
+                    <p>מציג את המרחק במטרים</p>
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            >
+              מרחק (מטרים)
+            </text>
+
+            {renderIntersections()}
+            
+            {renderDiagonalLines()}
+            {renderSolidDiagonalLines()}
+          </svg>
+          
+          {tooltipInfo.visible && (
+            <GreenWaveTooltip 
+              x={tooltipInfo.x} 
+              y={tooltipInfo.y} 
+              content={tooltipInfo.content}
+              isMobile={isMobile}
+            />
+          )}
+        </div>
+      </CardContent>
+    </>
+  );
+};
