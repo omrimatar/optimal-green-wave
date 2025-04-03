@@ -13,6 +13,7 @@ interface GreenPhaseBarProps {
   onMouseEnter: (e: React.MouseEvent, additionalInfo?: Record<string, any>) => void;
   onMouseLeave: () => void;
   isHalfCycle?: boolean;
+  phaseNumber?: number;
 }
 
 export const GreenPhaseBar: React.FC<GreenPhaseBarProps> = ({
@@ -26,7 +27,8 @@ export const GreenPhaseBar: React.FC<GreenPhaseBarProps> = ({
   chartHeight,
   onMouseEnter,
   onMouseLeave,
-  isHalfCycle
+  isHalfCycle,
+  phaseNumber
 }) => {
   // Calculate Y positions (inverted because SVG Y grows downward)
   const y1 = chartHeight - yScale(startTime);
@@ -52,22 +54,39 @@ export const GreenPhaseBar: React.FC<GreenPhaseBarProps> = ({
     height: Math.round(height * 100) / 100,
     y1: Math.round(y1 * 100) / 100,
     y2: Math.round(y2 * 100) / 100,
+    phaseNumber
   };
 
   return (
-    <rect
-      x={x - barWidth / 2}
-      y={y2}
-      width={barWidth}
-      height={height}
-      fill={color}
-      stroke={strokeColor}
-      strokeWidth={1}
-      rx={3}
-      ry={3}
-      onMouseEnter={(e) => onMouseEnter(e, phaseInfo)}
-      onMouseLeave={onMouseLeave}
-      style={{ cursor: 'pointer' }}
-    />
+    <>
+      <rect
+        x={x - barWidth / 2}
+        y={y2}
+        width={barWidth}
+        height={height}
+        fill={color}
+        stroke={strokeColor}
+        strokeWidth={1}
+        rx={3}
+        ry={3}
+        onMouseEnter={(e) => onMouseEnter(e, phaseInfo)}
+        onMouseLeave={onMouseLeave}
+        style={{ cursor: 'pointer' }}
+      />
+      {phaseNumber && (
+        <text
+          x={x}
+          y={(y1 + y2) / 2}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="12"
+          fontWeight="bold"
+          fill="#000000"
+          style={{ pointerEvents: 'none' }}
+        >
+          {phaseNumber}
+        </text>
+      )}
+    </>
   );
 };
