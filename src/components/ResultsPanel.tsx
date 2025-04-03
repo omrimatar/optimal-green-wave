@@ -90,7 +90,6 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
       comparisonResults.cycle_times[idx] : 
       90;
     
-    // Get the half cycle time flag from results or default to false
     const useHalfCycleTime = comparisonResults.use_half_cycle && comparisonResults.use_half_cycle[idx] !== undefined
       ? comparisonResults.use_half_cycle[idx]
       : false;
@@ -118,7 +117,6 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
       useHalfCycleTime
     });
     
-    // Create and return the Intersection object with all required properties
     const greenPhases: GreenPhase[] = [];
     
     if (comparisonResults.green_up && comparisonResults.green_up[idx]) {
@@ -170,17 +168,15 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
   
   return (
     <div className="space-y-6">
-      <Card className="p-6 w-full overflow-x-auto">
-        <div className="min-w-[900px]">
-          <GreenWaveChart 
-            intersections={chartIntersections}
-            mode={mode}
-            speed={chartSpeed}
-            pairBandPoints={pairBandPoints}
-            calculationPerformed={calculationPerformed}
-            comparisonResults={comparisonResults}
-          />
-        </div>
+      <Card className="p-6 w-full">
+        <GreenWaveChart 
+          intersections={chartIntersections}
+          mode={mode}
+          speed={chartSpeed}
+          pairBandPoints={pairBandPoints}
+          calculationPerformed={calculationPerformed}
+          comparisonResults={comparisonResults}
+        />
       </Card>
       
       <Card className="p-6">

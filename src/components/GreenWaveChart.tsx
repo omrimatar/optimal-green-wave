@@ -24,7 +24,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
   comparisonResults
 }) => {
   const chartRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 1500, height: 600 });
+  const [dimensions, setDimensions] = useState({ width: 1800, height: 600 });
   const [tooltipInfo, setTooltipInfo] = useState<{
     visible: boolean;
     x: number;
@@ -41,7 +41,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
 
   const leftPadding = isMobile ? 65 : 85;
   const originX = leftPadding + 25;
-  const rightPadding = isMobile ? 80 : 70;
+  const rightPadding = isMobile ? 80 : 50;
 
   const yLabelOffset = 20;
 
@@ -77,8 +77,8 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
     const handleResize = () => {
       if (chartRef.current) {
         const width = chartRef.current.clientWidth;
-        const heightRatio = isMobileDevice() ? 0.6 : 0.45;
-        const height = Math.min(600, Math.max(300, width * heightRatio));
+        const heightRatio = isMobileDevice() ? 0.5 : 0.4;
+        const height = Math.min(550, Math.max(300, width * heightRatio));
         
         setDimensions({
           width: width,
@@ -934,7 +934,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                       <div>
                         <p>צומת: {intersection.id}</p>
                         <p>כיוון: {phase.direction === 'upstream' ? 'עם הזרם' : 'נגד הזרם'}</p>
-                        <p>התחלה: 0 שניות (המש��, מחצית מחזור)</p>
+                        <p>��תחלה: 0 שניות (המש��, מחצית מחזור)</p>
                         <p>סיום: {Math.round(halfCycleEndTime)} שניות</p>
                         <p>היסט: {Math.round(offset)} שניות</p>
                       </div>
@@ -980,11 +980,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       <CardContent className="p-2 md:p-6">
         <div className="relative w-full" ref={chartRef}>
           <svg 
-            width={dimensions.width} 
+            width="100%" 
             height={dimensions.height}
-            className="overflow-visible w-full"
-            viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
-            preserveAspectRatio="xMidYMid meet"
+            className="overflow-visible"
+            preserveAspectRatio="xMinYMin meet"
           >
             {generateYGridLines()}
             {generateXGridLines()}
