@@ -35,6 +35,7 @@ const LogPageView: React.FC = () => {
 
         if (error) {
           console.error('Error logging page visit:', error.message);
+          // Only show toast errors in development, not in production
           if (process.env.NODE_ENV === 'development') {
             toast.error(`Failed to log visit: ${error.message}`);
           }
