@@ -145,7 +145,7 @@ const AnalyticsDashboard: React.FC = () => {
             <CardDescription>{t('total_visits_today')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">{stats.visitsToday}</div>
+            <div className="text-4xl font-bold">{stats?.visitsToday || 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -154,7 +154,7 @@ const AnalyticsDashboard: React.FC = () => {
             <CardDescription>{t('distinct_users_today')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">{stats.uniqueVisitorsToday}</div>
+            <div className="text-4xl font-bold">{stats?.uniqueVisitorsToday || 0}</div>
           </CardContent>
         </Card>
       </div>
@@ -174,7 +174,7 @@ const AnalyticsDashboard: React.FC = () => {
             
             <TabsContent value="line" className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={stats.yearlyTrend}>
+                <LineChart data={stats?.yearlyTrend || []}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="visit_date" />
                   <YAxis />
@@ -200,7 +200,7 @@ const AnalyticsDashboard: React.FC = () => {
             
             <TabsContent value="area" className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={stats.yearlyTrend}>
+                <AreaChart data={stats?.yearlyTrend || []}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="visit_date" />
                   <YAxis />
@@ -226,7 +226,7 @@ const AnalyticsDashboard: React.FC = () => {
             
             <TabsContent value="bar" className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stats.yearlyTrend}>
+                <BarChart data={stats?.yearlyTrend || []}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="visit_date" />
                   <YAxis />
