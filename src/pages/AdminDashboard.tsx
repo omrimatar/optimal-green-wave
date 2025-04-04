@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 import { useMaintenanceMode } from '@/contexts/MaintenanceContext';
 import { useNavigate } from 'react-router-dom';
@@ -13,12 +13,12 @@ const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isAdmin) {
-      toast.error(t('admin_access_required'));
+      // Silently redirect without error message
       navigate('/');
     }
-  }, [isAdmin, navigate, t]);
+  }, [isAdmin, navigate]);
 
   const handleGoBack = () => {
     navigate('/');
