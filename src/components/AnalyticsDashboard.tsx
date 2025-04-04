@@ -58,7 +58,7 @@ const AnalyticsDashboard: React.FC = () => {
 
         if (data) {
           console.log("Fetched analytics stats:", data);
-          setStats(data);
+          setStats(data as VisitStats);
         } else {
           // If no data is returned but also no error
           console.log('No data returned from get_visit_stats RPC');
