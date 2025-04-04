@@ -47,53 +47,105 @@ const AnalyticsDashboard: React.FC = () => {
         }
 
         console.log('Attempting to fetch analytics from Supabase...');
-        
-        // First check if the function exists by trying to invoke it
-        const { data, error: rpcError } = await supabase.rpc('get_visit_stats');
 
-        if (rpcError) {
-          console.error('RPC Error:', rpcError);
-          throw new Error(rpcError.message);
+        // Fetch directly from the visits table as a fallback approach
+        const { data: visitsData, error: visitsError } = await supabase
+          .from('visits')
+          .select('*');
+
+        if (visitsError) {
+          console.error('Error fetching visits:', visitsError);
+          throw new Error(visitsError.message);
         }
 
-        if (data) {
-          console.log("Fetched analytics stats:", data);
+        console.log('Raw visits data:', visitsData);
+
+        if (visitsData) {
+          // Calculate stats manually from the raw visits data
+          const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
           
-          // Parse JSON response properly to ensure it matches the VisitStats type
-          // We need to perform a safe type conversion here
-          try {
-            // First cast to unknown then perform manual type checking
-            const jsonData = data as unknown;
+          // Count today's visits
+          const todayVisits = visitsData.filter(visit => 
+            new Date(visit.created_at).toISOString().split('T')[0] === today
+          );
+          
+          // Count unique visitors today
+          const uniqueVisitorsToday = [...new Set(todayVisits.map(visit => visit.visitor_fingerprint))].length;
+          
+          // Generate trend data for the last 30 days
+          const last30Days = [];
+          for (let i = 0; i < 30; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
             
-            // Verify the shape of the data
-            if (
-              typeof jsonData === 'object' && 
-              jsonData !== null &&
-              'visitsToday' in jsonData && 
-              'uniqueVisitorsToday' in jsonData && 
-              'yearlyTrend' in jsonData && 
-              Array.isArray((jsonData as any).yearlyTrend)
-            ) {
-              // Create a properly typed object
-              const visitStats: VisitStats = {
-                visitsToday: Number((jsonData as any).visitsToday),
-                uniqueVisitorsToday: Number((jsonData as any).uniqueVisitorsToday),
-                yearlyTrend: (jsonData as any).yearlyTrend as YearlyTrendDataPoint[]
-              };
-              
-              setStats(visitStats);
-            } else {
-              console.error('Data does not match expected VisitStats structure:', jsonData);
-              throw new Error('Invalid data structure returned from analytics');
-            }
-          } catch (parseError) {
-            console.error('Error parsing analytics data:', parseError);
-            throw new Error('Failed to parse analytics data');
+            const dayVisits = visitsData.filter(visit => 
+              new Date(visit.created_at).toISOString().split('T')[0] === dateStr
+            );
+            
+            const uniqueVisitors = [...new Set(dayVisits.map(visit => visit.visitor_fingerprint))].length;
+            
+            last30Days.push({
+              visit_date: dateStr,
+              daily_visits_count: dayVisits.length,
+              daily_unique_visitors_count: uniqueVisitors
+            });
           }
+          
+          // Sort by date ascending
+          last30Days.sort((a, b) => a.visit_date.localeCompare(b.visit_date));
+          
+          const calculatedStats: VisitStats = {
+            visitsToday: todayVisits.length,
+            uniqueVisitorsToday: uniqueVisitorsToday,
+            yearlyTrend: last30Days
+          };
+          
+          console.log('Calculated stats:', calculatedStats);
+          setStats(calculatedStats);
         } else {
-          // If no data is returned but also no error
-          console.log('No data returned from get_visit_stats RPC');
-          setStats(null);
+          // Try the RPC method as a backup
+          console.log('Falling back to RPC method...');
+          const { data: rpcData, error: rpcError } = await supabase.rpc('get_visit_stats');
+          
+          if (rpcError) {
+            console.error('RPC Error:', rpcError);
+            throw new Error(rpcError.message);
+          }
+          
+          if (rpcData) {
+            console.log("Fetched RPC stats:", rpcData);
+            
+            try {
+              // Ensure the data has the expected structure
+              if (
+                typeof rpcData === 'object' && 
+                rpcData !== null &&
+                'visitsToday' in rpcData && 
+                'uniqueVisitorsToday' in rpcData && 
+                'yearlyTrend' in rpcData && 
+                Array.isArray(rpcData.yearlyTrend)
+              ) {
+                const visitStats: VisitStats = {
+                  visitsToday: Number(rpcData.visitsToday),
+                  uniqueVisitorsToday: Number(rpcData.uniqueVisitorsToday),
+                  yearlyTrend: rpcData.yearlyTrend as YearlyTrendDataPoint[]
+                };
+                
+                setStats(visitStats);
+              } else {
+                console.error('Invalid RPC data structure:', rpcData);
+                throw new Error('Invalid data structure returned from analytics');
+              }
+            } catch (parseError) {
+              console.error('Error parsing RPC data:', parseError);
+              throw new Error('Failed to parse analytics data');
+            }
+          }
+        }
+        
+        if (!stats) {
+          console.log('No data available after both approaches');
           toast.error(t('no_analytics_data_available'));
         }
       } catch (err: any) {
