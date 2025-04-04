@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
@@ -240,7 +241,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               {intersection.name && (
                 <text
                   x={x}
-                  y={dimensions.height - (isMobile ? 5 : 5)}
+                  y={dimensions.height - (isMobile ? 0 : 5)}
                   textAnchor="middle"
                   fontSize={isMobile ? 9 : 11}
                   fill="#4B5563"

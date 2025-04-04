@@ -32,11 +32,19 @@ export const FileActions = ({ speed, intersections, weights, onLoadInput }: File
       beta: weights.beta ?? 1.0     // Ensure beta has a value
     } : undefined;
     
+    // Create a proper copy of intersections that includes all properties including name
+    const formattedIntersections = intersections.map(intersection => ({
+      ...intersection,
+      name: intersection.name || '',
+    }));
+    
     const data = {
       speed,
-      intersections,
+      intersections: formattedIntersections,
       weights: formattedWeights
     };
+    
+    console.log("Exporting data:", data); // Add logging to debug export
     
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -59,7 +67,26 @@ export const FileActions = ({ speed, intersections, weights, onLoadInput }: File
         const reader = new FileReader();
         reader.onload = (e) => {
           try {
-            const data = JSON.parse(e.target?.result as string);
+            const jsonData = e.target?.result as string;
+            const data = JSON.parse(jsonData);
+            
+            console.log("Imported data:", data); // Add logging to debug import
+            
+            // Ensure all intersection properties are properly mapped
+            if (data.intersections) {
+              data.intersections = data.intersections.map((intersection: any) => ({
+                id: intersection.id,
+                distance: intersection.distance,
+                cycleTime: intersection.cycleTime,
+                greenPhases: intersection.greenPhases || [],
+                useHalfCycleTime: intersection.useHalfCycleTime || false,
+                upstreamSpeed: intersection.upstreamSpeed,
+                downstreamSpeed: intersection.downstreamSpeed,
+                offset: intersection.offset || 0,
+                name: intersection.name || '',
+              }));
+            }
+            
             onLoadInput(data);
           } catch (error) {
             console.error('Error parsing JSON:', error);

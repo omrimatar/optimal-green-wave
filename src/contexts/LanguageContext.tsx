@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 type Language = 'en' | 'he';
@@ -87,6 +88,7 @@ type TranslationKey =
   | 'phase_number'
   | 'optional'
   | 'must_be_between'
+  | 'intersection_name'
   | 'and';
 
 interface LanguageContextType {
@@ -178,9 +180,9 @@ const hebrewTranslations: Record<string, string> = {
   'optimization_weights': 'משקולות לאופטימזיציה',
   'weights_must_sum_to_1': 'משקולות לאופטימזיציה',
   'phase_number': 'מספר מופע',
-  'intersection_name': 'שם הצומת',
   'optional': 'אופציונלי',
   'must_be_between': 'חייב להיות בין',
+  'intersection_name': 'שם הצומת',
   'and': 'ל-'
 };
 
@@ -267,6 +269,7 @@ const englishTranslations: Record<string, string> = {
   'optimization_weights': 'Optimization Weights',
   'weights_must_sum_to_1': 'Weights must sum to 1',
   'phase_number': 'Phase Number',
+  'intersection_name': 'Intersection Name',
   'optional': 'Optional',
   'must_be_between': 'must be between',
   'and': 'and'
