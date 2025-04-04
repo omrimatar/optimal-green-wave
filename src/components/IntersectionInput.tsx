@@ -28,6 +28,7 @@ export const IntersectionInput = ({
   const [isEditingDistance, setIsEditingDistance] = useState(false);
   const [tempDistance, setTempDistance] = useState<string>(intersection.distance.toString());
   const [useHalfCycleTime, setUseHalfCycleTime] = useState(intersection.useHalfCycleTime || false);
+  const [tempName, setTempName] = useState<string>(intersection.name || '');
   
   const [tempGreenPhaseValues, setTempGreenPhaseValues] = useState<{
     [key: number]: { startTime: string; duration: string }
@@ -434,6 +435,17 @@ export const IntersectionInput = ({
     return getPhaseNumber(index, direction) > 1;
   };
 
+  const handleNameChange = (value: string) => {
+    setTempName(value);
+  };
+
+  const validateAndUpdateName = () => {
+    onChange({
+      ...intersection,
+      name: tempName
+    });
+  };
+
   const upstreamSpeed = intersection.upstreamSpeed !== undefined ? intersection.upstreamSpeed : defaultSpeed;
   const downstreamSpeed = intersection.downstreamSpeed !== undefined ? intersection.downstreamSpeed : defaultSpeed;
 
@@ -470,6 +482,24 @@ export const IntersectionInput = ({
         </div>
 
         <div>
+          <Label>{t('intersection_name')}</Label>
+          <Input
+            type="text"
+            value={tempName}
+            onChange={e => handleNameChange(e.target.value)}
+            onBlur={validateAndUpdateName}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                validateAndUpdateName();
+              }
+            }}
+            placeholder={t('optional')}
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
           <Label>{t('cycle_time')}</Label>
           <div className="flex flex-col space-y-2">
             <div className="flex items-center space-x-2 rtl:space-x-reverse">
@@ -490,9 +520,7 @@ export const IntersectionInput = ({
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
         <div>
           <Label>{t('upstream_speed')}</Label>
           <Input

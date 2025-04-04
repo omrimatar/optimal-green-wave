@@ -197,6 +197,71 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       }
     }
 
+    intersections.forEach(intersection => {
+      const x = originX + xScale(intersection.distance);
+      if (x <= dimensions.width - rightPadding) {
+        const existingLabel = labels.find(label => {
+          const labelKey = label.key;
+          if (typeof labelKey === 'string') {
+            const distanceMatch = labelKey.match(/x-label-(\d+)/);
+            return distanceMatch && parseInt(distanceMatch[1]) === intersection.distance;
+          }
+          return false;
+        });
+
+        if (!existingLabel) {
+          labels.push(
+            <g key={`x-label-${intersection.distance}`}
+              onMouseEnter={(e) => {
+                setHoveredElement(`x-label-${intersection.distance}`);
+                const content = (
+                  <div>
+                    <p><strong>מרחק: {intersection.distance} מטרים</strong></p>
+                    {intersection.name && <p><strong>צומת: {intersection.name}</strong></p>}
+                    {speed && (
+                      <p>זמן נסיעה משוער בהינתן מהירות {speed} קמ"ש: {Math.round(intersection.distance / speed * 3.6)} שניות</p>
+                    )}
+                  </div>
+                );
+                handleShowTooltip(e.clientX, e.clientY, content);
+              }}
+              onMouseLeave={handleHideTooltip}
+            >
+              <text
+                x={x}
+                y={dimensions.height - (isMobile ? 15 : 20)}
+                textAnchor="middle"
+                fontSize={isMobile ? 10 : 12}
+                fill={hoveredElement === `x-label-${intersection.distance}` ? "#000" : "#6B7280"}
+                style={{ fontWeight: hoveredElement === `x-label-${intersection.distance}` ? 'bold' : 'normal' }}
+              >
+                {intersection.distance}
+              </text>
+              {intersection.name && (
+                <text
+                  x={x}
+                  y={dimensions.height - (isMobile ? 5 : 5)}
+                  textAnchor="middle"
+                  fontSize={isMobile ? 9 : 11}
+                  fill="#4B5563"
+                >
+                  {intersection.name}
+                </text>
+              )}
+              <line 
+                x1={x} 
+                y1={dimensions.height - 40} 
+                x2={x} 
+                y2={dimensions.height - 35} 
+                stroke={hoveredElement === `x-label-${intersection.distance}` ? "#000" : "#6B7280"}
+                strokeWidth={hoveredElement === `x-label-${intersection.distance}` ? 2 : 1}
+              />
+            </g>
+          );
+        }
+      }
+    });
+    
     if (intersections.length > 0) {
       const lastIntersectionX = originX + xScale(lastIntersectionDistance);
       
@@ -721,6 +786,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       
       console.log(`Rendering intersection ${i+1} (ID: ${intersection.id}):`);
       console.log(`  Distance: ${intersection.distance}m`);
+      console.log(`  Name: ${intersection.name || 'N/A'}`);
       console.log(`  Cycle Time: ${intersection.cycleTime}s`);
       console.log(`  Offset: ${offset}s`);
       console.log(`  Green Phases:`, intersection.greenPhases);
