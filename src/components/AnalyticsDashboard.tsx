@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { 
@@ -25,19 +24,8 @@ import {
 } from "recharts";
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Skeleton } from '@/components/ui/skeleton';
-
-// Define types for data from RPC
-interface YearlyTrendDataPoint {
-  visit_date: string;
-  daily_visits_count: number;
-  daily_unique_visitors_count: number;
-}
-
-interface VisitStats {
-  visitsToday: number;
-  uniqueVisitorsToday: number;
-  yearlyTrend: YearlyTrendDataPoint[];
-}
+import { VisitStats } from '@/types/analytics';
+import { toast } from 'sonner';
 
 const AnalyticsDashboard: React.FC = () => {
   const [stats, setStats] = useState<VisitStats | null>(null);
@@ -50,30 +38,20 @@ const AnalyticsDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        // Since we don't have the actual RPC yet, we'll simulate stats for testing
-        // In production, this would be replaced with the actual RPC call
-        // const { data, error: rpcError } = await supabase.rpc<VisitStats>('get_visit_stats');
-        
-        // Simulated data for testing
-        const mockYearlyTrend: YearlyTrendDataPoint[] = [];
-        const today = new Date();
-        for (let i = 30; i >= 0; i--) {
-          const date = new Date();
-          date.setDate(today.getDate() - i);
-          mockYearlyTrend.push({
-            visit_date: date.toISOString().split('T')[0],
-            daily_visits_count: Math.floor(Math.random() * 100) + 20,
-            daily_unique_visitors_count: Math.floor(Math.random() * 50) + 10
-          });
+        // Call the actual RPC function in Supabase
+        const { data, error: rpcError } = await supabase.rpc('get_visit_stats');
+
+        if (rpcError) {
+          throw new Error(rpcError.message);
         }
-        
-        const mockData: VisitStats = {
-          visitsToday: Math.floor(Math.random() * 100) + 30,
-          uniqueVisitorsToday: Math.floor(Math.random() * 50) + 15,
-          yearlyTrend: mockYearlyTrend
-        };
-        
-        setStats(mockData);
+
+        if (data) {
+          console.log("Fetched analytics stats:", data);
+          setStats(data);
+        } else {
+          setStats(null);
+          toast.error(t('no_analytics_data_available'));
+        }
       } catch (err: any) {
         console.error("Error fetching analytics stats:", err);
         setError(err.message || 'An unexpected error occurred while fetching stats.');
@@ -84,7 +62,7 @@ const AnalyticsDashboard: React.FC = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [t]);
 
   const directionClass = language === 'he' ? 'rtl' : 'ltr';
 

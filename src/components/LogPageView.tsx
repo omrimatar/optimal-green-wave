@@ -10,21 +10,25 @@ const LogPageView: React.FC = () => {
 
   useEffect(() => {
     const logVisit = async () => {
-      const fingerprint = getOrCreateVisitorFingerprint();
-      const currentPath = location.pathname;
+      try {
+        const fingerprint = getOrCreateVisitorFingerprint();
+        const currentPath = location.pathname;
 
-      console.log(`Logging page view: Path=${currentPath}, Fingerprint=${fingerprint.substring(0, 8)}...`);
+        console.log(`Logging page view: Path=${currentPath}, Fingerprint=${fingerprint.substring(0, 8)}...`);
 
-      const { error } = await supabase
-        .from('visits')
-        .insert({
-          visitor_fingerprint: fingerprint,
-          path: currentPath,
-          language: language // Track which language the user is using
-        });
+        const { error } = await supabase
+          .from('visits')
+          .insert({
+            visitor_fingerprint: fingerprint,
+            path: currentPath,
+            language: language // Track which language the user is using
+          });
 
-      if (error) {
-        console.error('Error logging page view:', error.message);
+        if (error) {
+          console.error('Error logging page view:', error.message);
+        }
+      } catch (err) {
+        console.error('Failed to log page view:', err);
       }
     };
 
