@@ -11,9 +11,10 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Lock, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Lock, ToggleLeft, ToggleRight, BarChart } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface AdminLoginDialogProps {
   open: boolean;
@@ -23,28 +24,34 @@ interface AdminLoginDialogProps {
 export const AdminLoginDialog = ({ open, onOpenChange }: AdminLoginDialogProps) => {
   const [password, setPassword] = useState('');
   const { isAdmin, setIsAdmin, isMaintenanceMode, toggleMaintenanceMode } = useMaintenanceMode();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
+  const navigate = useNavigate();
   
   // Correct password: "omri2205"
   const handleLogin = () => {
     if (password === "omri2205") {
       setIsAdmin(true);
       onOpenChange(false);
-      toast.success("נכנסת כמנהל מערכת");
+      toast.success(t('admin_login_success'));
     } else {
-      toast.error("סיסמה שגויה");
+      toast.error(t('wrong_password'));
     }
   };
 
   const handleLogout = () => {
     setIsAdmin(false);
     onOpenChange(false);
-    toast.info("התנתקת ממצב מנהל");
+    toast.info(t('admin_logout_success'));
   };
 
   const handleToggleMaintenance = () => {
     toggleMaintenanceMode();
-    toast.info(isMaintenanceMode ? "מצב תחזוקה בוטל" : "מצב תחזוקה הופעל");
+    toast.info(isMaintenanceMode ? t('maintenance_mode_disabled') : t('maintenance_mode_enabled'));
+  };
+
+  const navigateToAnalytics = () => {
+    onOpenChange(false);
+    navigate('/admin/analytics');
   };
 
   return (
@@ -53,12 +60,12 @@ export const AdminLoginDialog = ({ open, onOpenChange }: AdminLoginDialogProps) 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            {isAdmin ? "ניהול מצב תחזוקה" : "כניסת מנהל מערכת"}
+            {isAdmin ? t('manage_maintenance_mode') : t('admin_login')}
           </DialogTitle>
           <DialogDescription>
             {isAdmin 
-              ? "אתה מחובר כמנהל מערכת. האם תרצה להפעיל או לבטל מצב תחזוקה?"
-              : "הזן סיסמת מנהל מערכת כדי להפעיל מצב תחזוקה"}
+              ? t('admin_panel_description')
+              : t('admin_login_description')}
           </DialogDescription>
         </DialogHeader>
         
@@ -68,7 +75,7 @@ export const AdminLoginDialog = ({ open, onOpenChange }: AdminLoginDialogProps) 
               <div className="grid flex-1 gap-2">
                 <Input
                   type="password"
-                  placeholder="סיסמת מנהל מערכת"
+                  placeholder={t('admin_password')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyDown={(e) => {
@@ -81,13 +88,22 @@ export const AdminLoginDialog = ({ open, onOpenChange }: AdminLoginDialogProps) 
             </div>
             <DialogFooter className="sm:justify-end">
               <Button type="button" onClick={handleLogin}>
-                כניסה
+                {t('login')}
               </Button>
             </DialogFooter>
           </>
         ) : (
           <div className="p-4 space-y-4">
             <div className="flex flex-col gap-4">
+              <Button 
+                onClick={navigateToAnalytics}
+                variant="default"
+                className={`flex items-center gap-2 ${language === 'he' ? "mr-auto" : "ml-auto"}`}
+              >
+                <BarChart className="h-5 w-5" />
+                {t('view_analytics')}
+              </Button>
+              
               <Button 
                 onClick={handleToggleMaintenance}
                 variant={isMaintenanceMode ? "destructive" : "outline"}
@@ -96,12 +112,12 @@ export const AdminLoginDialog = ({ open, onOpenChange }: AdminLoginDialogProps) 
                 {isMaintenanceMode ? (
                   <>
                     <ToggleRight className="h-5 w-5" />
-                    בטל מצב תחזוקה
+                    {t('disable_maintenance')}
                   </>
                 ) : (
                   <>
                     <ToggleLeft className="h-5 w-5" />
-                    הפעל מצב תחזוקה
+                    {t('enable_maintenance')}
                   </>
                 )}
               </Button>
@@ -110,7 +126,7 @@ export const AdminLoginDialog = ({ open, onOpenChange }: AdminLoginDialogProps) 
                 variant="outline"
                 className={language === 'he' ? "mr-auto" : "ml-auto"}
               >
-                התנתק ממצב מנהל
+                {t('admin_logout')}
               </Button>
             </div>
           </div>
