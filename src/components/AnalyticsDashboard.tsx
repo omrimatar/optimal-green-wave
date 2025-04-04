@@ -28,7 +28,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { VisitStats, YearlyTrendDataPoint, Visit } from '@/types/analytics';
 import { toast } from 'sonner';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const AnalyticsDashboard: React.FC = () => {
   const [stats, setStats] = useState<VisitStats | null>(null);
@@ -36,99 +37,99 @@ const AnalyticsDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { t, language } = useLanguage();
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        console.log('Attempting to fetch analytics from Supabase...');
+  const fetchStats = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log('Attempting to fetch analytics from Supabase...');
 
-        // Use direct table access to get visits data
-        const { data: visitsData, error: visitsError } = await supabase
-          .from('visits')
-          .select('*');
+      // Use direct table access to get visits data
+      const { data: visitsData, error: visitsError } = await supabase
+        .from('visits')
+        .select('*');
 
-        if (visitsError) {
-          console.error('Error fetching visits:', visitsError);
-          throw new Error(visitsError.message);
-        }
-
-        console.log('Raw visits data:', visitsData);
-
-        if (!visitsData || visitsData.length === 0) {
-          console.log('No visits data found');
-          // Show empty state instead of error
-          setStats({
-            visitsToday: 0,
-            uniqueVisitorsToday: 0,
-            yearlyTrend: []
-          });
-        } else {
-          // Process the visits data to calculate stats
-          const calculatedStats = processVisitsData(visitsData);
-          console.log('Calculated stats:', calculatedStats);
-          setStats(calculatedStats);
-          
-          // Also try the RPC method as a backup if available
-          try {
-            const { data: rpcData, error: rpcError } = await supabase.rpc('get_visit_stats');
-            
-            if (rpcError) {
-              console.warn('RPC fallback error:', rpcError);
-            } else if (rpcData) {
-              console.log("Fetched RPC stats:", rpcData);
-              
-              // If RPC data looks valid, use it instead
-              if (
-                typeof rpcData === 'object' && 
-                rpcData !== null &&
-                'visitsToday' in rpcData && 
-                'uniqueVisitorsToday' in rpcData && 
-                'yearlyTrend' in rpcData && 
-                Array.isArray(rpcData.yearlyTrend)
-              ) {
-                // Map the yearly trend data to ensure it conforms to the type
-                const mappedTrend: YearlyTrendDataPoint[] = rpcData.yearlyTrend.map((item: any) => ({
-                  visit_date: String(item.visit_date),
-                  daily_visits_count: Number(item.daily_visits_count),
-                  daily_unique_visitors_count: Number(item.daily_unique_visitors_count)
-                }));
-                
-                const visitStats: VisitStats = {
-                  visitsToday: Number(rpcData.visitsToday),
-                  uniqueVisitorsToday: Number(rpcData.uniqueVisitorsToday),
-                  yearlyTrend: mappedTrend
-                };
-                
-                setStats(visitStats);
-              }
-            }
-          } catch (rpcError) {
-            console.warn('Error in RPC fallback:', rpcError);
-            // Continue with calculated stats
-          }
-        }
-      } catch (err: any) {
-        console.error("Error fetching analytics stats:", err);
-        setError(err.message || 'An unexpected error occurred while fetching stats.');
-        
-        // For development, fall back to mock data if fetch fails
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Generating mock data for development');
-          const mockYearlyTrend = generateMockData();
-          setStats({
-            visitsToday: 12,
-            uniqueVisitorsToday: 5,
-            yearlyTrend: mockYearlyTrend
-          });
-        } else {
-          setStats(null);
-        }
-      } finally {
-        setLoading(false);
+      if (visitsError) {
+        console.error('Error fetching visits:', visitsError);
+        throw new Error(visitsError.message);
       }
-    };
 
+      console.log('Raw visits data:', visitsData);
+
+      if (!visitsData || visitsData.length === 0) {
+        console.log('No visits data found');
+        // Show empty state instead of error
+        setStats({
+          visitsToday: 0,
+          uniqueVisitorsToday: 0,
+          yearlyTrend: []
+        });
+      } else {
+        // Process the visits data to calculate stats
+        const calculatedStats = processVisitsData(visitsData);
+        console.log('Calculated stats:', calculatedStats);
+        setStats(calculatedStats);
+        
+        // Also try the RPC method as a backup if available
+        try {
+          const { data: rpcData, error: rpcError } = await supabase.rpc('get_visit_stats');
+          
+          if (rpcError) {
+            console.warn('RPC fallback error:', rpcError);
+          } else if (rpcData) {
+            console.log("Fetched RPC stats:", rpcData);
+            
+            // If RPC data looks valid, use it instead
+            if (
+              typeof rpcData === 'object' && 
+              rpcData !== null &&
+              'visitsToday' in rpcData && 
+              'uniqueVisitorsToday' in rpcData && 
+              'yearlyTrend' in rpcData && 
+              Array.isArray(rpcData.yearlyTrend)
+            ) {
+              // Map the yearly trend data to ensure it conforms to the type
+              const mappedTrend: YearlyTrendDataPoint[] = rpcData.yearlyTrend.map((item: any) => ({
+                visit_date: String(item.visit_date),
+                daily_visits_count: Number(item.daily_visits_count),
+                daily_unique_visitors_count: Number(item.daily_unique_visitors_count)
+              }));
+              
+              const visitStats: VisitStats = {
+                visitsToday: Number(rpcData.visitsToday),
+                uniqueVisitorsToday: Number(rpcData.uniqueVisitorsToday),
+                yearlyTrend: mappedTrend
+              };
+              
+              setStats(visitStats);
+            }
+          }
+        } catch (rpcError) {
+          console.warn('Error in RPC fallback:', rpcError);
+          // Continue with calculated stats
+        }
+      }
+    } catch (err: any) {
+      console.error("Error fetching analytics stats:", err);
+      setError(err.message || 'An unexpected error occurred while fetching stats.');
+      
+      // For development, fall back to mock data if fetch fails
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Generating mock data for development');
+        const mockYearlyTrend = generateMockData();
+        setStats({
+          visitsToday: 12,
+          uniqueVisitorsToday: 5,
+          yearlyTrend: mockYearlyTrend
+        });
+      } else {
+        setStats(null);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchStats();
   }, [t]);
 
@@ -200,6 +201,11 @@ const AnalyticsDashboard: React.FC = () => {
   };
 
   const directionClass = language === 'he' ? 'rtl' : 'ltr';
+  
+  const handleRefresh = () => {
+    fetchStats();
+    toast.success(t('analytics_refreshed'));
+  };
 
   if (loading) {
     return (
@@ -221,6 +227,15 @@ const AnalyticsDashboard: React.FC = () => {
           <p className="mt-2">
             {t('please_check_supabase_connection')}
           </p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2" 
+            onClick={handleRefresh}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            {t('refresh')}
+          </Button>
         </AlertDescription>
       </Alert>
     );
@@ -236,6 +251,15 @@ const AnalyticsDashboard: React.FC = () => {
           <p className="mt-2">
             {t('start_browsing_to_see_analytics')}
           </p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2" 
+            onClick={handleRefresh}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            {t('refresh')}
+          </Button>
         </AlertDescription>
       </Alert>
     );
@@ -243,6 +267,17 @@ const AnalyticsDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6" dir={directionClass}>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">{t('analytics_overview')}</h2>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleRefresh}
+        >
+          <RefreshCw className="mr-2 h-4 w-4" />
+          {t('refresh')}
+        </Button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="pb-2">
