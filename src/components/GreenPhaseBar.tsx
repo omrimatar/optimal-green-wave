@@ -1,7 +1,7 @@
 
 import React from 'react';
 
-export interface GreenPhaseBarProps {
+interface GreenPhaseBarProps {
   x: number;
   startTime: number;
   endTime: number;
@@ -13,7 +13,7 @@ export interface GreenPhaseBarProps {
   onMouseEnter: (e: React.MouseEvent, additionalInfo?: Record<string, any>) => void;
   onMouseLeave: () => void;
   isHalfCycle?: boolean;
-  phaseNumber?: number;
+  phaseNumber?: number; // Added phaseNumber prop
 }
 
 export const GreenPhaseBar: React.FC<GreenPhaseBarProps> = ({
@@ -28,7 +28,7 @@ export const GreenPhaseBar: React.FC<GreenPhaseBarProps> = ({
   onMouseEnter,
   onMouseLeave,
   isHalfCycle,
-  phaseNumber
+  phaseNumber // Added phaseNumber prop
 }) => {
   // Calculate Y positions (inverted because SVG Y grows downward)
   const y1 = chartHeight - yScale(startTime);
@@ -54,7 +54,7 @@ export const GreenPhaseBar: React.FC<GreenPhaseBarProps> = ({
     height: Math.round(height * 100) / 100,
     y1: Math.round(y1 * 100) / 100,
     y2: Math.round(y2 * 100) / 100,
-    phaseNumber
+    phaseNumber // Include phaseNumber in the phaseInfo object
   };
 
   // Calculate center for phase number text
