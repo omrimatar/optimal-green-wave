@@ -1,10 +1,10 @@
 
 import React, { useEffect } from 'react';
 import AnalyticsDashboard from '@/components/AnalyticsDashboard';
+import VisitsTable from '@/components/VisitsTable';
 import { useMaintenanceMode } from '@/contexts/MaintenanceContext';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
@@ -37,7 +37,10 @@ const AdminDashboard: React.FC = () => {
           {t('back_to_home')}
         </Button>
       </div>
-      <AnalyticsDashboard />
+      <div className="space-y-8">
+        <AnalyticsDashboard />
+        <VisitsTable />
+      </div>
     </div>
   );
 };
