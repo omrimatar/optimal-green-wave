@@ -1,4 +1,3 @@
-
 import { callLambdaOptimization, getLatestDebugData } from './lambda-client';
 import { modifiedWeights } from '@/types/optimization';
 import type { 
@@ -144,7 +143,6 @@ function enhanceResults(result: RunResult, actualDistances?: number[]): RunResul
     return {
       status: 'Error',
       offsets: [],
-      offsets_raw: [],
       objective_value: 0,
       corridorBW_up: 0,
       corridorBW_down: 0,
