@@ -6,8 +6,39 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = "https://hpdsonaiwqjitzdxfnrp.supabase.co";
 const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwZHNvbmFpd3FqaXR6ZHhmbnJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE2MTYxOTYzMTUsImV4cCI6MTkzMTc3MjMxNX0.RQZ_QbZ2fJqj5ct-m3KCy1rYCkOKtclSCmzZ4l0DpUA";
 
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create and export Supabase client with error handling
+let supabaseInstance;
+try {
+  console.log('Initializing Supabase client with URL:', supabaseUrl.substring(0, 12) + '...');
+  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true
+    },
+    global: {
+      fetch: (...args) => {
+        // For debugging network issues
+        console.log('Supabase fetch:', args[0]);
+        return fetch(...args);
+      }
+    }
+  });
+  console.log('Supabase client initialized successfully');
+} catch (error) {
+  console.error('Error initializing Supabase client:', error);
+  // Create a minimal mock client for fallback
+  supabaseInstance = {
+    from: () => ({
+      insert: async () => ({ error: new Error('Supabase client failed to initialize') })
+    }),
+    rpc: async () => ({ 
+      data: null, 
+      error: new Error('Supabase client failed to initialize') 
+    })
+  };
+}
+
+export const supabase = supabaseInstance;
 
 /**
  * Gets or creates a unique visitor fingerprint and stores it in localStorage.

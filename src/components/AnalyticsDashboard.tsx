@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { 
@@ -26,6 +27,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VisitStats } from '@/types/analytics';
 import { toast } from 'sonner';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const AnalyticsDashboard: React.FC = () => {
   const [stats, setStats] = useState<VisitStats | null>(null);
@@ -38,10 +41,17 @@ const AnalyticsDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
+        // Check if Supabase client is properly initialized
+        if (!supabase) {
+          throw new Error('Supabase client not initialized');
+        }
+
+        console.log('Attempting to fetch analytics from Supabase...');
         // Call the actual RPC function in Supabase
         const { data, error: rpcError } = await supabase.rpc('get_visit_stats');
 
         if (rpcError) {
+          console.error('RPC Error:', rpcError);
           throw new Error(rpcError.message);
         }
 
@@ -49,13 +59,27 @@ const AnalyticsDashboard: React.FC = () => {
           console.log("Fetched analytics stats:", data);
           setStats(data);
         } else {
+          // If no data is returned but also no error
+          console.log('No data returned from get_visit_stats RPC');
           setStats(null);
           toast.error(t('no_analytics_data_available'));
         }
       } catch (err: any) {
         console.error("Error fetching analytics stats:", err);
         setError(err.message || 'An unexpected error occurred while fetching stats.');
-        setStats(null);
+        
+        // For development, fall back to mock data if fetch fails
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Generating mock data for development');
+          const mockYearlyTrend = generateMockData();
+          setStats({
+            visitsToday: 12,
+            uniqueVisitorsToday: 5,
+            yearlyTrend: mockYearlyTrend
+          });
+        } else {
+          setStats(null);
+        }
       } finally {
         setLoading(false);
       }
@@ -63,6 +87,22 @@ const AnalyticsDashboard: React.FC = () => {
 
     fetchStats();
   }, [t]);
+
+  // Mock data generator for development
+  const generateMockData = () => {
+    const mockYearlyTrend = [];
+    const today = new Date();
+    for (let i = 30; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(today.getDate() - i);
+      mockYearlyTrend.push({
+        visit_date: date.toISOString().split('T')[0],
+        daily_visits_count: Math.floor(Math.random() * 20) + 5, // Lower, more realistic numbers
+        daily_unique_visitors_count: Math.floor(Math.random() * 10) + 1
+      });
+    }
+    return mockYearlyTrend;
+  };
 
   const directionClass = language === 'he' ? 'rtl' : 'ltr';
 
@@ -77,7 +117,18 @@ const AnalyticsDashboard: React.FC = () => {
   }
 
   if (error) {
-    return <div className="text-red-500 p-4 border border-red-300 rounded">{t('error_loading_analytics')}: {error}</div>;
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertCircle className="h-4 w-4 mr-2" />
+        <AlertTitle>{t('error_loading_analytics')}</AlertTitle>
+        <AlertDescription>
+          {error} 
+          <p className="mt-2">
+            {t('please_check_supabase_connection')}
+          </p>
+        </AlertDescription>
+      </Alert>
+    );
   }
 
   if (!stats) {
