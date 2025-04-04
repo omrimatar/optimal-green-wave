@@ -841,7 +841,21 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
               }}
               onMouseLeave={handleHideTooltip}
               phaseNumber={phase.phaseNumber}
+              intersectionName={intersection.name}
             />
+            
+            {phase.direction === 'upstream' && j === 0 && intersection.name && (
+              <text
+                x={x}
+                y={dimensions.height - 10}
+                textAnchor="middle"
+                fontSize={isMobile ? 9 : 11}
+                fill="#4B5563"
+                fontWeight="bold"
+              >
+                {intersection.name}
+              </text>
+            )}
             
             {wrappedPhase && (
               <GreenPhaseBar
@@ -868,6 +882,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
                 phaseNumber={phase.phaseNumber}
+                intersectionName={intersection.name}
               />
             )}
           </React.Fragment>
@@ -915,6 +930,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                 }}
                 onMouseLeave={handleHideTooltip}
                 phaseNumber={phase.phaseNumber}
+                intersectionName={intersection.name}
               />
               
               {halfCycleWrappedPhase && (
@@ -943,6 +959,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
                   }}
                   onMouseLeave={handleHideTooltip}
                   phaseNumber={phase.phaseNumber}
+                  intersectionName={intersection.name}
                 />
               )}
             </React.Fragment>
