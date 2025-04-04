@@ -58,7 +58,19 @@ const AnalyticsDashboard: React.FC = () => {
 
         if (data) {
           console.log("Fetched analytics stats:", data);
-          setStats(data as VisitStats);
+          
+          // Parse JSON response properly to ensure it matches the VisitStats type
+          // We need to verify the shape of the data before casting
+          if (typeof data === 'object' && 
+              'visitsToday' in data && 
+              'uniqueVisitorsToday' in data && 
+              'yearlyTrend' in data) {
+            
+            setStats(data as VisitStats);
+          } else {
+            console.error('Data does not match expected VisitStats structure:', data);
+            throw new Error('Invalid data structure returned from analytics');
+          }
         } else {
           // If no data is returned but also no error
           console.log('No data returned from get_visit_stats RPC');
