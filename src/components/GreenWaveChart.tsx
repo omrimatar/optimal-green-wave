@@ -1,9 +1,10 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
 import { GreenWaveTooltip } from './GreenWaveTooltip';
 import { Intersection } from '@/types/optimization';
-import { useIsMobile } from '@/hooks/use-mobile'; // Fixed import name
+import { useIsMobile } from '@/hooks/use-mobile'; // Use the primary export name
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PairBandPoint } from '@/types/traffic';
 
@@ -18,9 +19,9 @@ interface GreenWaveChartProps {
     zoomLevel?: number;
     scrollPosition?: number;
   };
-  pairBandPoints?: PairBandPoint[]; // Added missing prop
-  calculationPerformed?: boolean; // Added missing prop
-  comparisonResults?: any; // Added missing prop
+  pairBandPoints?: PairBandPoint[]; 
+  calculationPerformed?: boolean;
+  comparisonResults?: any;
 }
 
 export const GreenWaveChart = ({ 
@@ -45,7 +46,7 @@ export const GreenWaveChart = ({
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [zoomLevel, setZoomLevel] = useState(initialChartSettings?.zoomLevel || 1);
   const [scrollPosition, setScrollPosition] = useState(initialChartSettings?.scrollPosition || 0);
-  const isMobile = useIsMobile(); // Fixed variable name
+  const isMobile = useIsMobile(); // Consistently use useIsMobile
   const { t } = useLanguage();
 
   useEffect(() => {
