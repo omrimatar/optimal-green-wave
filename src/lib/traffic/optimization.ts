@@ -11,6 +11,7 @@ import type {
 
 /**
  * Transforms application data into Lambda request format and calls Lambda function
+ * Enhanced with better error handling and data validation
  */
 export async function greenWaveOptimization(
   data: NetworkData, 
@@ -30,8 +31,24 @@ export async function greenWaveOptimization(
     console.log('Using weights:', weights);
     console.log('Weight modification status:', modifiedWeights);
 
+    // Validate inputs
     if (!data.intersections || !data.travel || !weights) {
       throw new Error('Missing required data for optimization');
+    }
+
+    if (data.intersections.length === 0) {
+      throw new Error('At least one intersection is required for optimization');
+    }
+
+    // Validate all intersection data has required fields
+    for (const intersection of data.intersections) {
+      if (intersection.green_up === undefined || intersection.green_down === undefined) {
+        throw new Error(`Intersection ${intersection.id} is missing green phase data`);
+      }
+      
+      if (intersection.cycle_up === undefined && intersection.cycle_down === undefined) {
+        console.warn(`Intersection ${intersection.id} has no cycle time specified, using default 90s`);
+      }
     }
 
     // Extract actual distances from input data for later reference
@@ -89,6 +106,12 @@ export async function greenWaveOptimization(
 
       console.log('Received results from Lambda:', lambdaResults);
 
+      // Validate the Lambda response
+      if (!lambdaResults.baseline_results || 
+          (manualOffsets && !lambdaResults.optimization_results)) {
+        throw new Error('Invalid response structure from Lambda');
+      }
+
       // Process the results and add the actual distances to each result object
       const results = {
         baseline_results: enhanceResults(lambdaResults.baseline_results, actualDistances),
@@ -99,8 +122,9 @@ export async function greenWaveOptimization(
       console.log('Final processed results with distances:', results);
       return results;
     } catch (error) {
-      // Throw the error again to be caught by the outer catch
-      throw error;
+      console.error('Error calling Lambda optimization:', error);
+      // Re-throw with a more user-friendly message
+      throw new Error(`שגיאה בחישוב הגל הירוק: ${error instanceof Error ? error.message : 'תקלה לא ידועה'}`);
     }
   } catch (error) {
     console.error('Error in greenWaveOptimization:', error);
@@ -110,17 +134,35 @@ export async function greenWaveOptimization(
 
 /**
  * Enhances results with additional properties needed by UI components
+ * Added validation to prevent UI errors from invalid data
  */
 function enhanceResults(result: RunResult, actualDistances?: number[]): RunResult {
+  // Defensive check for undefined result
+  if (!result) {
+    console.error('Received undefined result in enhanceResults');
+    // Return a minimal valid object to prevent UI errors
+    return {
+      status: 'Error',
+      offsets: [],
+      offsets_raw: [],
+      objective_value: 0,
+      corridorBW_up: 0,
+      corridorBW_down: 0,
+      local_up: [],
+      local_down: [],
+      distances: actualDistances || []
+    };
+  }
+  
   return {
     ...result,
     // Ensure properties needed by UI components are present
     corridorBW_up: result.corridor_bandwidth_up || 0,
     corridorBW_down: result.corridor_bandwidth_down || 0,
-    local_up: result.pair_bandwidth_up || [],
-    local_down: result.pair_bandwidth_down || [],
+    local_up: Array.isArray(result.pair_bandwidth_up) ? result.pair_bandwidth_up : [],
+    local_down: Array.isArray(result.pair_bandwidth_down) ? result.pair_bandwidth_down : [],
     // Add the actual distances to the result
-    distances: actualDistances || result.distances
+    distances: actualDistances || result.distances || []
   };
 }
 

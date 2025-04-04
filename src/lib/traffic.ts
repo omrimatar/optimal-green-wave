@@ -37,7 +37,10 @@ export const getResponsiveSpacing = (baseSpacing: number) => {
   return Math.max(baseSpacing * scale, 2); // מינימום מרווח 2px
 };
 
-// Helper function to handle diagonal lines that cross cycle time boundaries
+/**
+ * Helper function to handle diagonal lines that cross cycle time boundaries
+ * Improved with boundary checks and validation
+ */
 export const handleCycleTimeCrossing = (
   originX: number, 
   destX: number, 
@@ -47,40 +50,94 @@ export const handleCycleTimeCrossing = (
   yScale: (value: number) => number, 
   chartHeight: number
 ) => {
-  if (destTime < originTime) {
-    // Calculate time and position parameters
-    const totalTimeDiff = cycleTime - originTime + destTime;
-    const timeToCycleEnd = cycleTime - originTime;
-    const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
+  // Validate inputs to prevent NaN or invalid calculations
+  if (isNaN(originX) || isNaN(destX) || isNaN(originTime) || 
+      isNaN(destTime) || isNaN(cycleTime) || !chartHeight) {
+    console.error('Invalid input to handleCycleTimeCrossing:', 
+      { originX, destX, originTime, destTime, cycleTime, chartHeight });
     
-    const distanceToTravel = Math.abs(destX - originX);
-    const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
-    
-    // Calculate X position at cycle boundary
-    const xDirection = destX > originX ? 1 : -1;
-    const xAtCycleEnd = originX + (xDirection * distanceToCycleEnd);
-    
-    // Calculate Y positions
-    const originY = chartHeight - yScale(originTime);
-    const destY = chartHeight - yScale(destTime);
-    const cycleEndY = chartHeight - yScale(cycleTime);
-    const cycleStartY = chartHeight - yScale(0);
-    
+    // Return safe default that won't render
     return {
-      wrapsAround: true,
-      part1: {
-        x1: originX,
-        y1: originY,
-        x2: xAtCycleEnd,
-        y2: cycleEndY
-      },
-      part2: {
-        x1: xAtCycleEnd,
-        y1: cycleStartY,
-        x2: destX,
-        y2: destY
+      wrapsAround: false,
+      full: {
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: 0
       }
     };
+  }
+  
+  // Ensure times are within cycle bounds
+  originTime = Math.max(0, Math.min(cycleTime, originTime));
+  destTime = Math.max(0, Math.min(cycleTime, destTime));
+  
+  if (destTime < originTime) {
+    try {
+      // Calculate time and position parameters
+      const totalTimeDiff = cycleTime - originTime + destTime;
+      const timeToCycleEnd = cycleTime - originTime;
+      
+      // Prevent division by zero
+      const proportionToCycleEnd = totalTimeDiff === 0 ? 
+        0.5 : timeToCycleEnd / totalTimeDiff;
+      
+      const distanceToTravel = Math.abs(destX - originX);
+      const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
+      
+      // Calculate X position at cycle boundary
+      const xDirection = destX > originX ? 1 : -1;
+      const xAtCycleEnd = originX + (xDirection * distanceToCycleEnd);
+      
+      // Calculate Y positions
+      const originY = chartHeight - yScale(originTime);
+      const destY = chartHeight - yScale(destTime);
+      const cycleEndY = chartHeight - yScale(cycleTime);
+      const cycleStartY = chartHeight - yScale(0);
+      
+      // Check if any coordinate is NaN and provide fallback
+      if ([originY, destY, cycleEndY, cycleStartY].some(isNaN)) {
+        console.warn('NaN value detected in Y coordinates:', 
+          { originY, destY, cycleEndY, cycleStartY });
+        return {
+          wrapsAround: false,
+          full: {
+            x1: originX,
+            y1: chartHeight - yScale(originTime) || 0,
+            x2: destX,
+            y2: chartHeight - yScale(destTime) || 0
+          }
+        };
+      }
+      
+      return {
+        wrapsAround: true,
+        part1: {
+          x1: originX,
+          y1: originY,
+          x2: xAtCycleEnd,
+          y2: cycleEndY
+        },
+        part2: {
+          x1: xAtCycleEnd,
+          y1: cycleStartY,
+          x2: destX,
+          y2: destY
+        }
+      };
+    } catch (error) {
+      console.error('Error in cycle time calculation:', error);
+      // Fallback to a straight line if calculation fails
+      return {
+        wrapsAround: false,
+        full: {
+          x1: originX,
+          y1: chartHeight - yScale(originTime),
+          x2: destX,
+          y2: chartHeight - yScale(destTime)
+        }
+      };
+    }
   }
   
   // No wrapping needed
