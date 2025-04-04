@@ -16,10 +16,10 @@ try {
       autoRefreshToken: true
     },
     global: {
-      fetch: (...args) => {
+      fetch: (url: RequestInfo | URL, options?: RequestInit) => {
         // For debugging network issues
-        console.log('Supabase fetch:', args[0]);
-        return fetch(...args);
+        console.log('Supabase fetch:', typeof url === 'string' ? url : 'Request object');
+        return fetch(url, options);
       }
     }
   });
