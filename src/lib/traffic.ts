@@ -45,8 +45,23 @@ export const handleCycleTimeCrossing = (
   destTime: number, 
   cycleTime: number, 
   yScale: (value: number) => number, 
-  chartHeight: number
+  chartHeight: number,
+  chartWidth: number,
+  leftPadding: number,
+  rightPadding: number
 ) => {
+  // Constrain X coordinates to chart boundaries
+  const minX = leftPadding;
+  const maxX = chartWidth - rightPadding;
+  
+  const boundedOriginX = Math.max(minX, Math.min(maxX, originX));
+  const boundedDestX = Math.max(minX, Math.min(maxX, destX));
+  
+  // If points are outside bounds and on same side, don't render
+  if ((originX < minX && destX < minX) || (originX > maxX && destX > maxX)) {
+    return { wrapsAround: false, outOfBounds: true };
+  }
+  
   if (destTime < originTime) {
     // Calculate time and position parameters
     const totalTimeDiff = cycleTime - originTime + destTime;
@@ -60,37 +75,62 @@ export const handleCycleTimeCrossing = (
     const xDirection = destX > originX ? 1 : -1;
     const xAtCycleEnd = originX + (xDirection * distanceToCycleEnd);
     
+    // Check if xAtCycleEnd is within chart bounds
+    const boundedXAtCycleEnd = Math.max(minX, Math.min(maxX, xAtCycleEnd));
+    
     // Calculate Y positions
     const originY = chartHeight - yScale(originTime);
     const destY = chartHeight - yScale(destTime);
     const cycleEndY = chartHeight - yScale(cycleTime);
     const cycleStartY = chartHeight - yScale(0);
     
+    // Check if either part is completely out of bounds
+    const part1OutOfBounds = (boundedOriginX === minX && boundedXAtCycleEnd === minX) || 
+                            (boundedOriginX === maxX && boundedXAtCycleEnd === maxX);
+                            
+    const part2OutOfBounds = (boundedXAtCycleEnd === minX && boundedDestX === minX) || 
+                            (boundedXAtCycleEnd === maxX && boundedDestX === maxX);
+    
+    if (part1OutOfBounds && part2OutOfBounds) {
+      return { wrapsAround: false, outOfBounds: true };
+    }
+    
     return {
       wrapsAround: true,
+      outOfBounds: false,
       part1: {
-        x1: originX,
+        x1: boundedOriginX,
         y1: originY,
-        x2: xAtCycleEnd,
-        y2: cycleEndY
+        x2: boundedXAtCycleEnd,
+        y2: cycleEndY,
+        isClipped: boundedOriginX !== originX || boundedXAtCycleEnd !== xAtCycleEnd || part1OutOfBounds
       },
       part2: {
-        x1: xAtCycleEnd,
+        x1: boundedXAtCycleEnd,
         y1: cycleStartY,
-        x2: destX,
-        y2: destY
+        x2: boundedDestX,
+        y2: destY,
+        isClipped: boundedXAtCycleEnd !== xAtCycleEnd || boundedDestX !== destX || part2OutOfBounds
       }
     };
   }
   
-  // No wrapping needed
+  // Check if line is completely out of bounds
+  if ((boundedOriginX === minX && boundedDestX === minX) || 
+      (boundedOriginX === maxX && boundedDestX === maxX)) {
+    return { wrapsAround: false, outOfBounds: true };
+  }
+  
+  // No wrapping needed, just constrain to bounds
   return {
     wrapsAround: false,
+    outOfBounds: false,
     full: {
-      x1: originX,
+      x1: boundedOriginX,
       y1: chartHeight - yScale(originTime),
-      x2: destX,
-      y2: chartHeight - yScale(destTime)
+      x2: boundedDestX,
+      y2: chartHeight - yScale(destTime),
+      isClipped: boundedOriginX !== originX || boundedDestX !== destX
     }
   };
 };
