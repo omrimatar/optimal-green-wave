@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Card, 
   CardContent, 
@@ -47,7 +47,8 @@ const AnalyticsDashboard: React.FC = () => {
         }
 
         console.log('Attempting to fetch analytics from Supabase...');
-        // Call the actual RPC function in Supabase
+        
+        // First check if the function exists by trying to invoke it
         const { data, error: rpcError } = await supabase.rpc('get_visit_stats');
 
         if (rpcError) {
