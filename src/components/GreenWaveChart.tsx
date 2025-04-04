@@ -3,20 +3,24 @@ import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
 import { GreenWaveTooltip } from './GreenWaveTooltip';
 import { Intersection } from '@/types/optimization';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile'; // Fixed import name
 import { useLanguage } from '@/contexts/LanguageContext';
+import { PairBandPoint } from '@/types/traffic';
 
 interface GreenWaveChartProps {
   intersections: Intersection[];
   mode: 'display' | 'calculate' | 'manual';
-  calculationResults: any;
+  calculationResults?: any;
   speed: number;
-  directionMode: 'corridor' | 'pair';
+  directionMode?: 'corridor' | 'pair';
   maxTime?: number;
   initialChartSettings?: {
     zoomLevel?: number;
     scrollPosition?: number;
   };
+  pairBandPoints?: PairBandPoint[]; // Added missing prop
+  calculationPerformed?: boolean; // Added missing prop
+  comparisonResults?: any; // Added missing prop
 }
 
 export const GreenWaveChart = ({ 
@@ -24,9 +28,12 @@ export const GreenWaveChart = ({
   mode,
   calculationResults, 
   speed, 
-  directionMode, 
+  directionMode = 'corridor', 
   maxTime = 120,
-  initialChartSettings
+  initialChartSettings,
+  pairBandPoints,
+  calculationPerformed,
+  comparisonResults
 }: GreenWaveChartProps) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [tooltipContent, setTooltipContent] = useState<{
@@ -38,7 +45,7 @@ export const GreenWaveChart = ({
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [zoomLevel, setZoomLevel] = useState(initialChartSettings?.zoomLevel || 1);
   const [scrollPosition, setScrollPosition] = useState(initialChartSettings?.scrollPosition || 0);
-  const isMobile = useMobile();
+  const isMobile = useIsMobile(); // Fixed variable name
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -115,13 +122,35 @@ export const GreenWaveChart = ({
       return intersection.greenPhases.map((phase, phaseIndex) => (
         <GreenPhaseBar
           key={`phase-${intersection.id}-${phaseIndex}`}
-          intersection={intersection}
-          phase={phase}
-          y={y}
-          timeToX={timeToX}
-          dimensions={dimensions}
-          maxTime={maxTime}
-          zoomLevel={zoomLevel}
+          x={timeToX(phase.startTime, dimensions) + (intersection.distance / maxDistance) * chartWidth}
+          startTime={phase.startTime}
+          endTime={phase.startTime + phase.duration}
+          cycleTime={intersection.cycleTime || 90}
+          direction={phase.direction}
+          barWidth={20}
+          yScale={(time) => time}
+          chartHeight={dimensions.height}
+          onMouseEnter={(e, info) => {
+            setTooltipContent({
+              x: e.clientX,
+              y: e.clientY,
+              content: (
+                <div>
+                  <p>{t('direction')}: {info?.direction}</p>
+                  <p>{t('start_time')}: {info?.startTime}s</p>
+                  <p>{t('end_time')}: {info?.endTime}s</p>
+                  <p>{t('duration')}: {info?.duration}s</p>
+                  {info?.phaseNumber !== undefined && <p>{t('phase_number')}: {info.phaseNumber}</p>}
+                </div>
+              ),
+              visible: true,
+            });
+          }}
+          onMouseLeave={() => {
+            setTooltipContent(prev => ({ ...prev, visible: false }));
+          }}
+          isHalfCycle={intersection.useHalfCycleTime}
+          phaseNumber={phase.phaseNumber}
         />
       ));
     });
