@@ -37,6 +37,65 @@ const AnalyticsDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { t, language } = useLanguage();
 
+  // Define fallback translations for missing keys
+  const fallbackTranslations: Record<string, Record<string, string>> = {
+    en: {
+      no_analytics_data: "No Analytics Data",
+      no_analytics_data_available: "No analytics data is available yet.",
+      start_browsing_to_see_analytics: "Start browsing the site to generate analytics data.",
+      refresh: "Refresh",
+      analytics_refreshed: "Analytics refreshed",
+      analytics_overview: "Analytics Overview",
+      page_views_today: "Page Views Today",
+      unique_visitors_today: "Unique Visitors Today",
+      total_visits_today: "Total visits to the site today",
+      distinct_users_today: "Distinct users who visited the site today",
+      visitor_trends: "Visitor Trends",
+      last_30_days: "Statistics for the last 30 days",
+      line_chart: "Line Chart",
+      area_chart: "Area Chart",
+      bar_chart: "Bar Chart",
+      page_views: "Page Views",
+      unique_visitors: "Unique Visitors",
+      error_loading_analytics: "Error Loading Analytics",
+      please_check_supabase_connection: "Please check the Supabase connection and try again."
+    },
+    he: {
+      no_analytics_data: "אין נתוני אנליטיקה",
+      no_analytics_data_available: "אין נתוני אנליטיקה זמינים עדיין",
+      start_browsing_to_see_analytics: "התחל לגלוש באתר כדי לייצר נתוני אנליטיקה",
+      refresh: "רענן",
+      analytics_refreshed: "האנליטיקה רועננה",
+      analytics_overview: "סקירת אנליטיקה",
+      page_views_today: "צפיות עמוד היום",
+      unique_visitors_today: "מבקרים ייחודיים היום",
+      total_visits_today: "סך הביקורים באתר היום",
+      distinct_users_today: "משתמשים ייחודיים שביקרו באתר היום",
+      visitor_trends: "מגמות מבקרים",
+      last_30_days: "סטטיסטיקה ל-30 הימים האחרונים",
+      line_chart: "תרשים קווי",
+      area_chart: "תרשים שטח",
+      bar_chart: "תרשים עמודות",
+      page_views: "צפיות בעמוד",
+      unique_visitors: "מבקרים ייחודיים",
+      error_loading_analytics: "שגיאה בטעינת האנליטיקה",
+      please_check_supabase_connection: "אנא בדוק את החיבור לסופאבייס ונסה שוב"
+    }
+  };
+
+  // Enhanced translation function with fallback
+  const translate = (key: string): string => {
+    // Try to use the regular translation function first
+    const regularTranslation = t(key);
+    
+    // If the returned value is the same as the key, it means translation is missing
+    if (regularTranslation === key && fallbackTranslations[language] && fallbackTranslations[language][key]) {
+      return fallbackTranslations[language][key];
+    }
+    
+    return regularTranslation;
+  };
+
   const fetchStats = async () => {
     setLoading(true);
     setError(null);
@@ -204,7 +263,7 @@ const AnalyticsDashboard: React.FC = () => {
   
   const handleRefresh = () => {
     fetchStats();
-    toast.success(t('analytics_refreshed'));
+    toast.success(translate('analytics_refreshed'));
   };
 
   if (loading) {
@@ -221,11 +280,11 @@ const AnalyticsDashboard: React.FC = () => {
     return (
       <Alert variant="destructive" className="mb-4">
         <AlertCircle className="h-4 w-4 mr-2" />
-        <AlertTitle>{t('error_loading_analytics')}</AlertTitle>
+        <AlertTitle>{translate('error_loading_analytics')}</AlertTitle>
         <AlertDescription>
           {error} 
           <p className="mt-2">
-            {t('please_check_supabase_connection')}
+            {translate('please_check_supabase_connection')}
           </p>
           <Button 
             variant="outline" 
@@ -234,7 +293,7 @@ const AnalyticsDashboard: React.FC = () => {
             onClick={handleRefresh}
           >
             <RefreshCw className="mr-2 h-4 w-4" />
-            {t('refresh')}
+            {translate('refresh')}
           </Button>
         </AlertDescription>
       </Alert>
@@ -245,11 +304,11 @@ const AnalyticsDashboard: React.FC = () => {
     return (
       <Alert className="mb-4">
         <AlertCircle className="h-4 w-4 mr-2" />
-        <AlertTitle>{t('no_analytics_data')}</AlertTitle>
+        <AlertTitle>{translate('no_analytics_data')}</AlertTitle>
         <AlertDescription>
-          {t('no_analytics_data_available')}
+          {translate('no_analytics_data_available')}
           <p className="mt-2">
-            {t('start_browsing_to_see_analytics')}
+            {translate('start_browsing_to_see_analytics')}
           </p>
           <Button 
             variant="outline" 
@@ -258,7 +317,7 @@ const AnalyticsDashboard: React.FC = () => {
             onClick={handleRefresh}
           >
             <RefreshCw className="mr-2 h-4 w-4" />
-            {t('refresh')}
+            {translate('refresh')}
           </Button>
         </AlertDescription>
       </Alert>
@@ -268,21 +327,21 @@ const AnalyticsDashboard: React.FC = () => {
   return (
     <div className="space-y-6" dir={directionClass}>
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t('analytics_overview')}</h2>
+        <h2 className="text-2xl font-bold">{translate('analytics_overview')}</h2>
         <Button 
           variant="outline" 
           size="sm" 
           onClick={handleRefresh}
         >
           <RefreshCw className="mr-2 h-4 w-4" />
-          {t('refresh')}
+          {translate('refresh')}
         </Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle>{t('page_views_today')}</CardTitle>
-            <CardDescription>{t('total_visits_today')}</CardDescription>
+            <CardTitle>{translate('page_views_today')}</CardTitle>
+            <CardDescription>{translate('total_visits_today')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">{stats?.visitsToday || 0}</div>
@@ -290,8 +349,8 @@ const AnalyticsDashboard: React.FC = () => {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle>{t('unique_visitors_today')}</CardTitle>
-            <CardDescription>{t('distinct_users_today')}</CardDescription>
+            <CardTitle>{translate('unique_visitors_today')}</CardTitle>
+            <CardDescription>{translate('distinct_users_today')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">{stats?.uniqueVisitorsToday || 0}</div>
@@ -301,15 +360,15 @@ const AnalyticsDashboard: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('visitor_trends')}</CardTitle>
-          <CardDescription>{t('last_30_days')}</CardDescription>
+          <CardTitle>{translate('visitor_trends')}</CardTitle>
+          <CardDescription>{translate('last_30_days')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="line">
             <TabsList className="mb-4">
-              <TabsTrigger value="line">{t('line_chart')}</TabsTrigger>
-              <TabsTrigger value="area">{t('area_chart')}</TabsTrigger>
-              <TabsTrigger value="bar">{t('bar_chart')}</TabsTrigger>
+              <TabsTrigger value="line">{translate('line_chart')}</TabsTrigger>
+              <TabsTrigger value="area">{translate('area_chart')}</TabsTrigger>
+              <TabsTrigger value="bar">{translate('bar_chart')}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="line" className="h-[400px]">
@@ -323,14 +382,14 @@ const AnalyticsDashboard: React.FC = () => {
                   <Line
                     type="monotone"
                     dataKey="daily_visits_count"
-                    name={t('page_views')}
+                    name={translate('page_views')}
                     stroke="#3b82f6"
                     activeDot={{ r: 8 }}
                   />
                   <Line
                     type="monotone"
                     dataKey="daily_unique_visitors_count"
-                    name={t('unique_visitors')}
+                    name={translate('unique_visitors')}
                     stroke="#ef4444"
                     activeDot={{ r: 6 }}
                   />
@@ -349,14 +408,14 @@ const AnalyticsDashboard: React.FC = () => {
                   <Area
                     type="monotone"
                     dataKey="daily_visits_count"
-                    name={t('page_views')}
+                    name={translate('page_views')}
                     stroke="#3b82f6"
                     fill="#3b82f680"
                   />
                   <Area
                     type="monotone"
                     dataKey="daily_unique_visitors_count"
-                    name={t('unique_visitors')}
+                    name={translate('unique_visitors')}
                     stroke="#ef4444"
                     fill="#ef444480"
                   />
@@ -374,12 +433,12 @@ const AnalyticsDashboard: React.FC = () => {
                   <Legend />
                   <Bar
                     dataKey="daily_visits_count"
-                    name={t('page_views')}
+                    name={translate('page_views')}
                     fill="#3b82f6"
                   />
                   <Bar
                     dataKey="daily_unique_visitors_count"
-                    name={t('unique_visitors')}
+                    name={translate('unique_visitors')}
                     fill="#ef4444"
                   />
                 </BarChart>
