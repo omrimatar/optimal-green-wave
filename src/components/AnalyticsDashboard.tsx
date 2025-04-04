@@ -126,10 +126,17 @@ const AnalyticsDashboard: React.FC = () => {
                 'yearlyTrend' in rpcData && 
                 Array.isArray(rpcData.yearlyTrend)
               ) {
+                // Properly map the yearly trend data to ensure it conforms to the YearlyTrendDataPoint type
+                const mappedTrend: YearlyTrendDataPoint[] = rpcData.yearlyTrend.map((item: any) => ({
+                  visit_date: String(item.visit_date),
+                  daily_visits_count: Number(item.daily_visits_count),
+                  daily_unique_visitors_count: Number(item.daily_unique_visitors_count)
+                }));
+                
                 const visitStats: VisitStats = {
                   visitsToday: Number(rpcData.visitsToday),
                   uniqueVisitorsToday: Number(rpcData.uniqueVisitorsToday),
-                  yearlyTrend: rpcData.yearlyTrend as YearlyTrendDataPoint[]
+                  yearlyTrend: mappedTrend
                 };
                 
                 setStats(visitStats);
