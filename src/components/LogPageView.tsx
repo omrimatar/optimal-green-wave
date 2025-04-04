@@ -24,14 +24,13 @@ const LogPageView: React.FC = () => {
 
         console.log(`Logging page view: Path=${currentPath}, Fingerprint=${fingerprint.substring(0, 8)}..., Language=${language}`);
 
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('visits')
           .insert({
             visitor_fingerprint: fingerprint,
             path: currentPath,
             language
-          })
-          .select();
+          });
 
         if (error) {
           console.error('Error logging page visit:', error.message);
@@ -40,7 +39,7 @@ const LogPageView: React.FC = () => {
             toast.error(`Failed to log visit: ${error.message}`);
           }
         } else {
-          console.log('Successfully logged page visit:', data);
+          console.log('Successfully logged page visit');
         }
       } catch (err) {
         console.error('Failed to log page view:', err);
@@ -50,6 +49,8 @@ const LogPageView: React.FC = () => {
     // Only log visits for non-admin routes to avoid artificially inflating numbers
     if (!location.pathname.includes('/admin')) {
       logVisit();
+    } else {
+      console.log('Not logging admin page visit:', location.pathname);
     }
   }, [location.pathname, language]);
 
