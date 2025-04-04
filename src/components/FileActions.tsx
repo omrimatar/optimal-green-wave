@@ -83,7 +83,7 @@ export const FileActions = ({ speed, intersections, weights, onLoadInput }: File
                 upstreamSpeed: intersection.upstreamSpeed,
                 downstreamSpeed: intersection.downstreamSpeed,
                 offset: intersection.offset || 0,
-                name: intersection.name || '',
+                name: intersection.name || '', // Ensure name is always included
               }));
             }
             
