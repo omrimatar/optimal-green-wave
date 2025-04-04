@@ -25,7 +25,7 @@ import {
 } from "recharts";
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Skeleton } from '@/components/ui/skeleton';
-import { VisitStats } from '@/types/analytics';
+import { VisitStats, YearlyTrendDataPoint } from '@/types/analytics';
 import { toast } from 'sonner';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
@@ -60,16 +60,35 @@ const AnalyticsDashboard: React.FC = () => {
           console.log("Fetched analytics stats:", data);
           
           // Parse JSON response properly to ensure it matches the VisitStats type
-          // We need to verify the shape of the data before casting
-          if (typeof data === 'object' && 
-              'visitsToday' in data && 
-              'uniqueVisitorsToday' in data && 
-              'yearlyTrend' in data) {
+          // We need to perform a safe type conversion here
+          try {
+            // First cast to unknown then perform manual type checking
+            const jsonData = data as unknown;
             
-            setStats(data as VisitStats);
-          } else {
-            console.error('Data does not match expected VisitStats structure:', data);
-            throw new Error('Invalid data structure returned from analytics');
+            // Verify the shape of the data
+            if (
+              typeof jsonData === 'object' && 
+              jsonData !== null &&
+              'visitsToday' in jsonData && 
+              'uniqueVisitorsToday' in jsonData && 
+              'yearlyTrend' in jsonData && 
+              Array.isArray((jsonData as any).yearlyTrend)
+            ) {
+              // Create a properly typed object
+              const visitStats: VisitStats = {
+                visitsToday: Number((jsonData as any).visitsToday),
+                uniqueVisitorsToday: Number((jsonData as any).uniqueVisitorsToday),
+                yearlyTrend: (jsonData as any).yearlyTrend as YearlyTrendDataPoint[]
+              };
+              
+              setStats(visitStats);
+            } else {
+              console.error('Data does not match expected VisitStats structure:', jsonData);
+              throw new Error('Invalid data structure returned from analytics');
+            }
+          } catch (parseError) {
+            console.error('Error parsing analytics data:', parseError);
+            throw new Error('Failed to parse analytics data');
           }
         } else {
           // If no data is returned but also no error
