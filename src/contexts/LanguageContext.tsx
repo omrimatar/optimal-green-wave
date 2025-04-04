@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 type Language = 'en' | 'he';
@@ -88,9 +87,10 @@ type TranslationKey =
   | 'phase_number'
   | 'optional'
   | 'must_be_between'
-  | 'and';
+  | 'and'
+  | 'intersection_name'
+  | 'enter_intersection_name';
 
-// Re-add the missing interface
 interface LanguageContextType {
   language: Language;
   toggleLanguage: () => void;
@@ -183,7 +183,9 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'phase_number': 'Phase Number',
     'optional': 'Optional',
     'must_be_between': 'must be between',
-    'and': 'and'
+    'and': 'and',
+    'intersection_name': "Intersection Name",
+    'enter_intersection_name': "Enter intersection name",
   },
   he: {
     app_title: 'מחשבון גל ירוק',
@@ -270,7 +272,9 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'phase_number': 'מספר מופע',
     'optional': 'לא חובה',
     'must_be_between': 'חייב להיות בין',
-    'and': 'ל-'
+    'and': 'ל-',
+    'intersection_name': "שם הצומת",
+    'enter_intersection_name': "הזן שם צומת",
   }
 };
 

@@ -1,9 +1,8 @@
-
 export interface GreenPhase {
   direction: 'upstream' | 'downstream';
   startTime: number;
   duration: number;
-  phaseNumber?: number; // Added phaseNumber field
+  phaseNumber?: number;
 }
 
 export interface Intersection {
@@ -11,10 +10,11 @@ export interface Intersection {
   distance: number;
   cycleTime: number;
   greenPhases: GreenPhase[];
-  offset?: number;
   upstreamSpeed?: number;
   downstreamSpeed?: number;
-  useHalfCycleTime?: boolean; // Added flag for half cycle time
+  offset?: number;
+  useHalfCycleTime?: boolean;
+  name?: string;
 }
 
 export interface OptimizationWeights {
@@ -26,8 +26,8 @@ export interface OptimizationWeights {
   avg_delay_down: number;
   max_delay_up: number;
   max_delay_down: number;
-  alpha?: number;  // New parameter for direction balancing
-  beta?: number;   // New parameter for secondary phase priority
+  alpha?: number;
+  beta?: number;
 }
 
 export const DEFAULT_WEIGHTS: OptimizationWeights = {
@@ -39,11 +39,10 @@ export const DEFAULT_WEIGHTS: OptimizationWeights = {
   avg_delay_down: 0.2,
   max_delay_up: 0.1,
   max_delay_down: 0.1,
-  alpha: 0.5,  // Default for alpha is 0.5 (moderate balance)
-  beta: 1.0    // Default for beta is 1.0 (full priority to main phase)
+  alpha: 0.5,
+  beta: 1.0
 };
 
-// Track which weights have been manually modified by the user
 export const modifiedWeights: Record<keyof OptimizationWeights, boolean> = {
   corridor_up: false,
   corridor_down: false,
@@ -57,13 +56,11 @@ export const modifiedWeights: Record<keyof OptimizationWeights, boolean> = {
   beta: false
 };
 
-// Helper function to ensure weights sum to 1
 export const normalizeWeights = (
   weights: OptimizationWeights, 
   changedKey: keyof OptimizationWeights, 
   newValue: number
 ): OptimizationWeights => {
-  // Don't normalize alpha and beta parameters as they operate independently
   if (changedKey === 'alpha' || changedKey === 'beta') {
     const updatedWeights = { ...weights };
     updatedWeights[changedKey] = newValue;
@@ -79,10 +76,8 @@ export const normalizeWeights = (
   
   updatedWeights[changedKey] = newValue;
   
-  // Mark the changed weight as modified
   modifiedWeights[changedKey] = true;
   
-  // Get keys to adjust (excluding alpha, beta, the changed key and any previously modified keys)
   const keysToAdjust = Object.keys(updatedWeights).filter(
     key => key !== changedKey && 
            key !== 'alpha' && 
@@ -91,13 +86,10 @@ export const normalizeWeights = (
   ) as Array<keyof OptimizationWeights>;
   
   if (keysToAdjust.length === 0) {
-    // If all weights have been modified, use all weights except the current one
-    // and except alpha and beta
     const allKeysExceptCurrent = Object.keys(updatedWeights).filter(
       key => key !== changedKey && key !== 'alpha' && key !== 'beta'
     ) as Array<keyof OptimizationWeights>;
     
-    // If all weights are fixed, we need to adjust them all proportionally
     const sumToAdjust = allKeysExceptCurrent.reduce(
       (sum, key) => sum + updatedWeights[key], 
       0
@@ -109,7 +101,6 @@ export const normalizeWeights = (
         updatedWeights[key] = Math.max(0, updatedWeights[key] * scale);
       });
     } else {
-      // Distribute evenly
       const valuePerKey = (1 - newValue) / allKeysExceptCurrent.length;
       allKeysExceptCurrent.forEach(key => {
         updatedWeights[key] = valuePerKey;
@@ -119,14 +110,12 @@ export const normalizeWeights = (
     return updatedWeights;
   }
   
-  // Calculate sum of weights to adjust
   const sumToAdjust = keysToAdjust.reduce(
     (sum, key) => sum + updatedWeights[key], 
     0
   );
   
   if (sumToAdjust === 0) {
-    // Special case: if all other unmodified weights are 0, distribute evenly
     if (diff < 0) {
       const valueToAdd = Math.abs(diff) / keysToAdjust.length;
       keysToAdjust.forEach(key => {
@@ -136,13 +125,11 @@ export const normalizeWeights = (
     return updatedWeights;
   }
   
-  // Adjust other unmodified weights proportionally
   keysToAdjust.forEach(key => {
     const proportion = updatedWeights[key] / sumToAdjust;
     updatedWeights[key] = Math.max(0, updatedWeights[key] - (diff * proportion));
   });
   
-  // Fix any rounding errors to ensure sum is exactly 1
   const newSum = Object.keys(updatedWeights)
     .filter(key => key !== 'alpha' && key !== 'beta')
     .reduce((sum, key) => sum + updatedWeights[key as keyof OptimizationWeights], 0);
@@ -160,7 +147,6 @@ export const normalizeWeights = (
   return updatedWeights;
 };
 
-// Reset all modified flags to default state
 export const resetModifiedFlags = () => {
   Object.keys(modifiedWeights).forEach(key => {
     modifiedWeights[key as keyof OptimizationWeights] = false;

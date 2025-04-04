@@ -197,6 +197,75 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       }
     }
 
+    intersections.forEach((intersection, index) => {
+      const x = originX + xScale(intersection.distance);
+      
+      const isAlreadyLabeled = labels.some(label => {
+        const labelKey = label.key;
+        if (typeof labelKey === 'string') {
+          const distanceMatch = labelKey.match(/x-label-(\d+)/);
+          if (distanceMatch && parseInt(distanceMatch[1]) === intersection.distance) {
+            return true;
+          }
+        }
+        return false;
+      });
+      
+      if (!isAlreadyLabeled && x <= dimensions.width - rightPadding) {
+        labels.push(
+          <g key={`x-label-intersection-${intersection.id}`}
+            onMouseEnter={(e) => {
+              setHoveredElement(`x-label-intersection-${intersection.id}`);
+              const content = (
+                <div>
+                  <p><strong>צומת {index + 1}</strong></p>
+                  <p>מרחק: {intersection.distance} מטרים</p>
+                  {speed && (
+                    <p>זמן נסיעה משוער בהינתן מהירות {speed} קמ"ש: {Math.round(intersection.distance / speed * 3.6)} שניות</p>
+                  )}
+                </div>
+              );
+              handleShowTooltip(e.clientX, e.clientY, content);
+            }}
+            onMouseLeave={handleHideTooltip}
+          >
+            <text
+              x={x}
+              y={dimensions.height - (isMobile ? 15 : 20)}
+              textAnchor="middle"
+              fontSize={isMobile ? 10 : 12}
+              fill={hoveredElement === `x-label-intersection-${intersection.id}` ? "#000" : "#6B7280"}
+              style={{ fontWeight: hoveredElement === `x-label-intersection-${intersection.id}` ? 'bold' : 'normal' }}
+            >
+              {intersection.distance}
+            </text>
+            
+            {intersection.name && (
+              <text
+                x={x}
+                y={dimensions.height - (isMobile ? 2 : 5)}
+                textAnchor="middle"
+                fontSize={isMobile ? 9 : 11}
+                fill="#4B5563"
+                style={{ direction: 'rtl', unicodeBidi: 'bidi-override' }}
+              >
+                {intersection.name}
+              </text>
+            )}
+            
+            <line 
+              x1={x} 
+              y1={dimensions.height - 40} 
+              x2={x} 
+              y2={dimensions.height - 35} 
+              stroke={hoveredElement === `x-label-intersection-${intersection.id}` ? "#000" : "#6B7280"}
+              strokeWidth={hoveredElement === `x-label-intersection-${intersection.id}` ? 2 : 1}
+            />
+          </g>
+        );
+      }
+    });
+
     if (intersections.length > 0) {
       const lastIntersectionX = originX + xScale(lastIntersectionDistance);
       
