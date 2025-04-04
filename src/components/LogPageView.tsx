@@ -12,6 +12,7 @@ const LogPageView: React.FC = () => {
     const logVisit = async () => {
       try {
         // Generate a unique visitor fingerprint based on session storage
+        // This allows tracking return visits in the same session
         let fingerprint = sessionStorage.getItem('visitor_fingerprint');
         if (!fingerprint) {
           fingerprint = crypto.randomUUID();

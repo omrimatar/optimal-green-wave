@@ -25,7 +25,7 @@ import {
 } from "recharts";
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Skeleton } from '@/components/ui/skeleton';
-import { VisitStats, YearlyTrendDataPoint } from '@/types/analytics';
+import { VisitStats, YearlyTrendDataPoint, Visit } from '@/types/analytics';
 import { toast } from 'sonner';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
@@ -41,14 +41,9 @@ const AnalyticsDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        // Check if Supabase client is properly initialized
-        if (!supabase) {
-          throw new Error('Supabase client not initialized');
-        }
-
         console.log('Attempting to fetch analytics from Supabase...');
 
-        // Fetch directly from the visits table as a fallback approach
+        // Use direct table access to get visits data
         const { data: visitsData, error: visitsError } = await supabase
           .from('visits')
           .select('*');
@@ -60,64 +55,30 @@ const AnalyticsDashboard: React.FC = () => {
 
         console.log('Raw visits data:', visitsData);
 
-        if (visitsData) {
-          // Calculate stats manually from the raw visits data
-          const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
-          
-          // Count today's visits
-          const todayVisits = visitsData.filter(visit => 
-            new Date(visit.created_at).toISOString().split('T')[0] === today
-          );
-          
-          // Count unique visitors today
-          const uniqueVisitorsToday = [...new Set(todayVisits.map(visit => visit.visitor_fingerprint))].length;
-          
-          // Generate trend data for the last 30 days
-          const last30Days = [];
-          for (let i = 0; i < 30; i++) {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            const dateStr = date.toISOString().split('T')[0];
-            
-            const dayVisits = visitsData.filter(visit => 
-              new Date(visit.created_at).toISOString().split('T')[0] === dateStr
-            );
-            
-            const uniqueVisitors = [...new Set(dayVisits.map(visit => visit.visitor_fingerprint))].length;
-            
-            last30Days.push({
-              visit_date: dateStr,
-              daily_visits_count: dayVisits.length,
-              daily_unique_visitors_count: uniqueVisitors
-            });
-          }
-          
-          // Sort by date ascending
-          last30Days.sort((a, b) => a.visit_date.localeCompare(b.visit_date));
-          
-          const calculatedStats: VisitStats = {
-            visitsToday: todayVisits.length,
-            uniqueVisitorsToday: uniqueVisitorsToday,
-            yearlyTrend: last30Days
-          };
-          
+        if (!visitsData || visitsData.length === 0) {
+          console.log('No visits data found');
+          // Show empty state instead of error
+          setStats({
+            visitsToday: 0,
+            uniqueVisitorsToday: 0,
+            yearlyTrend: []
+          });
+        } else {
+          // Process the visits data to calculate stats
+          const calculatedStats = processVisitsData(visitsData);
           console.log('Calculated stats:', calculatedStats);
           setStats(calculatedStats);
-        } else {
-          // Try the RPC method as a backup
-          console.log('Falling back to RPC method...');
-          const { data: rpcData, error: rpcError } = await supabase.rpc('get_visit_stats');
           
-          if (rpcError) {
-            console.error('RPC Error:', rpcError);
-            throw new Error(rpcError.message);
-          }
-          
-          if (rpcData) {
-            console.log("Fetched RPC stats:", rpcData);
+          // Also try the RPC method as a backup if available
+          try {
+            const { data: rpcData, error: rpcError } = await supabase.rpc('get_visit_stats');
             
-            try {
-              // Ensure the data has the expected structure
+            if (rpcError) {
+              console.warn('RPC fallback error:', rpcError);
+            } else if (rpcData) {
+              console.log("Fetched RPC stats:", rpcData);
+              
+              // If RPC data looks valid, use it instead
               if (
                 typeof rpcData === 'object' && 
                 rpcData !== null &&
@@ -126,7 +87,7 @@ const AnalyticsDashboard: React.FC = () => {
                 'yearlyTrend' in rpcData && 
                 Array.isArray(rpcData.yearlyTrend)
               ) {
-                // Properly map the yearly trend data to ensure it conforms to the YearlyTrendDataPoint type
+                // Map the yearly trend data to ensure it conforms to the type
                 const mappedTrend: YearlyTrendDataPoint[] = rpcData.yearlyTrend.map((item: any) => ({
                   visit_date: String(item.visit_date),
                   daily_visits_count: Number(item.daily_visits_count),
@@ -140,20 +101,12 @@ const AnalyticsDashboard: React.FC = () => {
                 };
                 
                 setStats(visitStats);
-              } else {
-                console.error('Invalid RPC data structure:', rpcData);
-                throw new Error('Invalid data structure returned from analytics');
               }
-            } catch (parseError) {
-              console.error('Error parsing RPC data:', parseError);
-              throw new Error('Failed to parse analytics data');
             }
+          } catch (rpcError) {
+            console.warn('Error in RPC fallback:', rpcError);
+            // Continue with calculated stats
           }
-        }
-        
-        if (!stats) {
-          console.log('No data available after both approaches');
-          toast.error(t('no_analytics_data_available'));
         }
       } catch (err: any) {
         console.error("Error fetching analytics stats:", err);
@@ -179,6 +132,57 @@ const AnalyticsDashboard: React.FC = () => {
     fetchStats();
   }, [t]);
 
+  // Process raw visits data into statistics
+  const processVisitsData = (visitsData: Visit[]) => {
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Count today's visits
+    const todayVisits = visitsData.filter(visit => 
+      new Date(visit.created_at).toISOString().split('T')[0] === today
+    );
+    
+    // Count unique visitors today
+    const uniqueVisitorsToday = [...new Set(todayVisits.map(visit => visit.visitor_fingerprint))].length;
+    
+    // Generate trend data for the last 30 days
+    const trendMap = new Map<string, { visits: number, uniqueVisitors: Set<string> }>();
+    
+    // Initialize the last 30 days with empty data
+    for (let i = 0; i < 30; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      trendMap.set(dateStr, { visits: 0, uniqueVisitors: new Set() });
+    }
+    
+    // Fill in actual data
+    visitsData.forEach(visit => {
+      const visitDate = new Date(visit.created_at).toISOString().split('T')[0];
+      // Only process visits from the last 30 days
+      if (trendMap.has(visitDate)) {
+        const dayData = trendMap.get(visitDate)!;
+        dayData.visits++;
+        dayData.uniqueVisitors.add(visit.visitor_fingerprint);
+      }
+    });
+    
+    // Convert map to array and sort by date
+    const trendArray: YearlyTrendDataPoint[] = Array.from(trendMap.entries())
+      .map(([date, data]) => ({
+        visit_date: date,
+        daily_visits_count: data.visits,
+        daily_unique_visitors_count: data.uniqueVisitors.size
+      }))
+      .sort((a, b) => a.visit_date.localeCompare(b.visit_date));
+    
+    return {
+      visitsToday: todayVisits.length,
+      uniqueVisitorsToday: uniqueVisitorsToday,
+      yearlyTrend: trendArray
+    };
+  };
+
   // Mock data generator for development
   const generateMockData = () => {
     const mockYearlyTrend = [];
@@ -188,7 +192,7 @@ const AnalyticsDashboard: React.FC = () => {
       date.setDate(today.getDate() - i);
       mockYearlyTrend.push({
         visit_date: date.toISOString().split('T')[0],
-        daily_visits_count: Math.floor(Math.random() * 20) + 5, // Lower, more realistic numbers
+        daily_visits_count: Math.floor(Math.random() * 20) + 5,
         daily_unique_visitors_count: Math.floor(Math.random() * 10) + 1
       });
     }
@@ -222,8 +226,19 @@ const AnalyticsDashboard: React.FC = () => {
     );
   }
 
-  if (!stats) {
-    return <div className="p-4 text-muted-foreground">{t('no_analytics_data')}</div>;
+  if (!stats || (!stats.yearlyTrend.length && stats.visitsToday === 0 && stats.uniqueVisitorsToday === 0)) {
+    return (
+      <Alert className="mb-4">
+        <AlertCircle className="h-4 w-4 mr-2" />
+        <AlertTitle>{t('no_analytics_data')}</AlertTitle>
+        <AlertDescription>
+          {t('no_analytics_data_available')}
+          <p className="mt-2">
+            {t('start_browsing_to_see_analytics')}
+          </p>
+        </AlertDescription>
+      </Alert>
+    );
   }
 
   return (
