@@ -1,11 +1,11 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GreenPhaseBar } from './GreenPhaseBar';
 import { GreenWaveTooltip } from './GreenWaveTooltip';
 import { type Intersection } from "@/types/optimization";
-import { type PairBandPoint, type RunResult, type DiagonalPoint } from "@/types/traffic";
+import { type PairBandPoint, type RunResult } from "@/types/traffic";
 import { isMobileDevice, getMobileScale, handleCycleTimeCrossing } from '@/lib/traffic';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface GreenWaveChartProps {
   intersections: Intersection[];
@@ -429,7 +429,7 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       
       console.log(`Rendering diagonal lines for pair ${pair.from_junction}->${pair.to_junction}:`);
       console.log(`Upstream bandwidth: ${upstreamBandwidth}, Downstream bandwidth: ${downstreamBandwidth}`);
-      console.log(`Upstream data: origin_low=${pair.up.origin_low.toFixed(2)}, origin_high=${pair.up.origin_high.toFixed(2)}, dest_low=${pair.up.dest_low.toFixed(2)}, dest_high=${pair.up.dest_high.toFixed(2)}`);
+      console.log(`Upstream data: origin_low=${pair.up.origin_low.toFixed(2)}, origin_high=${pair.up.dest_low.toFixed(2)}, dest_low=${pair.up.dest_high.toFixed(2)}`);
       console.log(`Downstream data: origin_low=${pair.down.origin_low.toFixed(2)}, origin_high=${pair.down.origin_high.toFixed(2)}, dest_low=${pair.down.dest_low.toFixed(2)}, dest_high=${pair.down.dest_high.toFixed(2)}`);
       
       const cycleTime = Math.max(
