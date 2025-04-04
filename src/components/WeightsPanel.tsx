@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { SlidersHorizontal, RotateCcw } from "lucide-react";
-import { OptimizationWeights, normalizeWeights, modifiedWeights, resetModifiedFlags } from "@/types/optimization";
+import { OptimizationWeights, normalizeWeights, resetModifiedFlags } from "@/types/optimization";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useModifiedFlags } from "@/contexts/ModifiedFlagsContext";
 import { Separator } from "@/components/ui/separator";
 
 interface WeightsPanelProps {
@@ -24,6 +25,7 @@ export const WeightsPanel = ({
   onResetWeights
 }: WeightsPanelProps) => {
   const { t, language } = useLanguage();
+  const { resetFlags } = useModifiedFlags();
   const [localWeights, setLocalWeights] = useState<OptimizationWeights>(weights);
   const formatNumber = (num: number) => num.toFixed(1);
 
@@ -60,7 +62,7 @@ export const WeightsPanel = ({
 
   const handleResetWeights = () => {
     // Reset the modified flags when user resets weights
-    resetModifiedFlags();
+    resetFlags();
     onResetWeights();
   };
 

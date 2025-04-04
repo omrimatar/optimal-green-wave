@@ -1,9 +1,10 @@
+
 import React, { useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { type Intersection, type OptimizationWeights, modifiedWeights } from '@/types/optimization';
+import { type Intersection, type OptimizationWeights } from '@/types/optimization';
 import { useModifiedFlags } from '@/contexts/ModifiedFlagsContext';
 
 export const FileActions = ({ 

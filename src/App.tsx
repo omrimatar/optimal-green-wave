@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { MaintenanceProvider } from "@/contexts/MaintenanceContext";
+import { ModifiedFlagsProvider } from "@/contexts/ModifiedFlagsContext";
 import { MaintenancePage } from "@/components/MaintenancePage";
 import { MobileDetectionDialog } from "@/components/MobileDetectionDialog";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -32,23 +33,25 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <MaintenanceProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <MobileDetectionDialog />
-          <LanguageToggle />
-          <BrowserRouter>
-            <LogPageView />
-            <MaintenanceWrapper>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/admin/analytics" element={<AdminDashboard />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </MaintenanceWrapper>
-          </BrowserRouter>
-        </TooltipProvider>
+        <ModifiedFlagsProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <MobileDetectionDialog />
+            <LanguageToggle />
+            <BrowserRouter>
+              <LogPageView />
+              <MaintenanceWrapper>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/admin/analytics" element={<AdminDashboard />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </MaintenanceWrapper>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ModifiedFlagsProvider>
       </MaintenanceProvider>
     </LanguageProvider>
   </QueryClientProvider>
