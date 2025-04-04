@@ -1,116 +1,110 @@
 
-import React, { useRef } from 'react';
 import { Button } from "@/components/ui/button";
-import { Download, Upload } from 'lucide-react';
-import { toast } from 'sonner';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { type Intersection, type OptimizationWeights } from '@/types/optimization';
-import { useModifiedFlags } from '@/contexts/ModifiedFlagsContext';
+import { FileUp, FileDown, Lock } from "lucide-react";
+import type { Intersection } from "@/types/optimization";
+import type { OptimizationWeights } from "@/types/optimization";
+import { useState } from "react";
+import { AdminLoginDialog } from "@/components/AdminLoginDialog";
+import { useMaintenanceMode } from "@/contexts/MaintenanceContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-export const FileActions = ({ 
-  speed,
-  intersections,
-  weights,
-  onLoadInput 
-}: {
+interface FileActionsProps {
   speed: number;
   intersections: Intersection[];
-  weights: OptimizationWeights;
-  onLoadInput: (data: { speed: number; intersections: Intersection[]; weights?: OptimizationWeights; }) => void;
-}) => {
+  weights?: OptimizationWeights;
+  onLoadInput: (data: { 
+    speed: number; 
+    intersections: Intersection[];
+    weights?: OptimizationWeights;
+  }) => void;
+}
+
+export const FileActions = ({ speed, intersections, weights, onLoadInput }: FileActionsProps) => {
+  const [showAdminDialog, setShowAdminDialog] = useState(false);
+  const { isAdmin } = useMaintenanceMode();
   const { t } = useLanguage();
-  const downloadRef = useRef<HTMLAnchorElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { modifiedFlags } = useModifiedFlags();
 
-  const handleSaveToFile = () => {
-    try {
-      const data = {
-        speed,
-        intersections: intersections.map(intersection => ({
-          id: intersection.id,
-          distance: intersection.distance,
-          cycleTime: intersection.cycleTime,
-          greenPhases: intersection.greenPhases,
-          upstreamSpeed: intersection.upstreamSpeed,
-          downstreamSpeed: intersection.downstreamSpeed,
-          useHalfCycleTime: intersection.useHalfCycleTime,
-          name: intersection.name
-        })),
-        weights: modifiedFlags.some(Boolean) ? weights : undefined
-      };
-      
-      const json = JSON.stringify(data, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
-      const href = URL.createObjectURL(blob);
-      
-      if (downloadRef.current) {
-        downloadRef.current.href = href;
-        downloadRef.current.download = 'traffic_data.json';
-        downloadRef.current.click();
-        URL.revokeObjectURL(href);
-      } else {
-        console.error("Download link ref is not available.");
-        toast.error(t('error_saving_file'));
-      }
-    } catch (error) {
-      console.error("Error saving to file:", error);
-      toast.error(t('error_saving_file'));
-    }
+  const handleExport = () => {
+    // Ensure alpha and beta parameters are included in the export
+    const formattedWeights = weights ? {
+      ...weights,
+      alpha: weights.alpha ?? 0.5, // Ensure alpha has a value
+      beta: weights.beta ?? 1.0     // Ensure beta has a value
+    } : undefined;
+    
+    const data = {
+      speed,
+      intersections,
+      weights: formattedWeights
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'green-wave-data.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
-  const handleLoadFromFile = () => {
-    if (fileInputRef.current && fileInputRef.current.files && fileInputRef.current.files.length > 0) {
-      const file = fileInputRef.current.files[0];
-      const reader = new FileReader();
-      
-      reader.onload = (e) => {
-        try {
-          const content = e.target?.result;
-          if (typeof content === 'string') {
-            const data = JSON.parse(content);
+  const handleImport = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target?.result as string);
             onLoadInput(data);
-          } else {
-            toast.error(t('error_reading_file'));
+          } catch (error) {
+            console.error('Error parsing JSON:', error);
           }
-        } catch (error) {
-          console.error("Error parsing or loading file:", error);
-          toast.error(t('error_loading_file'));
-        }
-      };
-      
-      reader.readAsText(file);
-    } else {
-      toast.error(t('no_file_selected'));
-    }
-  };
-
-  const handleClickUpload = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+        };
+        reader.readAsText(file);
+      }
+    };
+    input.click();
   };
 
   return (
-    <div className="flex flex-wrap gap-2 md:gap-4">
-      <Button variant="outline" onClick={handleSaveToFile} className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white text-xs md:text-sm">
-        <Download className="w-3 h-3 md:w-4 md:h-4" />
-        {t('save_to_file')}
+    <div className="flex gap-4 flex-wrap">
+      <Button 
+        variant="outline" 
+        size="sm"
+        onClick={handleImport}
+        className="flex items-center gap-2"
+      >
+        <FileUp size={16} />
+        {t('import_data')}
       </Button>
-      <Button variant="outline" onClick={handleClickUpload} className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white text-xs md:text-sm">
-        <Upload className="w-3 h-3 md:w-4 md:h-4" />
-        {t('load_from_file')}
+      <Button 
+        variant="outline" 
+        size="sm"
+        onClick={handleExport}
+        className="flex items-center gap-2"
+      >
+        <FileDown size={16} />
+        {t('export_data')}
       </Button>
-      <input
-        type="file"
-        style={{ display: 'none' }}
-        accept=".json"
-        ref={fileInputRef}
-        onChange={handleLoadFromFile}
+      <Button
+        variant={isAdmin ? "secondary" : "outline"}
+        size="sm"
+        onClick={() => setShowAdminDialog(true)}
+        className="flex items-center gap-2"
+      >
+        <Lock size={16} />
+        {t('admin_login')}
+      </Button>
+
+      <AdminLoginDialog 
+        open={showAdminDialog} 
+        onOpenChange={setShowAdminDialog}
       />
-      <a href="#" style={{ display: 'none' }} ref={downloadRef}>
-        {t('download')}
-      </a>
     </div>
   );
 };

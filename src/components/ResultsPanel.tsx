@@ -106,9 +106,16 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
                             originalIntersections[idx].downstreamSpeed : 
                             speed;
     
-    const name = originalIntersections && originalIntersections[idx] ? 
-                 originalIntersections[idx].name : 
-                 undefined;
+    console.log(`ResultsPanel created intersection ${idx+1}:`, {
+      id: idx + 1,
+      distance,
+      cycleTime,
+      offset,
+      greenPhases: (comparisonResults.green_up?.[idx] || []).concat(comparisonResults.green_down?.[idx] || []),
+      upstreamSpeed,
+      downstreamSpeed,
+      useHalfCycleTime
+    });
     
     const greenPhases: GreenPhase[] = [];
     
@@ -152,8 +159,7 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
       greenPhases,
       upstreamSpeed,
       downstreamSpeed,
-      useHalfCycleTime,
-      name
+      useHalfCycleTime
     };
   });
 
