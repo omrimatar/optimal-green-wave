@@ -4,7 +4,7 @@ import { GreenPhaseBar } from './GreenPhaseBar';
 import { GreenWaveTooltip } from './GreenWaveTooltip';
 import { type Intersection } from "@/types/optimization";
 import { type PairBandPoint, type RunResult, type DiagonalPoint } from "@/types/traffic";
-import { isMobileDevice, getMobileScale } from '@/lib/traffic';
+import { isMobileDevice, getMobileScale, handleCycleTimeCrossing } from '@/lib/traffic';
 
 interface GreenWaveChartProps {
   intersections: Intersection[];
@@ -372,48 +372,25 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       );
       
       if (upstreamBandwidth > 0) {
-        const upOriginLowY = dimensions.height - 40 - yScale(pair.up.origin_low);
-        const upOriginHighY = dimensions.height - 40 - yScale(pair.up.origin_high);
-        const upDestLowY = dimensions.height - 40 - yScale(pair.up.dest_low);
-        const upDestHighY = dimensions.height - 40 - yScale(pair.up.dest_high);
+        const upLowLine = handleCycleTimeCrossing(
+          originX, 
+          destX, 
+          pair.up.origin_low, 
+          pair.up.dest_low, 
+          cycleTime, 
+          yScale, 
+          dimensions.height - 40
+        );
         
-        const upLowWrapsAround = pair.up.dest_low < pair.up.origin_low;
-        const upHighWrapsAround = pair.up.dest_high < pair.up.origin_high;
-
-        console.log(`Upstream low line: origin=${pair.up.origin_low.toFixed(2)}, dest=${pair.up.dest_low.toFixed(2)}, wraps=${upLowWrapsAround}`);
-        console.log(`Upstream high line: origin=${pair.up.origin_high.toFixed(2)}, dest=${pair.up.dest_high.toFixed(2)}, wraps=${upHighWrapsAround}`);
-        
-        if (upLowWrapsAround) {
-          const totalTimeDiff = cycleTime - pair.up.origin_low + pair.up.dest_low;
-          const timeToCycleEnd = cycleTime - pair.up.origin_low;
-          const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
-          const distanceToTravel = destX - originX;
-          const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
-          const xAtCycleEnd = originX + distanceToCycleEnd;
-          
-          const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
-          const upCycleStartY = dimensions.height - 40 - yScale(0);
-          
-          console.log(`Upstream low wrap calculation:`, {
-            totalTimeDiff,
-            timeToCycleEnd,
-            proportionToCycleEnd,
-            distanceToTravel,
-            distanceToCycleEnd,
-            xAtCycleEnd,
-            upOriginLowY,
-            upCycleEndY,
-            upCycleStartY,
-            upDestLowY
-          });
-          
+        if (upLowLine.wrapsAround) {
+          console.log(`Upstream low line wraps around at cycle boundary`);
           lines.push(
             <line
               key={`up-low-part1-${index}`}
-              x1={originX}
-              y1={upOriginLowY}
-              x2={xAtCycleEnd}
-              y2={upCycleEndY}
+              x1={upLowLine.part1.x1}
+              y1={upLowLine.part1.y1}
+              x2={upLowLine.part1.x2}
+              y2={upLowLine.part1.y2}
               className="line-groove line-groove-upstream"
               onMouseEnter={(e) => {
                 const content = (
@@ -433,10 +410,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           lines.push(
             <line
               key={`up-low-part2-${index}`}
-              x1={xAtCycleEnd}
-              y1={upCycleStartY}
-              x2={destX}
-              y2={upDestLowY}
+              x1={upLowLine.part2.x1}
+              y1={upLowLine.part2.y1}
+              x2={upLowLine.part2.x2}
+              y2={upLowLine.part2.y2}
               className="line-groove line-groove-upstream"
               onMouseEnter={(e) => {
                 const content = (
@@ -456,10 +433,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           lines.push(
             <line
               key={`up-low-${index}`}
-              x1={originX}
-              y1={upOriginLowY}
-              x2={destX}
-              y2={upDestLowY}
+              x1={upLowLine.full.x1}
+              y1={upLowLine.full.y1}
+              x2={upLowLine.full.x2}
+              y2={upLowLine.full.y2}
               className="line-groove line-groove-upstream"
               onMouseEnter={(e) => {
                 const content = (
@@ -477,42 +454,25 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           );
         }
         
-        if (upHighWrapsAround) {
-          const totalTimeDiff = cycleTime - pair.up.origin_high + pair.up.dest_high;
-          const timeToCycleEnd = cycleTime - pair.up.origin_high;
-          const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
-          const distanceToTravel = destX - originX;
-          const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
-          const xAtCycleEnd = originX + distanceToCycleEnd;
-          
-          const upCycleEndY = dimensions.height - 40 - yScale(cycleTime);
-          const upCycleStartY = dimensions.height - 40 - yScale(0);
-          
-          console.log(`Upstream high wrap calculation:`, {
-            pair: `${pair.from_junction}->${pair.to_junction}`,
-            origin_high: pair.up.origin_high,
-            dest_high: pair.up.dest_high,
-            totalTimeDiff,
-            timeToCycleEnd,
-            proportionToCycleEnd,
-            distanceToTravel,
-            distanceToCycleEnd,
-            originX,
-            destX,
-            xAtCycleEnd,
-            upOriginHighY,
-            upCycleEndY,
-            upCycleStartY,
-            upDestHighY
-          });
-          
+        const upHighLine = handleCycleTimeCrossing(
+          originX, 
+          destX, 
+          pair.up.origin_high, 
+          pair.up.dest_high, 
+          cycleTime, 
+          yScale, 
+          dimensions.height - 40
+        );
+        
+        if (upHighLine.wrapsAround) {
+          console.log(`Upstream high line wraps around at cycle boundary`);
           lines.push(
             <line
               key={`up-high-part1-${index}`}
-              x1={originX}
-              y1={upOriginHighY}
-              x2={xAtCycleEnd}
-              y2={upCycleEndY}
+              x1={upHighLine.part1.x1}
+              y1={upHighLine.part1.y1}
+              x2={upHighLine.part1.x2}
+              y2={upHighLine.part1.y2}
               className="line-ridge line-ridge-upstream"
               onMouseEnter={(e) => {
                 const content = (
@@ -532,10 +492,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           lines.push(
             <line
               key={`up-high-part2-${index}`}
-              x1={xAtCycleEnd}
-              y1={upCycleStartY}
-              x2={destX}
-              y2={upDestHighY}
+              x1={upHighLine.part2.x1}
+              y1={upHighLine.part2.y1}
+              x2={upHighLine.part2.x2}
+              y2={upHighLine.part2.y2}
               className="line-ridge line-ridge-upstream"
               onMouseEnter={(e) => {
                 const content = (
@@ -555,10 +515,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           lines.push(
             <line
               key={`up-high-${index}`}
-              x1={originX}
-              y1={upOriginHighY}
-              x2={destX}
-              y2={upDestHighY}
+              x1={upHighLine.full.x1}
+              y1={upHighLine.full.y1}
+              x2={upHighLine.full.x2}
+              y2={upHighLine.full.y2}
               className="line-ridge line-ridge-upstream"
               onMouseEnter={(e) => {
                 const content = (
@@ -580,48 +540,25 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
       }
 
       if (downstreamBandwidth > 0) {
-        const downOriginLowY = dimensions.height - 40 - yScale(pair.down.origin_low);
-        const downOriginHighY = dimensions.height - 40 - yScale(pair.down.origin_high);
-        const downDestLowY = dimensions.height - 40 - yScale(pair.down.dest_low);
-        const downDestHighY = dimensions.height - 40 - yScale(pair.down.dest_high);
+        const downLowLine = handleCycleTimeCrossing(
+          destX, 
+          originX, 
+          pair.down.origin_low, 
+          pair.down.dest_low, 
+          cycleTime, 
+          yScale, 
+          dimensions.height - 40
+        );
         
-        const downLowWrapsAround = pair.down.dest_low < pair.down.origin_low;
-        const downHighWrapsAround = pair.down.dest_high < pair.down.origin_high;
-        
-        console.log(`Downstream low line: origin=${pair.down.origin_low.toFixed(2)}, dest=${pair.down.dest_low.toFixed(2)}, wraps=${downLowWrapsAround}`);
-        console.log(`Downstream high line: origin=${pair.down.origin_high.toFixed(2)}, dest=${pair.down.dest_high.toFixed(2)}, wraps=${downHighWrapsAround}`);
-        
-        if (downLowWrapsAround) {
-          const totalTimeDiff = cycleTime - pair.down.origin_low + pair.down.dest_low;
-          const timeToCycleEnd = cycleTime - pair.down.origin_low;
-          const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
-          const distanceToTravel = originX - destX;
-          const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
-          const xAtCycleEnd = destX + distanceToCycleEnd;
-          
-          const downCycleEndY = dimensions.height - 40 - yScale(cycleTime);
-          const downCycleStartY = dimensions.height - 40 - yScale(0);
-          
-          console.log(`Downstream wrap calculation for low line:`, {
-            totalTimeDiff,
-            timeToCycleEnd,
-            proportionToCycleEnd,
-            distanceToTravel,
-            distanceToCycleEnd,
-            xAtCycleEnd,
-            downOriginLowY,
-            downCycleEndY,
-            downCycleStartY,
-            downDestLowY
-          });
-          
+        if (downLowLine.wrapsAround) {
+          console.log(`Downstream low line wraps around at cycle boundary`);
           lines.push(
             <line
               key={`down-low-part1-${index}`}
-              x1={destX}
-              y1={downOriginLowY}
-              x2={xAtCycleEnd}
-              y2={downCycleEndY}
+              x1={downLowLine.part1.x1}
+              y1={downLowLine.part1.y1}
+              x2={downLowLine.part1.x2}
+              y2={downLowLine.part1.y2}
               className="line-groove line-groove-downstream"
               onMouseEnter={(e) => {
                 const content = (
@@ -641,10 +578,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           lines.push(
             <line
               key={`down-low-part2-${index}`}
-              x1={xAtCycleEnd}
-              y1={downCycleStartY}
-              x2={originX}
-              y2={downDestLowY}
+              x1={downLowLine.part2.x1}
+              y1={downLowLine.part2.y1}
+              x2={downLowLine.part2.x2}
+              y2={downLowLine.part2.y2}
               className="line-groove line-groove-downstream"
               onMouseEnter={(e) => {
                 const content = (
@@ -664,10 +601,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           lines.push(
             <line
               key={`down-low-${index}`}
-              x1={destX}
-              y1={downOriginLowY}
-              x2={originX}
-              y2={downDestLowY}
+              x1={downLowLine.full.x1}
+              y1={downLowLine.full.y1}
+              x2={downLowLine.full.x2}
+              y2={downLowLine.full.y2}
               className="line-groove line-groove-downstream"
               onMouseEnter={(e) => {
                 const content = (
@@ -685,37 +622,25 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           );
         }
         
-        if (downHighWrapsAround) {
-          const totalTimeDiff = cycleTime - pair.down.origin_high + pair.down.dest_high;
-          const timeToCycleEnd = cycleTime - pair.down.origin_high;
-          const proportionToCycleEnd = timeToCycleEnd / totalTimeDiff;
-          const distanceToTravel = originX - destX;
-          const distanceToCycleEnd = distanceToTravel * proportionToCycleEnd;
-          const xAtCycleEnd = destX + distanceToCycleEnd;
-          
-          const downCycleEndY = dimensions.height - 40 - yScale(cycleTime);
-          const downCycleStartY = dimensions.height - 40 - yScale(0);
-          
-          console.log(`Downstream wrap calculation for high line:`, {
-            totalTimeDiff,
-            timeToCycleEnd,
-            proportionToCycleEnd,
-            distanceToTravel,
-            distanceToCycleEnd,
-            xAtCycleEnd,
-            downOriginHighY,
-            downCycleEndY,
-            downCycleStartY,
-            downDestHighY
-          });
-          
+        const downHighLine = handleCycleTimeCrossing(
+          destX, 
+          originX, 
+          pair.down.origin_high, 
+          pair.down.dest_high, 
+          cycleTime, 
+          yScale, 
+          dimensions.height - 40
+        );
+        
+        if (downHighLine.wrapsAround) {
+          console.log(`Downstream high line wraps around at cycle boundary`);
           lines.push(
             <line
               key={`down-high-part1-${index}`}
-              x1={destX}
-              y1={downOriginHighY}
-              x2={xAtCycleEnd}
-              y2={downCycleEndY}
+              x1={downHighLine.part1.x1}
+              y1={downHighLine.part1.y1}
+              x2={downHighLine.part1.x2}
+              y2={downHighLine.part1.y2}
               className="line-ridge line-ridge-downstream"
               onMouseEnter={(e) => {
                 const content = (
@@ -735,10 +660,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           lines.push(
             <line
               key={`down-high-part2-${index}`}
-              x1={xAtCycleEnd}
-              y1={downCycleStartY}
-              x2={originX}
-              y2={downDestHighY}
+              x1={downHighLine.part2.x1}
+              y1={downHighLine.part2.y1}
+              x2={downHighLine.part2.x2}
+              y2={downHighLine.part2.y2}
               className="line-ridge line-ridge-downstream"
               onMouseEnter={(e) => {
                 const content = (
@@ -758,10 +683,10 @@ export const GreenWaveChart: React.FC<GreenWaveChartProps> = ({
           lines.push(
             <line
               key={`down-high-${index}`}
-              x1={destX}
-              y1={downOriginHighY}
-              x2={originX}
-              y2={downDestHighY}
+              x1={downHighLine.full.x1}
+              y1={downHighLine.full.y1}
+              x2={downHighLine.full.x2}
+              y2={downHighLine.full.y2}
               className="line-ridge line-ridge-downstream"
               onMouseEnter={(e) => {
                 const content = (
