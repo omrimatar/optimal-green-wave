@@ -1,4 +1,3 @@
-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,10 +8,9 @@ interface MetricsTableProps {
   baseline: RunResult;
   optimized: RunResult;
   mode: 'display' | 'calculate' | 'manual';
-  printMode?: boolean;
 }
 
-export const MetricsTable = ({ baseline, optimized, mode, printMode = false }: MetricsTableProps) => {
+export const MetricsTable = ({ baseline, optimized, mode }: MetricsTableProps) => {
   const { t, language } = useLanguage();
 
   const getLabels = () => {
@@ -64,19 +62,18 @@ export const MetricsTable = ({ baseline, optimized, mode, printMode = false }: M
   const optimizedMaxDelayDown = Array.isArray(optimized.max_delay_down) ? optimized.max_delay_down : [];
 
   const textAlign = language === 'he' ? "text-right" : "text-left";
-  const cardClassName = printMode ? "" : "table-fade-in";
 
   return (
-    <Card className={`w-full ${cardClassName}`}>
-      {!printMode && <CardHeader>
+    <Card className="w-full table-fade-in">
+      <CardHeader>
         <CardTitle className="flex items-center gap-2">
           {mode === 'manual' ? t('manual_results') : t('optimization_results')}
           <Badge variant="outline" className="mr-2">
             {optimized.status === "Optimal" ? t('optimal') : optimized.status}
           </Badge>
         </CardTitle>
-      </CardHeader>}
-      <CardContent className={printMode ? "p-0" : ""}>
+      </CardHeader>
+      <CardContent>
         <Table dir={language === 'he' ? "rtl" : "ltr"}>
           <TableHeader>
             <TableRow>

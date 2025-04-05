@@ -1,9 +1,7 @@
-
 import { Card } from "@/components/ui/card";
 import { MetricsTable } from "./MetricsTable";
 import { OptimizationCharts } from "./OptimizationCharts";
 import { GreenWaveChart } from "./GreenWaveChart";
-import { PdfReportButton } from "./PdfReportButton";
 import type { RunResult, PairBandPoint } from "@/types/traffic";
 import { type Intersection, type GreenPhase } from "@/types/optimization";
 
@@ -166,18 +164,10 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
   });
 
   const chartSpeed = speed || comparisonResults.speed || 50;
+  console.log("Chart using global design speed:", chartSpeed);
   
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <PdfReportButton 
-          results={results}
-          mode={mode}
-          originalIntersections={originalIntersections || []}
-          speed={chartSpeed}
-        />
-      </div>
-      
       <Card className="p-6 w-full">
         <GreenWaveChart 
           intersections={chartIntersections}
