@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -395,7 +394,10 @@ const Index = () => {
             onClick={handleHeaderClick}
           />
           <div className="text-center space-y-1 md:space-y-2">
-            <h1 className="text-2xl md:text-4xl font-bold text-gray-900">{t('app_title')}</h1>
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-900">
+              {t('app_title')}
+              <span className="beta-badge">גרסת בטא</span>
+            </h1>
             <p className="text-base md:text-lg text-gray-600">{t('app_subtitle')}</p>
           </div>
         </div>
@@ -578,4 +580,3 @@ const Index = () => {
 };
 
 export default Index;
-

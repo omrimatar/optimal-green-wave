@@ -104,6 +104,12 @@
   .line-ridge-downstream {
     stroke: #3B82F6; /* Darker blue for downstream */
   }
+
+  /* Beta badge styling */
+  .beta-badge {
+    @apply bg-amber-500 text-white text-xs font-medium px-2 py-0.5 rounded-md ml-2 align-middle;
+    transform: translateY(-1px);
+  }
 }
 
 @keyframes tableAppear {
