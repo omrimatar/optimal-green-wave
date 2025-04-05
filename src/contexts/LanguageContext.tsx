@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 type Language = 'en' | 'he';
@@ -190,7 +189,7 @@ const hebrewTranslations: Record<string, string> = {
 
 const englishTranslations: Record<string, string> = {
   app_title: 'Green Wave Calculator',
-  app_subtitle: 'A tool for optimal traffic light timing planning',
+  app_subtitle: 'Traffic Signal Coordination Optimization Tool',
   language: 'English',
   cycle_time: 'Cycle Time (seconds)',
   default_speed: 'Design Speed (km/h)',
