@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 type Language = 'en' | 'he';
@@ -89,13 +88,8 @@ type TranslationKey =
   | 'optional'
   | 'must_be_between'
   | 'intersection_name'
-  | 'and';
-
-interface LanguageContextType {
-  language: Language;
-  toggleLanguage: () => void;
-  t: (key: string) => string;
-}
+  | 'and'
+  | 'print_report';
 
 const hebrewTranslations: Record<string, string> = {
   app_title: 'מחשבון גל ירוק',
@@ -183,7 +177,8 @@ const hebrewTranslations: Record<string, string> = {
   'optional': 'אופציונלי',
   'must_be_between': 'חייב להיות בין',
   'intersection_name': 'שם הצומת',
-  'and': 'ל-'
+  'and': 'ל-',
+  'print_report': 'הדפס דוח'
 };
 
 const englishTranslations: Record<string, string> = {
@@ -272,7 +267,8 @@ const englishTranslations: Record<string, string> = {
   'intersection_name': 'Intersection Name',
   'optional': 'Optional',
   'must_be_between': 'must be between',
-  'and': 'and'
+  'and': 'and',
+  'print_report': 'Print Report'
 };
 
 const translations: Record<Language, Record<TranslationKey, string>> = {

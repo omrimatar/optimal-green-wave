@@ -104,6 +104,36 @@
   .line-ridge-downstream {
     stroke: #3B82F6; /* Darker blue for downstream */
   }
+  
+  /* PDF Report styles */
+  .print-button {
+    background-color: #F8FAFC;
+    border-color: #CBD5E1;
+    color: #475569;
+  }
+  
+  .print-button:hover {
+    background-color: #F1F5F9;
+    border-color: #94A3B8;
+  }
+  
+  /* Hide elements in PDF view */
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    
+    #pdf-content, #pdf-content * {
+      visibility: visible;
+    }
+    
+    #pdf-content {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+    }
+  }
 }
 
 @keyframes tableAppear {
