@@ -89,6 +89,7 @@ type TranslationKey =
   | 'optional'
   | 'must_be_between'
   | 'intersection_name'
+  | 'beta_version'
   | 'and';
 
 interface LanguageContextType {
@@ -183,6 +184,7 @@ const hebrewTranslations: Record<string, string> = {
   'optional': 'אופציונלי',
   'must_be_between': 'חייב להיות בין',
   'intersection_name': 'שם הצומת',
+  'beta_version': 'גרסת בטא',
   'and': 'ל-'
 };
 
@@ -272,6 +274,7 @@ const englishTranslations: Record<string, string> = {
   'intersection_name': 'Intersection Name',
   'optional': 'Optional',
   'must_be_between': 'must be between',
+  'beta_version': 'Beta Version',
   'and': 'and'
 };
 

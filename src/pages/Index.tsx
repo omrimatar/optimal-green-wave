@@ -18,11 +18,13 @@ import { DebugDialog } from '@/components/DebugDialog';
 import { useMaintenanceMode } from '@/contexts/MaintenanceContext';
 import { AdminLoginDialog } from '@/components/AdminLoginDialog';
 import { ContactButton } from '@/components/ContactButton';
+
 const Index = () => {
   const {
     t,
     language
   } = useLanguage();
+
   const [intersections, setIntersections] = useState<Intersection[]>([{
     id: 1,
     distance: 0,
@@ -76,6 +78,7 @@ const Index = () => {
   const {
     isAdmin
   } = useMaintenanceMode();
+
   useEffect(() => {
     if (intersections.length > 0) {
       const updatedIntersections = intersections.map(intersection => ({
@@ -85,11 +88,13 @@ const Index = () => {
       setIntersections(updatedIntersections);
     }
   }, [globalCycleTime]);
+
   const clearResults = () => {
     setResults(null);
     setMode('calculate');
     setCalculationPerformed(false);
   };
+
   const handleGlobalCycleTimeChange = (value: string) => {
     const numValue = parseInt(value);
     if (isNaN(numValue) || numValue < 0 || numValue > 300 || !Number.isInteger(numValue)) {
@@ -99,6 +104,7 @@ const Index = () => {
     setGlobalCycleTime(numValue);
     clearResults();
   };
+
   const handleSpeedChange = (value: string) => {
     const numValue = parseInt(value);
     if (isNaN(numValue) || numValue < 0 || numValue > 120 || !Number.isInteger(numValue)) {
@@ -114,6 +120,7 @@ const Index = () => {
     setIntersections(updatedIntersections);
     setCalculationPerformed(false);
   };
+
   const handleAddIntersection = () => {
     const newId = Math.max(...intersections.map(i => i.id)) + 1;
     const lastIntersection = intersections[intersections.length - 1];
@@ -139,6 +146,7 @@ const Index = () => {
     setManualOffsets(prev => [...prev, 0]);
     clearResults();
   };
+
   const handleManualCalculate = async () => {
     try {
       const currentOffsets = [...manualOffsets];
@@ -165,6 +173,7 @@ const Index = () => {
       setCalculationPerformed(true);
     }
   };
+
   const handleCalculate = async () => {
     try {
       if (speed < 0 || speed > 120 || !Number.isInteger(speed)) {
@@ -215,6 +224,7 @@ const Index = () => {
       setCalculationPerformed(true);
     }
   };
+
   const handleShowExisting = async () => {
     try {
       if (speed < 0 || speed > 120 || !Number.isInteger(speed)) {
@@ -255,11 +265,13 @@ const Index = () => {
       setCalculationPerformed(true);
     }
   };
+
   const updateWeight = (category: keyof OptimizationWeights, value: number) => {
     const updatedWeights = normalizeWeights(weights, category, value);
     setWeights(updatedWeights);
     clearResults();
   };
+
   const handleLoadInput = (data: {
     speed: number;
     intersections: Intersection[];
@@ -317,20 +329,24 @@ const Index = () => {
     clearResults();
     toast.success("הקובץ נטען בהצלחה");
   };
+
   const handleResetWeights = () => {
     setWeights(DEFAULT_WEIGHTS);
     resetModifiedFlags();
     clearResults();
     toast.success("המשקולות אופסו לברירת המחדל");
   };
+
   const handleShowDebugData = () => {
     const latestData = getLatestLambdaDebugData();
     setDebugData(latestData);
     setShowDebugDialog(true);
   };
+
   const afterApiCallAttempt = () => {
     setCalculationPerformed(true);
   };
+
   const handleHeaderClick = () => {
     setClickCount(prev => {
       const newCount = prev + 1;
@@ -342,6 +358,7 @@ const Index = () => {
       return newCount;
     });
   };
+
   console.log("Current results state:", results);
   return <div className="min-h-screen p-4 md:p-8 bg-gradient-to-br from-green-50 to-blue-50" dir={language === 'he' ? 'rtl' : 'ltr'}>
       <div className="max-w-[1600px] mx-auto space-y-4 md:space-y-8 animate-fade-up">
@@ -350,7 +367,7 @@ const Index = () => {
           <div className="text-center space-y-1 md:space-y-2">
             <h1 className="text-2xl md:text-4xl font-bold text-gray-900">
               {t('app_title')}
-              <span className="beta-badge mx-[5px]">גרסת בטא</span>
+              <span className="beta-badge mx-[5px]">{t('beta_version')}</span>
             </h1>
             <p className="text-base md:text-lg text-gray-600">{t('app_subtitle')}</p>
           </div>
@@ -472,4 +489,5 @@ const Index = () => {
       </div>
     </div>;
 };
+
 export default Index;
