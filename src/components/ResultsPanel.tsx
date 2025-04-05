@@ -1,12 +1,9 @@
-
 import { Card } from "@/components/ui/card";
 import { MetricsTable } from "./MetricsTable";
 import { OptimizationCharts } from "./OptimizationCharts";
 import { GreenWaveChart } from "./GreenWaveChart";
-import { PDFReport } from "./PDFReport";
 import type { RunResult, PairBandPoint } from "@/types/traffic";
 import { type Intersection, type GreenPhase } from "@/types/optimization";
-import { useEffect, useRef } from "react";
 
 interface ResultsPanelProps {
   results: {
@@ -21,9 +18,6 @@ interface ResultsPanelProps {
 }
 
 export const ResultsPanel = ({ results, mode, originalIntersections, speed, calculationPerformed = false }: ResultsPanelProps) => {
-  const chartRef = useRef<HTMLDivElement | null>(null);
-  const tableRef = useRef<HTMLDivElement | null>(null);
-  
   if (!results || 
      !results.baseline_results || 
      (mode === 'manual' && !results.manual_results) ||
@@ -170,59 +164,19 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
   });
 
   const chartSpeed = speed || comparisonResults.speed || 50;
-  
-  // Use effect to update the PDF chart and table references
-  useEffect(() => {
-    const updatePdfElements = async () => {
-      if (!chartRef.current || !tableRef.current) return;
-      
-      // Find the containers in the hidden PDF elements
-      const pdfChartContainer = document.getElementById('pdf-green-wave-chart-container');
-      const pdfTableContainer = document.getElementById('pdf-metrics-table-container');
-      
-      if (pdfChartContainer && chartRef.current) {
-        // Clone the chart into the PDF container
-        const chartClone = chartRef.current.cloneNode(true) as HTMLElement;
-        pdfChartContainer.innerHTML = '';
-        pdfChartContainer.appendChild(chartClone);
-      }
-      
-      if (pdfTableContainer && tableRef.current) {
-        // Clone the table into the PDF container
-        const tableClone = tableRef.current.cloneNode(true) as HTMLElement;
-        pdfTableContainer.innerHTML = '';
-        pdfTableContainer.appendChild(tableClone);
-      }
-    };
-    
-    // Run the update when results change
-    if (results) {
-      updatePdfElements();
-    }
-  }, [results, mode]);
+  console.log("Chart using global design speed:", chartSpeed);
   
   return (
     <div className="space-y-6">
-      <div className="flex justify-end mb-2">
-        <PDFReport 
-          results={results}
-          mode={mode}
-          originalIntersections={originalIntersections}
-          speed={speed}
-        />
-      </div>
-      
       <Card className="p-6 w-full">
-        <div ref={chartRef}>
-          <GreenWaveChart 
-            intersections={chartIntersections}
-            mode={mode}
-            speed={chartSpeed}
-            pairBandPoints={pairBandPoints}
-            calculationPerformed={calculationPerformed}
-            comparisonResults={comparisonResults}
-          />
-        </div>
+        <GreenWaveChart 
+          intersections={chartIntersections}
+          mode={mode}
+          speed={chartSpeed}
+          pairBandPoints={pairBandPoints}
+          calculationPerformed={calculationPerformed}
+          comparisonResults={comparisonResults}
+        />
       </Card>
       
       <Card className="p-6">
@@ -233,13 +187,11 @@ export const ResultsPanel = ({ results, mode, originalIntersections, speed, calc
             mode={mode}
           />
           
-          <div ref={tableRef}>
-            <MetricsTable 
-              baseline={results.baseline_results}
-              optimized={comparisonResults}
-              mode={mode}
-            />
-          </div>
+          <MetricsTable 
+            baseline={results.baseline_results}
+            optimized={comparisonResults}
+            mode={mode}
+          />
         </div>
       </Card>
     </div>
