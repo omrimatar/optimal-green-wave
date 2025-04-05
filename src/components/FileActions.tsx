@@ -29,7 +29,7 @@ export const FileActions = ({ speed, intersections, weights, onLoadInput }: File
     const formattedWeights = weights ? {
       ...weights,
       alpha: weights.alpha ?? 0.5, // Ensure alpha has a value
-      beta: weights.beta ?? 1.0     // Ensure beta has a value
+      beta: 1.0     // Always ensure beta is 1.0 (inactive feature)
     } : undefined;
     
     // Create a proper copy of intersections that includes all properties including name
@@ -85,6 +85,11 @@ export const FileActions = ({ speed, intersections, weights, onLoadInput }: File
                 offset: intersection.offset || 0,
                 name: intersection.name || '', // Ensure name is always included
               }));
+            }
+            
+            // Force beta to be 1.0 on import as it's an inactive feature
+            if (data.weights) {
+              data.weights.beta = 1.0;
             }
             
             onLoadInput(data);

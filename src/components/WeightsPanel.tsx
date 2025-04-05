@@ -188,23 +188,24 @@ export const WeightsPanel = ({
           </div>
         </div>
         
-        {/* Beta parameter - secondary phase priority */}
-        <div className="space-y-3 p-3 bg-gray-50 rounded-md">
+        {/* Beta parameter - secondary phase priority - DISABLED */}
+        <div className="space-y-3 p-3 bg-gray-50 rounded-md opacity-60">
           <div className="flex justify-between">
-            <Label className="font-medium text-base">β {t('main_phase_priority')} ({formatNumber(localWeights.beta || 1.0)})</Label>
+            <Label className="font-medium text-base text-gray-500">β {t('main_phase_priority')} (1.0)</Label>
             <input 
               type="number" 
-              value={parseFloat((localWeights.beta || 1.0).toFixed(2))} 
+              value={1.0} 
               min="0" 
               max="1" 
               step="0.1" 
-              onChange={e => handleInputChange('beta', e.target.value)} 
-              className="w-16 text-right border rounded px-2" 
+              disabled
+              className="w-16 text-right border rounded px-2 bg-gray-100 text-gray-500 cursor-not-allowed" 
             />
           </div>
           <Slider 
-            value={[(localWeights.beta || 1.0) * 100]} 
-            onValueChange={value => handleWeightChange('beta', value[0] / 100)} 
+            value={[100]} 
+            disabled
+            className="cursor-not-allowed"
             max={100} 
             step={1} 
           />
@@ -212,8 +213,10 @@ export const WeightsPanel = ({
             <span>{t('no_main_phase_priority')}</span>
             <span>{t('full_main_phase_priority')}</span>
           </div>
+          <p className="text-sm text-gray-500 italic mt-1">{t('experimental_feature_inactive')}</p>
         </div>
       </div>
     </div>}
   </>;
 };
+
