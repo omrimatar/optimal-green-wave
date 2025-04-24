@@ -18,7 +18,7 @@ export const ContactButton = () => {
   const handleCopyClick = async () => {
     try {
       await navigator.clipboard.writeText(EMAIL);
-      toast.success('כתובת המייל הועתקה בהצלחה');
+      toast.success(`כתובת המייל ${EMAIL} הועתקה בהצלחה`);
     } catch (err) {
       toast.error('שגיאה בהעתקת כתובת המייל');
     }
@@ -61,4 +61,3 @@ export const ContactButton = () => {
     </div>
   );
 };
-
